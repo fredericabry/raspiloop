@@ -8,6 +8,7 @@
 #include <QTextStream>
 
 #include <qdebug.h>
+#include <qtimer.h>
 
 
 
@@ -104,6 +105,38 @@ void MainWindow::ding()
 }
 
 
+
+void MainWindow::topClick()
+{
+    static int x = 0;
+if(ui->radioClick->isChecked())
+{
+    x++;
+    if(x>4)
+        x=1;
+
+
+    if(x==1) alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
+    else alsa_play("hw:1,0",2,44100,2000,"ding2.wav",this);
+
+
+
+}
+
+}
+
+
+void MainWindow::updateTempo(int tempo)
+{
+
+
+clickTimer->start(1000*60/tempo);
+
+}
+
+
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -121,6 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->b_ding,SIGNAL(pressed()),this,SLOT(ding()));
 
 
+
     Afficher("Démarrage\n");
 
 
@@ -130,9 +164,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
+
+
+
+    clickTimer = new QTimer(this);
+    connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
+
+    clickTimer->start(1000);
    // alsa_record("hw:1,0",2,44100,2000,"test.wav",this);
 
-
+    connect(ui->tempoBox,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
 
 
 }

@@ -68,7 +68,7 @@ void alsa_play(QString device, int channels, int rate, long length, QString file
     parent_play= pt;
     init_play(channels,rate,length);
     open_file_play(filename);
-    set_hw_parameters_play(device);
+    set_hw_parameters_play();
     set_sw_parameters_play();
     start_play();
 
@@ -87,7 +87,7 @@ int err;
         if(err == -EBUSY)
         {
 
-
+            qDebug()<<"Device " + device + " busy";
             return false;
         }
         else
@@ -169,7 +169,7 @@ void open_file_play(QString filename)
 
 }
 
-void set_hw_parameters_play(QString device)
+void set_hw_parameters_play(void)
 {
 
     int err;
@@ -336,7 +336,7 @@ void async_callback_play(snd_async_handler_t *ahandler)
 
 
     int nread,err;
-    snd_pcm_sframes_t avail;
+    snd_pcm_uframes_t avail;
 
 
     snd_pcm_t *play_handle = snd_async_handler_get_pcm(ahandler);

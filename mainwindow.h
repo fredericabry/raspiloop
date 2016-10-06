@@ -9,7 +9,7 @@
 #define n2s QString::number
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -30,6 +30,8 @@ public:
     QString InputCardName;
     QString OutputCardName;
 
+    QTimer *clickTimer;
+
     void Afficher(QString);
     void br();
     void AfficherListe(QStringList);
@@ -45,6 +47,10 @@ private slots:
     void consoleclear(void);
     void link(void);
     void ding(void);
+    void topClick(void);
+    void updateTempo(int);
+signals:
+
 };
 
 #endif // MAINWINDOW_H

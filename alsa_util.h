@@ -28,7 +28,7 @@ void stop_record(void);
 
 void async_callback_play(snd_async_handler_t *ahandler);
 void open_file_play(QString filename);
-void set_hw_parameters_play(QString device);
+void set_hw_parameters_play(void);
 void set_sw_parameters_play(void);
 void start_play(void);
 void alsa_play(QString device, int channels, int rate, long length, QString filename, MainWindow *pt);
