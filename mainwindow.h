@@ -31,6 +31,7 @@ public:
     QString OutputCardName;
 
     void Afficher(QString);
+    void br();
     void AfficherListe(QStringList);
     void connectToCard(void);
     ~MainWindow();

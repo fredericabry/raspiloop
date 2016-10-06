@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
    // alsa_record("hw:1,0",2,44100,2000,"test.wav",this);
 
-
+   alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
 
 
 }

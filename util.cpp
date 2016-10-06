@@ -5,7 +5,10 @@
 #include <QTextStream>
 
 
-
+void MainWindow::br()
+{
+    Afficher("\n");
+}
 
 void MainWindow::Afficher(QString txt)
 {
