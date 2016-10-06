@@ -60,9 +60,9 @@ void alsa_record(QString device, int channels, int rate, long length, QString fi
 
     parent= pt;
     init_record(channels,rate,length);
-    open_file(filename);
-    set_hw_parameters(device);
-    set_sw_parameters();
+    open_file_record(filename);
+    set_hw_parameters_record(device);
+    set_sw_parameters_record();
     start_record();
 
 
@@ -96,7 +96,7 @@ void start_record(void)
     frame_count -= nread*rec_nbr_chan;
 
     snd_async_handler_t *pcm_callback;
-    snd_async_add_pcm_handler(&pcm_callback,capture_handle,async_callback,NULL);
+    snd_async_add_pcm_handler(&pcm_callback,capture_handle,async_callback_record,NULL);
 
 }
 
@@ -104,7 +104,7 @@ void start_record(void)
 
 
 //software parameters
-void set_sw_parameters(void)
+void set_sw_parameters_record(void)
 {
 
 
@@ -143,7 +143,7 @@ void set_sw_parameters(void)
 
 
 //hardware parameters
-void set_hw_parameters(QString device)
+void set_hw_parameters_record(QString device)
 {
 
     int err;
@@ -233,7 +233,7 @@ void set_hw_parameters(QString device)
 
 
 //Setup the wave file used to record
-void open_file(QString filename)
+void open_file_record(QString filename)
 {
 
     SF_INFO sf_info;
@@ -269,7 +269,7 @@ void open_file(QString filename)
 
 
 
-void async_callback(snd_async_handler_t *ahandler)
+void async_callback_record(snd_async_handler_t *ahandler)
 {
     snd_pcm_t *capture_handle = snd_async_handler_get_pcm(ahandler);
     snd_pcm_sframes_t avail;
@@ -593,29 +593,6 @@ void getCardList(snd_pcm_stream_t stream,QStringList *CardName,QStringList *Card
 
 
 
-            /*     for (idx = 0;idx < count ; idx++)
-            {
-
-                snd_pcm_info_set_subdevice(pcminfo,idx);
-                if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0)
-                {
-
-                    qDebug()<<"control digital audio playback info";
-                }
-                else
-                {
-                    card_desc += "  Subdevice #"
-                               + n2s(idx)
-                               + ": "
-                               + snd_pcm_info_get_subdevice_name(pcminfo)
-                               +"\n";
-
-                }
-
-            }
-
-
-*/
 
 
 
