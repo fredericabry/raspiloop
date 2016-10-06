@@ -60,6 +60,11 @@ void alsa_play(QString device, int channels, int rate, long length, QString file
 
 
 
+
+
+    if (!open_device_play(device)) return;
+
+
     parent_play= pt;
     init_play(channels,rate,length);
     open_file_play(filename);
@@ -73,11 +78,39 @@ void alsa_play(QString device, int channels, int rate, long length, QString file
 
 
 
+bool open_device_play(QString device)
+{
+int err;
+
+    if ((err = snd_pcm_open (&play_handle,device.toStdString().c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+
+        if(err == -EBUSY)
+        {
+
+
+            return false;
+        }
+        else
+        {
+
+
+            fprintf (stderr, "cannot open audio device %s (%s)\n",
+                     device.toStdString().c_str(),
+                     snd_strerror (err));
+
+            exit (1);
+            return false;
+        }
+    }
+
+    return true;
+
+}
+
 
 void init_play(int channels,int rate, long length)
 {
 
-    parent_play->Afficher("début playback\n");
 
     nbr_chan_play = channels;
     rate_play = rate;
@@ -144,25 +177,8 @@ void set_hw_parameters_play(QString device)
     unsigned int rate = rate_record;
 
 
-    if ((err = snd_pcm_open (&play_handle,device.toStdString().c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-
-        if(err == -EBUSY)
-        {
 
 
-
-        }
-        else
-        {
-
-
-        fprintf (stderr, "cannot open audio device %s (%s)\n",
-                 device.toStdString().c_str(),
-                 snd_strerror (err));
-
-        exit (1);
-    }
-EPIPE
 
     if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
         fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
@@ -366,7 +382,7 @@ while(i<1000)
 
 
             stop_play();
-                       break;
+            break;
         }
 
 
@@ -379,21 +395,21 @@ while(i<1000)
 
 void stop_play(void)
 {
-   // parent_play->Afficher("fin playback\n");
+    // parent_play->Afficher("fin playback\n");
 
 
-if(snd_pcm_state(play_handle) == SND_PCM_STATE_XRUN)
-{
-snd_pcm_drain(play_handle);
-snd_pcm_unlink(play_handle);
-snd_pcm_close(play_handle);
+    if(snd_pcm_state(play_handle) == SND_PCM_STATE_XRUN)
+    {
+        snd_pcm_drain(play_handle);
+        snd_pcm_unlink(play_handle);
+        snd_pcm_close(play_handle);
+    }
+
+    //
+    //   qDebug()<<snd_pcm_state(play_handle);
+
 }
 
-  //
-//   qDebug()<<snd_pcm_state(play_handle);
-
-}
-/*
 
 
 

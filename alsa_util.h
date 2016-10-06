@@ -34,7 +34,7 @@ void start_play(void);
 void alsa_play(QString device, int channels, int rate, long length, QString filename, MainWindow *pt);
 void init_play(int channels,int rate, long length);
 void stop_play(void);
-
+bool open_device_play(QString device);
 
 
 
