@@ -108,6 +108,7 @@ void MainWindow::ding()
 
 void MainWindow::topClick()
 {
+
     static int x = 0;
 if(ui->radioClick->isChecked())
 {
@@ -129,7 +130,7 @@ if(ui->radioClick->isChecked())
 void MainWindow::updateTempo(int tempo)
 {
 
-
+return;
 clickTimer->start(1000*60/tempo);
 
 }
@@ -167,13 +168,31 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    clickTimer = new QTimer(this);
+/*    clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-
     clickTimer->start(1000);
    // alsa_record("hw:1,0",2,44100,2000,"test.wav",this);
-
+*/
     connect(ui->tempoBox,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
+
+
+    hw_info data;
+
+    data = get_device_info("hw:1,0");
+
+    Afficher(data.name);
+    Afficher("max playback "+n2s(data.max_playback));
+    Afficher("min playback "+n2s(data.min_playback));
+    Afficher("max capture "+n2s(data.max_capture));
+    Afficher("min capture "+n2s(data.min_capture));
+    Afficher("max rate "+n2s(data.max_rate) + "Hz");
+    Afficher("min rate "+n2s(data.min_rate) + "Hz");
+
+
+
+
+
+
 
 
 }

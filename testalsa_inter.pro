@@ -15,10 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     util.cpp \
-    alsa_util.cpp
+    alsa_util.cpp \
+    alsa_playback.cpp
 
 HEADERS  += mainwindow.h \
-    alsa_util.h
+    alsa_util.h \
+    alsa_playback.h
 
 FORMS    += mainwindow.ui
 

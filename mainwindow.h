@@ -33,6 +33,7 @@ public:
     QTimer *clickTimer;
 
     void Afficher(QString);
+    void AfficherI(int i);
     void br();
     void AfficherListe(QStringList);
     void connectToCard(void);
