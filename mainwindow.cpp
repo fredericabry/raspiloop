@@ -96,7 +96,12 @@ void MainWindow::cardchoicerefresh(void)
 
 
 
+void MainWindow::ding()
+{
 
+   alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
+
+}
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -113,7 +118,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->brefresh,SIGNAL(pressed()),this,SLOT(cardchoicerefresh()));
     connect(ui->bconnect,SIGNAL(pressed()),this,SLOT(chooseCard()));
     connect(ui->bclear,SIGNAL(pressed()),this,SLOT(consoleclear()));
-
+    connect(ui->b_ding,SIGNAL(pressed()),this,SLOT(ding()));
 
 
     Afficher("Démarrage\n");
@@ -127,11 +132,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
    // alsa_record("hw:1,0",2,44100,2000,"test.wav",this);
 
-   alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
+
 
 
 }
-
 
 
 

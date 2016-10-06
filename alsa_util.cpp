@@ -82,7 +82,7 @@ void init_play(int channels,int rate, long length)
     nbr_chan_play = channels;
     rate_play = rate;
 
-    frame_count_play = ((length/10)*(rate/100)*channels); //nbr of frames expected to record "length ms";
+
 
 
 }
@@ -130,9 +130,7 @@ void open_file_play(QString filename)
     available_frame_play = sf_info.frames;
 
 
-    buf_play =  (short*)malloc(available_frame_play*sizeof(short));
 
-    sf_read_short(sf_play,buf_play,available_frame_play);
 
 
 
@@ -147,12 +145,24 @@ void set_hw_parameters_play(QString device)
 
 
     if ((err = snd_pcm_open (&play_handle,device.toStdString().c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+
+        if(err == -EBUSY)
+        {
+
+
+
+        }
+        else
+        {
+
+
         fprintf (stderr, "cannot open audio device %s (%s)\n",
                  device.toStdString().c_str(),
                  snd_strerror (err));
+
         exit (1);
     }
-
+EPIPE
 
     if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
         fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
@@ -201,7 +211,7 @@ void set_hw_parameters_play(QString device)
     snd_pcm_hw_params_set_period_size_near(play_handle, hw_params, &frames_play,0);
 
 
- //   buf_play =  (short*)malloc(bufsize_play*sizeof(short));
+    buf_play =  (short*)malloc(bufsize_play*sizeof(short));
 
 
     if ((err = snd_pcm_hw_params (play_handle, hw_params)) < 0) {
@@ -236,12 +246,14 @@ void set_sw_parameters_play(void)
     }
 
 
-
+    //envoie les données quand il y a plus de *threshold* données dans le buf de la carte
     err = snd_pcm_sw_params_set_start_threshold(play_handle, swparams,  frames_play);
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
         exit(1);
     }
+
+
     err = snd_pcm_sw_params_set_avail_min(play_handle, swparams, frames_play);
     if (err < 0) {
         printf("Unable to set avail min: %s\n", snd_strerror(err));
@@ -258,7 +270,7 @@ void set_sw_parameters_play(void)
 
 void start_play(void)
 {
-    int nwrite,err;
+    int nread,err;
 
 
     if ((err = snd_pcm_prepare (play_handle)) < 0) {
@@ -267,19 +279,38 @@ void start_play(void)
         exit (1);
     }
 
-    if ((nwrite = snd_pcm_writei (play_handle, buf_play, frames_play))<0) {
-        qDebug()<<"play on audio interface failed ";
-        // recover
-        snd_pcm_prepare(play_handle);
-    } else {
-        //if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
-    }
 
 
-    //frame_count_record -= nread*nbr_chan_record;
+
+
+
 
     snd_async_handler_t *pcm_callback;
     snd_async_add_pcm_handler(&pcm_callback,play_handle,async_callback_play,NULL);
+
+
+    for(int i = 0; i < 3 ; i ++)
+    {
+        if((nread = sf_readf_short(sf_play,buf_play,frames_play))>0)
+        {
+
+            if ((err = snd_pcm_writei (play_handle, buf_play, nread))!=nread) {
+                exit(0);
+                qDebug()<<"play on audio interface failed ";
+            }
+            else
+                available_frame_play -= nread;
+
+        }
+    }
+
+
+
+
+
+
+
+
 
 }
 
@@ -288,90 +319,81 @@ void async_callback_play(snd_async_handler_t *ahandler)
 {
 
 
-int nwrite;
-
-snd_pcm_t *play_handle = snd_async_handler_get_pcm(ahandler);
-
-
-qDebug()<<"a\n";
-
-if ((nwrite = snd_pcm_writei (play_handle, buf_play, frames_play))<0) {
-    qDebug()<<"play on audio interface failed ";
-    // recover
-    snd_pcm_prepare(play_handle);
-} else {
-    //if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
-}
-
-    /*
-    snd_pcm_t *capture_handle = snd_async_handler_get_pcm(ahandler);
+    int nread,err;
     snd_pcm_sframes_t avail;
-    int nread;
 
-    avail = snd_pcm_avail_update(capture_handle);
 
-    while(avail >= (snd_pcm_sframes_t)frames_record)
+    snd_pcm_t *play_handle = snd_async_handler_get_pcm(ahandler);
+
+
+
+    avail = snd_pcm_avail_update(play_handle);
+
+    while(avail >= frames_play)
     {
-
-        if(frame_count_record <= 0)
+        if((nread = sf_readf_short(sf_play,buf_play,frames_play))>0)
         {
 
-            stop_record();
-            return;
-
-        }
-        else if(frame_count_record <= (snd_pcm_sframes_t)frames_record)
-        {
-
-            if ((nread = snd_pcm_readi (capture_handle, buf_record, frame_count_record))<0) {
-                qDebug()<<"read from audio interface failed ";
-                snd_pcm_prepare(capture_handle);
-            } else
+            if ((err = snd_pcm_writei (play_handle, buf_play, nread))!=nread) {
+                qDebug()<<"play on audio interface failed ";
+                exit(0);
+            }
+            else
             {
-                if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
-                frame_count_record -= nread*nbr_chan_record;
 
-            }
-
-            stop_record();
-            return;
-
-
-        }
-        else
-        {
-
-            if ((nread = snd_pcm_readi (capture_handle, buf_record, frames_record))<0) {
-                qDebug()<<"read from audio interface failed ";
-
-                // recover
-                snd_pcm_prepare(capture_handle);
-            } else {
-
-
-
-                if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
-                frame_count_record -= nread*nbr_chan_record;
-
-
-
-            }
-            avail = snd_pcm_ava if ((nwrite = snd_pcm_writei (play_handle, buf_play, frames_play))<0) {
+                available_frame_play -= nread;    /*
+  int i = 0;
+while(i<1000)
+    {
+    if ((nwrite = snd_pcm_writei (play_handle, buf_play, frames_play))<0) {
         qDebug()<<"play on audio interface failed ";
         // recover
         snd_pcm_prepare(play_handle);
     } else {
         //if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
-    }il_update(capture_handle);
-
-        }
-
+    }
+    i++;
     }
 */
+            }
+
+            avail = snd_pcm_avail_update(play_handle);
+        }
+
+
+        else
+        {
+
+
+            stop_play();
+                       break;
+        }
+
+
+    }
+
+
+
+
 }
 
+void stop_play(void)
+{
+   // parent_play->Afficher("fin playback\n");
 
 
+if(snd_pcm_state(play_handle) == SND_PCM_STATE_XRUN)
+{
+snd_pcm_drain(play_handle);
+snd_pcm_unlink(play_handle);
+snd_pcm_close(play_handle);
+}
+
+  //
+//   qDebug()<<snd_pcm_state(play_handle);
+
+}
+/*
 
 
 
@@ -509,6 +531,7 @@ void set_hw_parameters_record(QString device)
         fprintf (stderr, "cannot open audio device %s (%s)\n",
                  device.toStdString().c_str(),
                  snd_strerror (err));
+
         exit (1);
     }
 

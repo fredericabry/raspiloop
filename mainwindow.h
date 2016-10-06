@@ -44,6 +44,7 @@ private slots:
     void chooseCard(void);
     void consoleclear(void);
     void link(void);
+    void ding(void);
 };
 
 #endif // MAINWINDOW_H
