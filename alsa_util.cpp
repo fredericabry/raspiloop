@@ -41,6 +41,124 @@ long available_frame_play;
 
 
 
+int ringbuf_push(ringbuf_t *ringbuf,short data)
+{
+    int next = ringbuf->head+1;
+    if(next>= ringbuf->maxlength)
+        next = 0;
+
+    if(next == ringbuf->tail) //buffer is full
+        return -1;
+
+
+    ringbuf->buf[ringbuf->head] = data;//inserting new data
+
+    ringbuf->head = next;
+
+    return 0;
+
+}
+
+int ringbuf_pull(ringbuf_t *ringbuf,short *data)
+{
+
+    if(ringbuf->head == ringbuf->tail) return -1; //buffer is empty
+
+    *data = ringbuf->buf[ringbuf->tail];
+
+    int next = ringbuf->tail + 1;
+
+    if(next >= ringbuf->maxlength) next = 0;
+
+    ringbuf->tail = next;
+
+    return 0;
+
+}
+
+void ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
+{
+    short x;
+    short buf2[1000];
+    for (int j = 0;j<nelements;j++)
+    {
+        if(ringbuf_pull(ringbuf_in,&x) == 0)
+        {
+            buf2[j] = x;
+
+        }
+        else
+            buf2[j]=0;
+
+    }
+
+    memcpy(buf_out,&buf2,nelements*sizeof(short));
+    return;
+
+}
+
+
+
+
+void ringbuf_copyN(ringbuf_t *ringbuf_in,short *buf_out,int N)
+{
+    if(N > ringbuf_in->length) {qDebug()<<"Failed to copy from ringbuf struct"; return;}
+
+
+
+}
+
+
+
+
+void ringbuf_fill(ringbuf_t *ringbuf_in)
+{
+    SF_INFO sf_info;
+    int nread,err;
+    short *buf;
+    sf_info.format = 0;
+    if ((sf_play = sf_open ("ding.wav", SFM_READ, &sf_info)) == NULL) {
+        char errstr[256];
+        sf_error_str (0, errstr, sizeof (errstr) - 1);
+        fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
+
+        exit (1);
+    }
+
+    int short_mask = SF_FORMAT_PCM_16;
+
+    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
+    {
+        parent_play->Afficher("format de fichier incorrect\n");
+        return;
+    }
+    /*
+    if(sf_info.samplerate != rate_play)
+    {
+        parent_play->Afficher("soundfile rate incorrect\n");
+        return;
+    }
+    if(sf_info.channels != nbr_chan_play)
+    {
+        parent_play->Afficher("chan nbr incorrect\n");
+        return;
+    }*/
+
+    buf = (short*)malloc(30000*sizeof(short));
+
+
+    if((nread = sf_readf_short(sf_play,buf,15000))>0)
+    {
+
+        for(int i=0;i<15000;i++) ringbuf_push(ringbuf_in,buf[i]);
+    }
+
+    qDebug()<<nread;
+
+
+}
+
+
 
 
 
@@ -1006,7 +1124,7 @@ struct hw_info get_device_info(QString device_name) {
 
 
     if ((err = snd_pcm_open (&handle, device_name.toStdString().c_str(), stream, 0)) < 0) {
-     /*   fprintf (stderr, "cannot open audio device %s (%s)\n",
+        /*   fprintf (stderr, "cannot open audio device %s (%s)\n",
                  dev_name,
                  snd_strerror (err));*/
         info.max_playback = 0;
@@ -1159,7 +1277,7 @@ capture:
 
 
     if ((err = snd_pcm_open (&handle, device_name.toStdString().c_str(), stream, 0)) < 0) {
-      /*  fprintf (stderr, "cannot open audio device %s (%s)\n",
+        /*  fprintf (stderr, "cannot open audio device %s (%s)\n",
                  dev_name,
                  snd_strerror (err));*/
         info.max_capture = 0;

@@ -35,6 +35,29 @@ struct hw_info
 
 
 
+typedef struct
+{
+    short * const buf;
+    int head;
+    int tail;
+    const int maxlength;
+}ringbuf_t;
+
+
+
+int ringbuf_push(ringbuf_t *ringbuf,short data);
+int ringbuf_pull(ringbuf_t *ringbuf,short *data);
+void ringbuf_copy(ringbuf_t *ringbuf_in, short *buf_out, int nelements);
+void ringbuf_fill(ringbuf_t *ringbuf_in);
+
+
+#define RINGBUF_DEF(bufname,length) short bufname##_data[length]; ringbuf_t bufname = {bufname##_data,0,0,length+1}
+
+
+
+
+
+
 
 void getCardList(snd_pcm_stream_t,QStringList*, QStringList*);
 int getCardListLength(snd_pcm_stream_t);

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "alsa_util.h"
+#include "alsa_playback.h"
 #include <stdbool.h>
 
 
@@ -16,7 +17,7 @@
 
 
 
-
+RINGBUF_DEF(main_buf_playback,20000);
 
 
 
@@ -100,8 +101,8 @@ void MainWindow::cardchoicerefresh(void)
 void MainWindow::ding()
 {
 
-   alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
-
+   //alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
+    ringbuf_fill(&main_buf_playback);
 }
 
 
@@ -190,8 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
+    alsa_start_playback("hw:1,0", 2, 44100,this,&main_buf_playback);
 
 
 
