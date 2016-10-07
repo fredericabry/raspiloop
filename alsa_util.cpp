@@ -44,7 +44,7 @@ long available_frame_play;
 int ringbuf_push(ringbuf_t *ringbuf,short data)
 {
     int next = ringbuf->head+1;
-    if(next>= ringbuf->maxlength)
+    if(next>= ringbuf->maxlength+1)
         next = 0;
 
     if(next == ringbuf->tail) //buffer is full
@@ -68,7 +68,7 @@ int ringbuf_pull(ringbuf_t *ringbuf,short *data)
 
     int next = ringbuf->tail + 1;
 
-    if(next >= ringbuf->maxlength) next = 0;
+    if(next >= ringbuf->maxlength+1) next = 0;
 
     ringbuf->tail = next;
 
@@ -97,12 +97,18 @@ void ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
 
 }
 
+int ringbuf_length(ringbuf_t *ringbuf)
+{
+if(ringbuf->head>=ringbuf->tail) return ringbuf->head-ringbuf->tail;
+else return ringbuf->maxlength-ringbuf->tail + ringbuf->head + 1;
 
+}
 
 
 void ringbuf_copyN(ringbuf_t *ringbuf_in,short *buf_out,int N)
 {
-    if(N > ringbuf_in->length) {qDebug()<<"Failed to copy from ringbuf struct"; return;}
+    if(N > ringbuf_in->maxlength) {qDebug()<<"Failed to copy from ringbuf struct"; return;}
+
 
 
 
