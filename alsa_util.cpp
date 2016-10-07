@@ -99,15 +99,58 @@ void ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
 
 int ringbuf_length(ringbuf_t *ringbuf)
 {
-if(ringbuf->head>=ringbuf->tail) return ringbuf->head-ringbuf->tail;
-else return ringbuf->maxlength-ringbuf->tail + ringbuf->head + 1;
+    if(ringbuf->head>=ringbuf->tail) return ringbuf->head-ringbuf->tail;
+    else return ringbuf->maxlength-ringbuf->tail + ringbuf->head + 1;
+
+}
+
+int ringbuf_freespace(ringbuf_t *ringbuf)
+{
+
+        return ringbuf->maxlength-ringbuf_length(ringbuf);
 
 }
 
 
-void ringbuf_copyN(ringbuf_t *ringbuf_in,short *buf_out,int N)
+void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
 {
-    if(N > ringbuf_in->maxlength) {qDebug()<<"Failed to copy from ringbuf struct"; return;}
+    short *pt ;
+
+
+    if(N > ringbuf_out->maxlength) {qDebug()<<"Failed to copy to ringbuf struct"; return;}
+
+    if(N > ringbuf_freespace(ringbuf_out))  { qDebug()<<"Insuficient free space in ringbuf struct";return;}
+
+    if(ringbuf_out->head >= ringbuf_out->tail)
+    {
+        if(N+ringbuf_out->tail <= ringbuf_out->maxlength)
+        {
+            pt = ringbuf_out->buf+(ringbuf_out->head)/*sizeof(short)*/;
+            memcpy(pt,buf_in,N*sizeof(short));
+            ringbuf_out->head += N;
+        }
+        else
+        {
+
+            //first let us copy the part that fits
+            int first = ringbuf_out->maxlength - ringbuf_out->head; //maxlength + 1 because of the additionnal value in the buffer
+            pt = ringbuf_out->buf+(ringbuf_out->head)/*sizeof(short)*/;
+            memcpy(pt,buf_in,first*sizeof(short));
+            //then what remains
+            int second = N-first;
+            pt = ringbuf_out->buf;
+            memcpy(pt,buf_in+first/*sizeof(short)*/,second*sizeof(short));
+
+
+            ringbuf_out->head = second-1;
+            qDebug()<<first;
+            qDebug()<<second;
+
+        }
+
+    }
+
+
 
 
 
