@@ -6,7 +6,7 @@
 
 #include <QFile>
 #include <QTextStream>
-
+#include <qtimer.h>
 #include <qdebug.h>
 
 
@@ -34,7 +34,7 @@ long available_frame_play;
 #define FORM_FILE SND_PCM_FORMAT_S16_LE
 
 
-
+    QTime *myTimer;
 
 
 
@@ -76,7 +76,7 @@ int ringbuf_pull(ringbuf_t *ringbuf,short *data)
 
 }
 
-void ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
+int ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
 {
     short x;
     short buf2[1000];
@@ -93,7 +93,8 @@ void ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
     }
 
     memcpy(buf_out,&buf2,nelements*sizeof(short));
-    return;
+
+    return nelements;
 
 }
 
@@ -110,7 +111,6 @@ int ringbuf_freespace(ringbuf_t *ringbuf)
         return ringbuf->maxlength-ringbuf_length(ringbuf);
 
 }
-
 
 void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
 {
@@ -133,7 +133,7 @@ void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
         {
 
             //first let us copy the part that fits
-            int first = ringbuf_out->maxlength - ringbuf_out->head; //maxlength + 1 because of the additionnal value in the buffer
+            int first = ringbuf_out->maxlength+1 - ringbuf_out->head; //maxlength + 1 because of the additionnal value in the buffer
             pt = ringbuf_out->buf+(ringbuf_out->head)/*sizeof(short)*/;
             memcpy(pt,buf_in,first*sizeof(short));
             //then what remains
@@ -142,11 +142,18 @@ void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
             memcpy(pt,buf_in+first/*sizeof(short)*/,second*sizeof(short));
 
 
-            ringbuf_out->head = second-1;
-            qDebug()<<first;
-            qDebug()<<second;
+            ringbuf_out->head = second;
+
 
         }
+
+    }
+    else
+    {
+
+    pt = ringbuf_out->buf+(ringbuf_out->head)/*sizeof(short)*/;
+    memcpy(pt,buf_in,N*sizeof(short));
+    ringbuf_out->head += N;
 
     }
 
@@ -157,8 +164,57 @@ void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
 
 }
 
+int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N)
+{
 
 
+    short *pt ;
+
+
+    if(N > ringbuf_length(ringbuf_in)) {/*qDebug()<<"not enough elements"; */N = ringbuf_length(ringbuf_in);}
+
+
+    if((ringbuf_in->head < ringbuf_in->tail)&&(ringbuf_in->tail+N>ringbuf_in->maxlength))
+    {
+
+        //first let us copy the part that fits
+        int first = ringbuf_in->maxlength+1 - ringbuf_in->tail; //maxlength + 1 because of the additionnal value in the buffer
+        pt = ringbuf_in->buf+(ringbuf_in->tail)/*sizeof(short)*/;
+        memcpy(buf_out,pt,first*sizeof(short));
+
+
+
+        //then what remains
+        int second = N-first;
+        pt = ringbuf_in->buf;
+
+        memcpy(buf_out+first/*sizeof(short)*/,pt,second*sizeof(short));
+
+
+        ringbuf_in->tail = second;
+
+
+
+
+
+        return N;
+
+    }
+    else
+        {
+            pt = ringbuf_in->buf+(ringbuf_in->tail)/*sizeof(short)*/;
+            memcpy(buf_out,pt,N*sizeof(short));
+            ringbuf_in->tail += N;
+            return N;
+
+        }
+
+
+
+
+
+
+}
 
 void ringbuf_fill(ringbuf_t *ringbuf_in)
 {
@@ -196,13 +252,26 @@ void ringbuf_fill(ringbuf_t *ringbuf_in)
     buf = (short*)malloc(30000*sizeof(short));
 
 
+
+
+
     if((nread = sf_readf_short(sf_play,buf,15000))>0)
     {
 
-        for(int i=0;i<15000;i++) ringbuf_push(ringbuf_in,buf[i]);
+        //for(int i=0;i<15000;i++) ringbuf_push(ringbuf_in,bringbuf_filluf[i]);
+
+            ringbuf_pushN(ringbuf_in,buf,nread);
+
     }
 
-    qDebug()<<nread;
+
+
+
+
+
+
+
+
 
 
 }

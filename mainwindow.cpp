@@ -10,6 +10,7 @@
 
 #include <qdebug.h>
 #include <qtimer.h>
+#include <qelapsedtimer.h>
 
 
 
@@ -192,63 +193,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 */
 
-    short *dt;
-    dt = (short*)malloc(5*sizeof(short));
-    dt[0] = 2;
-    dt[1] = 4000;
-    dt[2] = 6;
-    dt[3] = 8000;
-    dt[4] = 10;
-
-    RINGBUF_DEF(buf,5);
-    buf.head = 4;
-    buf.tail = 3;
-
-    AfficherI(ringbuf_freespace(&buf));
-
-    ringbuf_pushN(&buf, dt , 4);
-
-
-    AfficherI(buf.head);
-    AfficherI(buf.tail);
-br();
-
-
-    //ringbuf_push(&buf,dt[1]);
-    short x;
-    for(int i = 0;i<6;i++)
-    {
-                AfficherI(buf.buf[i]);
-    }
-br();
-    for(int i = 0;i<5;i++)
-    {
-          if(ringbuf_pull(&buf,&x) != -1)
-           AfficherI(x);
-           else
-               Afficher("no data");
-
-    }
-    br();
-    AfficherI(buf.head);
-    AfficherI(buf.tail);
-
-return;
-
-    AfficherI(buf.head);
-
-
-
-    AfficherI(ringbuf_length(&buf));
 
 
 
 
 
 
-    //alsa_start_playback("hw:1,0", 2, 44100,this,&main_buf_playback);
 
+    alsa_start_playback("hw:1,0", 2, 44100,this,&main_buf_playback);
 
+    ding();
 
 }
 

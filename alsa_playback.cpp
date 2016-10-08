@@ -25,6 +25,8 @@ MainWindow *parent;
 snd_pcm_t *playback_handle;
 snd_pcm_uframes_t playback_frames,playback_bufsize,playback_period_size;
 short *playback_buf;
+short *empty_buf;
+
 int playback_rate;
 int playback_channels;
 
@@ -98,6 +100,9 @@ void alsa_init_playback(int channels,int rate)
     playback_bufsize = FRAME_PER_BUFFER*playback_frames;
 
 
+    empty_buf = (short*)malloc(playback_period_size*sizeof(short));
+    for(int i = 0; i<playback_period_size;i++) empty_buf[i] = 0;
+
 
 }
 
@@ -152,7 +157,7 @@ void alsa_set_hw_parameters_playback(void)
 
 
 
-   // qDebug()<<snd_pcm_hw_params_set_period_size_near(playback_handle, hw_params, &playback_period_size,0);
+     snd_pcm_hw_params_set_period_size_near(playback_handle, hw_params, &playback_period_size,0);
 
 
     playback_buf =  (short*)malloc(playback_bufsize*sizeof(short));
@@ -205,14 +210,39 @@ void alsa_set_sw_parameters_playback(void)
 
 }
 
+void alsa_write_playback(ringbuf_t *ringbuf)
+{
+    static int a;
+    int nread,err;
+    nread = ringbuf_pullN(ringbuf,playback_buf,playback_frames*playback_channels)/playback_channels;
+
+    if(nread > 0)
+    {
+       // qDebug()<<nread;
+        if ((err = snd_pcm_writei (playback_handle, playback_buf,nread))!=nread) {
+
+            qDebug()<<"play on audio interface failed ";
+            exit(0);
+        }
+    }
+    else //fill in with 0 waiting for some sound to stream
+    {
+        if ((err = snd_pcm_writei (playback_handle, empty_buf,playback_frames))!=playback_frames) {
+
+            qDebug()<<"play on audio interface failed ";
+            exit(0);
+        }
+
+    }
+}
+
 void alsa_async_callback_playback(snd_async_handler_t *ahandler)
 {
 
-    int nread,err;
+    int err;
     snd_pcm_uframes_t avail;
 
     snd_pcm_t *playback_handle = snd_async_handler_get_pcm(ahandler);
-
 
 
     avail = snd_pcm_avail_update(playback_handle);
@@ -221,34 +251,20 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
     {
 
 
-        ringbuf_copy(ringbuf2,playback_buf,playback_frames*playback_channels);
+        alsa_write_playback(ringbuf2);
 
-        if ((err = snd_pcm_writei (playback_handle, playback_buf,playback_frames))!=playback_frames) {
-
-            qDebug()<<"play on audio interface failed ";
-            exit(0);
-        }
-        else
-        {
-
-        }
-
-
-    avail = snd_pcm_avail_update(playback_handle);
-
-
-
+        avail = snd_pcm_avail_update(playback_handle);
 
     }
 
-//qDebug()<<"a";
+    //qDebug()<<"a";
 
 }
 
 void alsa_begin_playback(ringbuf_t *ringbuf)
 {
 
-    int nread,err;
+    int err;
 
 
     if ((err = snd_pcm_prepare (playback_handle)) < 0) {
@@ -266,21 +282,10 @@ void alsa_begin_playback(ringbuf_t *ringbuf)
 
     for(int i = 0; i < 3 ; i ++)
     {
-      //  if((nread = sf_readf_short(sf_play,buf_play,frames_play))>0)
-       // {
-            ringbuf_copy(ringbuf,playback_buf,playback_frames*playback_channels);
 
-            if ((err = snd_pcm_writei (playback_handle, playback_buf,playback_frames))!=playback_frames) {
+        alsa_write_playback(ringbuf);
 
-                qDebug()<<"play on audio interface failed ";
-                exit(0);
-            }
-            else
-            {
 
-            }
-
-      //  }
     }
 
 }
