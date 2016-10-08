@@ -18,5 +18,6 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler, ringbuf_t *ring
 void alsa_begin_playback(ringbuf_t *ringbuf);
 void alsa_write_playback(ringbuf_t *ringbuf);
 bool alsa_open_device_playback(QString device);
+void alsa_conf(void);
 
 #endif // ALSA_PLAYBACK_H

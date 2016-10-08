@@ -18,7 +18,7 @@
 
 
 
-RINGBUF_DEF(main_buf_playback,20000);
+RINGBUF_DEF(main_buf_playback,500000);
 
 
 
@@ -182,7 +182,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     data = get_device_info("hw:1,0");
 
-  /*
+
     Afficher(data.name);
     Afficher("max playback "+n2s(data.max_playback));
     Afficher("min playback "+n2s(data.min_playback));
@@ -190,8 +190,8 @@ MainWindow::MainWindow(QWidget *parent) :
     Afficher("min capture "+n2s(data.min_capture));
     Afficher("max rate "+n2s(data.max_rate) + "Hz");
     Afficher("min rate "+n2s(data.min_rate) + "Hz");
-
-*/
+    Afficher("max buffer" + n2s(data.max_buffer_size));
+    Afficher("min buffer" + n2s(data.min_buffer_size));
 
 
 
@@ -203,6 +203,8 @@ MainWindow::MainWindow(QWidget *parent) :
     alsa_start_playback("hw:1,0", 2, 44100,this,&main_buf_playback);
 
     ding();
+
+alsa_conf();
 
 }
 

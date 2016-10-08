@@ -24,6 +24,7 @@
 MainWindow *parent;
 snd_pcm_t *playback_handle;
 snd_pcm_uframes_t playback_frames,playback_bufsize,playback_period_size;
+snd_pcm_uframes_t hw_buffersize;
 short *playback_buf;
 short *empty_buf;
 
@@ -33,7 +34,6 @@ int playback_channels;
 
 
 ringbuf_t *ringbuf2;
-
 
 
 
@@ -113,6 +113,9 @@ void alsa_set_hw_parameters_playback(void)
     snd_pcm_hw_params_t *hw_params;
     unsigned int rate = playback_rate;
 
+
+      hw_buffersize = 2*playback_channels*CHANNEL_WIDTH;
+
     if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
         fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
                  snd_strerror (err));
@@ -153,6 +156,10 @@ void alsa_set_hw_parameters_playback(void)
         exit (1);
     }
 
+
+
+
+    snd_pcm_hw_params_set_buffer_size_near 	( 	playback_handle,hw_params,&hw_buffersize);
 
 
 
@@ -236,10 +243,12 @@ void alsa_write_playback(ringbuf_t *ringbuf)
     }
 }
 
+
+
 void alsa_async_callback_playback(snd_async_handler_t *ahandler)
 {
 
-    int err;
+    int err,nread;
     snd_pcm_uframes_t avail;
 
     snd_pcm_t *playback_handle = snd_async_handler_get_pcm(ahandler);
@@ -251,7 +260,7 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
     {
 
 
-        alsa_write_playback(ringbuf2);
+          alsa_write_playback(ringbuf2);
 
         avail = snd_pcm_avail_update(playback_handle);
 
@@ -287,5 +296,18 @@ void alsa_begin_playback(ringbuf_t *ringbuf)
 
 
     }
+
+}
+
+
+void alsa_conf(void)
+{
+    snd_pcm_uframes_t  	buffer_size;
+
+    snd_pcm_uframes_t period_size;
+    snd_pcm_get_params 	( 	playback_handle,       &buffer_size, 	&period_size );
+
+    qDebug()<<buffer_size;
+    qDebug()<<period_size;
 
 }
