@@ -5,12 +5,16 @@
 class ringbuf_c
 {
 public:
-    ringbuf_c(const int maxlength);
+    ringbuf_c(const int maxlength,const int bufsize);
     ~ringbuf_c();
-    short *buf;
+    short *ringbuf;//big buffer for circular storage
+    short *buf;//small buffer for transfert
+
+
     int head;
     int tail;
     int const maxlength;
+    int const bufsize;
 
 
     int push(short data);
@@ -20,7 +24,7 @@ public:
     int length();
     int freespace();
     void pushN(short *buf_in, int N);
-    int pullN(short *buf_out,int N,short *buf0);
+    int pullN(int N,short *buf0);
 
 };
 

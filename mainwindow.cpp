@@ -68,9 +68,19 @@ void MainWindow::topClick()
             x=1;
 
 
-   //     if(x==1) alsa_play("hw:1,0",2,44100,"ding.wav",this);
-    //    else alsa_play("hw:1,0",2,44100,"ding2.wav",this);
+        if((x==1) || (x == 3))
+        {
+alsa_load_file(0);
 
+
+        }
+
+        else
+
+        {
+alsa_load_file(1);
+
+        }
 
 
     }
@@ -81,7 +91,6 @@ void MainWindow::topClick()
 void MainWindow::updateTempo(int tempo)
 {
 
-    return;
     clickTimer->start(1000*60/tempo);
 
 }
@@ -119,11 +128,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    /*    clickTimer = new QTimer(this);
-    connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-    clickTimer->start(1000);
-   // alsa_record("hw:1,0",2,44100,2000,"test.wav",this);
-*/
+
+
+
     connect(ui->tempoBox,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
 
 
@@ -131,7 +138,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     data = get_device_info("hw:1,0");
 
-    /*
+
     Afficher(data.name);
     Afficher("max playback "+n2s(data.max_playback));
     Afficher("min playback "+n2s(data.min_playback));
@@ -142,13 +149,8 @@ MainWindow::MainWindow(QWidget *parent) :
     Afficher("max buffer" + n2s(data.max_buffer_size));
     Afficher("min buffer" + n2s(data.min_buffer_size));
 
-*/
 
 
-
-
-
-    //ringbuf_c *a = new ringbuf_c(10);
 
 
 
@@ -160,9 +162,12 @@ MainWindow::MainWindow(QWidget *parent) :
     alsa_start_playback("hw:1,0", 2, 44100,this);
 
 
-    ding();
 
-    //alsa_conf();
+
+    clickTimer = new QTimer(this);
+  connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
+  clickTimer->start(1000);
+
 
 }
 

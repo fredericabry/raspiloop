@@ -30,15 +30,12 @@ short *empty_buf;
 
 int playback_rate;
 int playback_channels;
-//short *playback_buf;
-short *buf1,*buf2;
+
 
 
 SNDFILE *sf_play;
 
-ringbuf_t** main_buf_playback;
-RINGBUF_DEF(left_buf_playback,500000);
-RINGBUF_DEF(right_buf_playback,500000);
+ringbuf_c** main_buf_playback;
 
 
 
@@ -51,7 +48,8 @@ void alsa_start_playback(QString device, int channels, int rate, MainWindow *pt)
 
     parent= pt;
     alsa_init_playback(channels,rate);
-    //open_file_play(filename);
+
+
     alsa_set_hw_parameters_playback();
     alsa_set_sw_parameters_playback();
     alsa_begin_playback(main_buf_playback);
@@ -104,16 +102,14 @@ void alsa_init_playback(int channels,int rate)
     for(int i = 0; i<(int)playback_period_size;i++) empty_buf[i] = 0;
 
 
-    //playback_buf = (short*)malloc(sizeof(short)*playback_frames*2);
-    buf1 = (short*)malloc(sizeof(short)*playback_frames*2);
-    buf2 = (short*)malloc(sizeof(short)*playback_frames*2);
 
+    main_buf_playback = (ringbuf_c**)malloc(channels*sizeof(ringbuf_c));
 
+    for(int i =0;i<channels;i++)
+    {
+        main_buf_playback[i] = new ringbuf_c(500000,playback_frames*2);
 
-    main_buf_playback = (ringbuf_t**)malloc(channels*sizeof(ringbuf_t*));
-    main_buf_playback[0] = &left_buf_playback;
-    main_buf_playback[1] = &right_buf_playback;
-
+    }
 
 
 
@@ -230,17 +226,16 @@ void alsa_set_sw_parameters_playback(void)
 
 }
 
-void alsa_write_playback(ringbuf_t **ringbuf)
+void alsa_write_playback(ringbuf_c **ringbuf)
 {
     int err;
     short *playback_buf[2];
 
-    ringbuf_pullN(ringbuf[0],buf1,playback_frames,empty_buf);
-    ringbuf_pullN(ringbuf[1],buf2,playback_frames,empty_buf);
-
-    playback_buf[0] = buf1;
-    playback_buf[1] = buf2;
-
+    for(int i = 0;i<playback_channels;i++)
+    {
+    ringbuf[i]->pullN(playback_frames,empty_buf);
+    playback_buf[i] = ringbuf[i]->buf;
+    }
         if ((err = snd_pcm_writen (playback_handle, (void**)playback_buf,playback_frames))!=(snd_pcm_sframes_t)playback_frames) {
 
             qDebug()<<"play on audio interface failed ";
@@ -256,7 +251,7 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
     snd_pcm_uframes_t avail;
 
     snd_pcm_t *playback_handle = snd_async_handler_get_pcm(ahandler);
-    ringbuf_t **ringbuf = (ringbuf_t**)snd_async_handler_get_callback_private(ahandler);
+    ringbuf_c **ringbuf = (ringbuf_c**)snd_async_handler_get_callback_private(ahandler);
 
     avail = snd_pcm_avail_update(playback_handle);
 
@@ -270,7 +265,7 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
 
 }
 
-void alsa_begin_playback(ringbuf_t **ringbuf)
+void alsa_begin_playback(ringbuf_c **ringbuf)
 {
 
     int err;
@@ -350,7 +345,8 @@ void alsa_load_file(int channel)
     if((nread = sf_readf_short(sf_play,buf,15000))>0)
     {
 
-        ringbuf_pushN(main_buf_playback[channel],buf,nread);
+        //ringbuf_pushN(main_buf_playback[channel],buf,nread);
+        main_buf_playback[channel]->pushN(buf,nread);
 
     }
 
