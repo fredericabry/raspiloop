@@ -20,6 +20,6 @@ void alsa_write_playback(ringbuf_c **ringbuf);
 bool alsa_open_device_playback(QString device);
 void alsa_conf(void);
 void alsa_load_file(int channel);
-
+void alsa_start_file(QString filename, int channel);
 
 #endif // ALSA_PLAYBACK_H

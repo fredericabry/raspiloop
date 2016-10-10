@@ -3,7 +3,7 @@
 #include "alsa_util.h"
 #include "alsa_playback.h"
 #include <stdbool.h>
-
+#include <sndfile.h>
 #include "ringbuf_c.h"
 
 #include <QFile>
@@ -12,7 +12,7 @@
 #include <qdebug.h>
 
 
-ringbuf_c::ringbuf_c(const int maxlength,const int bufsize):maxlength(maxlength),bufsize(bufsize)
+ringbuf_c::ringbuf_c(const int maxlength, const int bufsize, const int trigger):maxlength(maxlength),bufsize(bufsize),trigger(trigger)
 {
 
     this->tail = 0;
@@ -20,13 +20,17 @@ ringbuf_c::ringbuf_c(const int maxlength,const int bufsize):maxlength(maxlength)
 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
+    buffile = (short*)malloc(10000*sizeof(short));
+
+    soundfile = NULL;
 }
 
 ringbuf_c::~ringbuf_c()
 {
 
-free(ringbuf);
-free(buf);
+    free(ringbuf);
+    free(buf);
+    free(buffile);
 }
 
 int ringbuf_c::push(short data)
@@ -50,8 +54,11 @@ int ringbuf_c::push(short data)
 int ringbuf_c::pull(short *data)
 {
 
-    if(this->head == this->tail) return -1; //buffer is empty
-
+    if(this->head == this->tail)
+    {
+        triggerempty();
+        return -1; //buffer is empty
+    }
     *data = this->ringbuf[this->tail];
 
     int next = this->tail + 1;
@@ -60,6 +67,8 @@ int ringbuf_c::pull(short *data)
 
     this->tail = next;
 
+    if(this->length()<trigger)
+        triggerempty();
     return 0;
 
 }
@@ -74,7 +83,7 @@ int ringbuf_c::length()
 int ringbuf_c::freespace()
 {
 
-        return this->maxlength-this->length();
+    return this->maxlength-this->length();
 
 }
 
@@ -83,9 +92,11 @@ void ringbuf_c::pushN(short *buf_in, int N)
     short *pt ;
 
 
-    if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct"; return;}
 
-    if(N > this->freespace())  { qDebug()<<"Insuficient free space in ringbuf struct";return;}
+
+    if(N > this->freespace())  {/* qDebug()<<"Insuficient free space in ringbuf struct";*/return;}
+
+    if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct"; return;}
 
     if(this->head >= this->tail)
     {
@@ -112,10 +123,12 @@ void ringbuf_c::pushN(short *buf_in, int N)
     }
     else
     {
-    pt = this->ringbuf+(this->head)/*sizeof(short)*/;
-    memcpy(pt,buf_in,N*sizeof(short));
-    this->head += N;
+        pt = this->ringbuf+(this->head)/*sizeof(short)*/;
+        memcpy(pt,buf_in,N*sizeof(short));
+        this->head += N;
     }
+
+
 }
 
 int ringbuf_c::pullN(int N,short *buf0)
@@ -151,12 +164,12 @@ int ringbuf_c::pullN(int N,short *buf0)
 
     }
     else
-        {
-            pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
-            memcpy(this->buf,pt,N*sizeof(short));
-            this->tail += N;
+    {
+        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        memcpy(this->buf,pt,N*sizeof(short));
+        this->tail += N;
 
-        }
+    }
 
 
 
@@ -167,9 +180,50 @@ int ringbuf_c::pullN(int N,short *buf0)
 
     }
 
+    if(this->length()<trigger)
+    {
+        triggerempty();
+
+    }
 
     return N+N0;
 }
 
 
+void ringbuf_c::triggerempty(void)
+{
+  //qDebug()<<"vide";
+    soundupd();
 
+
+}
+
+
+void ringbuf_c::soundupd()
+{
+    int nread;
+
+
+
+    if(!soundfile) {return; }
+
+
+    if((nread = sf_readf_short(soundfile,buffile,10000))>0)
+    {
+
+
+       this->pushN(buffile,nread);
+
+    }
+
+    if(nread == 0)
+    {
+        sf_close(soundfile);
+        this->soundfile = NULL;
+
+
+
+    }
+
+
+}

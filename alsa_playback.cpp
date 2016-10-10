@@ -107,7 +107,7 @@ void alsa_init_playback(int channels,int rate)
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new ringbuf_c(500000,playback_frames*2);
+        main_buf_playback[i] = new ringbuf_c(100000,playback_frames*2,10000);
 
     }
 
@@ -206,7 +206,7 @@ void alsa_set_sw_parameters_playback(void)
     }
 
     //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-    err = snd_pcm_sw_params_set_start_threshold(playback_handle, swparams,  playback_frames);
+    err = snd_pcm_sw_params_set_start_threshold(playback_handle, swparams,  2*playback_frames);
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
         exit(1);
@@ -233,14 +233,26 @@ void alsa_write_playback(ringbuf_c **ringbuf)
 
     for(int i = 0;i<playback_channels;i++)
     {
-    ringbuf[i]->pullN(playback_frames,empty_buf);
-    playback_buf[i] = ringbuf[i]->buf;
+        ringbuf[i]->pullN(playback_frames,empty_buf);
+        playback_buf[i] = ringbuf[i]->buf;
     }
-        if ((err = snd_pcm_writen (playback_handle, (void**)playback_buf,playback_frames))!=(snd_pcm_sframes_t)playback_frames) {
+    if ((err = snd_pcm_writen (playback_handle, (void**)playback_buf,playback_frames))!=(snd_pcm_sframes_t)playback_frames) {
+        if(err == -EPIPE)
+        {
 
+            qDebug()<<"underrun";
+            if ((err = snd_pcm_prepare (playback_handle)) < 0) {
+                qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
+                exit (1);
+            }
+        }
+        else
+        {
             qDebug()<<"play on audio interface failed ";
+            qDebug()<<err;
             exit(0);
         }
+    }
 
 }
 
@@ -308,12 +320,19 @@ void alsa_load_file(int channel)
     int nread;
     short *buf;
     sf_info.format = 0;
+    int fail_count = 0;
+
+start:
     if ((sf_play = sf_open ("ding2.wav", SFM_READ, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
 
-        exit (1);
+        //system failed to open the file for some reason, let's give two other chances.
+        if(fail_count > 2) {qDebug()<<"file opening failure";return;}
+        else {fail_count++;goto start;}
+
+                   //exit (1);
     }
 
     int short_mask = SF_FORMAT_PCM_16;
@@ -336,7 +355,7 @@ void alsa_load_file(int channel)
         return;
     }
 
-    buf = (short*)malloc(30000*sizeof(short));
+    buf = (short*)malloc(15000*sizeof(short));
 
 
 
@@ -349,6 +368,53 @@ void alsa_load_file(int channel)
         main_buf_playback[channel]->pushN(buf,nread);
 
     }
+
+        sf_close(sf_play);
+
+}
+
+void alsa_start_file(QString filename, int channel)
+{
+
+    int nread;
+    SF_INFO sf_info;
+
+    ringbuf_c *pRingBuf = main_buf_playback[channel];
+
+    if ((pRingBuf->soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
+        char errstr[256];
+        sf_error_str (0, errstr, sizeof (errstr) - 1);
+        fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
+
+      return;
+    }
+
+    int short_mask = SF_FORMAT_PCM_16;
+
+    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
+    {
+        qDebug()<<"format de fichier incorrect\n";
+        return;
+    }
+    /*
+    if(sf_info.samplerate != rate_play)
+    {
+        parent_play->Afficher("soundfile rate incorrect\n");
+        return;
+    }
+    */
+    if(sf_info.channels != 1)
+    {
+        qDebug()<<"chan nbr incorrect\n";
+        pRingBuf->soundfile = NULL;
+        return;
+    }
+
+
+
+
+    pRingBuf->soundupd();
+
 
 
 }

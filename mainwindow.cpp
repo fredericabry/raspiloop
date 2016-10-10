@@ -70,7 +70,7 @@ void MainWindow::topClick()
 
         if((x==1) || (x == 3))
         {
-alsa_load_file(0);
+alsa_load_file(1);
 
 
         }
@@ -96,6 +96,12 @@ void MainWindow::updateTempo(int tempo)
 }
 
 
+void MainWindow::click_change(bool val)
+{
+  // AfficherI(val);
+
+}
+
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -114,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bclear,SIGNAL(pressed()),this,SLOT(consoleclear()));
     connect(ui->b_ding,SIGNAL(pressed()),this,SLOT(ding()));
 
-
+    connect(ui->radioClick,SIGNAL(clicked(bool)),this,SLOT(click_change(bool)));
 
     Afficher("Démarrage\n");
 
@@ -166,7 +172,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     clickTimer = new QTimer(this);
   connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-  clickTimer->start(1000);
+  clickTimer->start(500);
+
+
+ alsa_start_file("grosse tec.wav",0);
 
 
 }
