@@ -21,7 +21,6 @@ int rate_record;
 long frame_count_record;
 
 
-SNDFILE *sf_play;
 MainWindow *parent_play;
 snd_pcm_t *play_handle;
 snd_pcm_uframes_t frames_play,bufsize_play;
@@ -76,28 +75,6 @@ int ringbuf_pull(ringbuf_t *ringbuf,short *data)
 
 }
 
-int ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements)
-{
-    short x;
-    short buf2[1000];
-    for (int j = 0;j<nelements;j++)
-    {
-        if(ringbuf_pull(ringbuf_in,&x) == 0)
-        {
-            buf2[j] = x;
-
-        }
-        else
-            buf2[j]=0;
-
-    }
-
-    memcpy(buf_out,&buf2,nelements*sizeof(short));
-
-    return nelements;
-
-}
-
 int ringbuf_length(ringbuf_t *ringbuf)
 {
     if(ringbuf->head>=ringbuf->tail) return ringbuf->head-ringbuf->tail;
@@ -131,7 +108,6 @@ void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
         }
         else
         {
-
             //first let us copy the part that fits
             int first = ringbuf_out->maxlength+1 - ringbuf_out->head; //maxlength + 1 because of the additionnal value in the buffer
             pt = ringbuf_out->buf+(ringbuf_out->head)/*sizeof(short)*/;
@@ -141,48 +117,35 @@ void ringbuf_pushN(ringbuf_t *ringbuf_out,short *buf_in, int N)
             pt = ringbuf_out->buf;
             memcpy(pt,buf_in+first/*sizeof(short)*/,second*sizeof(short));
 
-
             ringbuf_out->head = second;
 
-
         }
-
     }
     else
     {
-
     pt = ringbuf_out->buf+(ringbuf_out->head)/*sizeof(short)*/;
     memcpy(pt,buf_in,N*sizeof(short));
     ringbuf_out->head += N;
-
     }
-
-
-
-
-
-
 }
 
-int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N)
+int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N,short *buf0)
 {
 
-
     short *pt ;
-
-
-    if(N > ringbuf_length(ringbuf_in)) {/*qDebug()<<"not enough elements"; */N = ringbuf_length(ringbuf_in);}
-
+    int N0=0;
+    if(N > ringbuf_length(ringbuf_in)) {
+        /*qDebug()<<"not enough elements"; */
+        N0 = N - ringbuf_length(ringbuf_in);
+        N = ringbuf_length(ringbuf_in);
+    }
 
     if((ringbuf_in->head < ringbuf_in->tail)&&(ringbuf_in->tail+N>ringbuf_in->maxlength))
     {
-
         //first let us copy the part that fits
         int first = ringbuf_in->maxlength+1 - ringbuf_in->tail; //maxlength + 1 because of the additionnal value in the buffer
         pt = ringbuf_in->buf+(ringbuf_in->tail)/*sizeof(short)*/;
         memcpy(buf_out,pt,first*sizeof(short));
-
-
 
         //then what remains
         int second = N-first;
@@ -190,14 +153,12 @@ int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N)
 
         memcpy(buf_out+first/*sizeof(short)*/,pt,second*sizeof(short));
 
-
         ringbuf_in->tail = second;
 
 
 
 
 
-        return N;
 
     }
     else
@@ -205,64 +166,22 @@ int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N)
             pt = ringbuf_in->buf+(ringbuf_in->tail)/*sizeof(short)*/;
             memcpy(buf_out,pt,N*sizeof(short));
             ringbuf_in->tail += N;
-            return N;
 
         }
 
 
 
+    if(N0>0)
+    {
+        //not enough elements in the ringbuffer, lets fill in with elements from buf0
+        memcpy(buf_out+N/*sizeof(short)*/,buf0,N0*sizeof(short));
+
+    }
 
 
-
+    return N+N0;
 }
 
-void ringbuf_fill(ringbuf_t *ringbuf_in)
-{
-    SF_INFO sf_info;
-    int nread,err;
-    short *buf;
-    sf_info.format = 0;
-    if ((sf_play = sf_open ("ding.wav", SFM_READ, &sf_info)) == NULL) {
-        char errstr[256];
-        sf_error_str (0, errstr, sizeof (errstr) - 1);
-        fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
-
-        exit (1);
-    }
-
-    int short_mask = SF_FORMAT_PCM_16;
-
-    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
-    {
-        parent_play->Afficher("format de fichier incorrect\n");
-        return;
-    }
-    /*
-    if(sf_info.samplerate != rate_play)
-    {
-        parent_play->Afficher("soundfile rate incorrect\n");
-        return;
-    }
-    if(sf_info.channels != nbr_chan_play)
-    {
-        parent_play->Afficher("chan nbr incorrect\n");
-        return;
-    }*/
-
-    buf = (short*)malloc(30000*sizeof(short));
-
-
-
-
-
-    if((nread = sf_readf_short(sf_play,buf,15000))>0)
-    {
-
-        //for(int i=0;i<15000;i++) ringbuf_push(ringbuf_in,bringbuf_filluf[i]);
-
-            ringbuf_pushN(ringbuf_in,buf,nread);
-
-    }
 
 
 
@@ -274,7 +193,19 @@ void ringbuf_fill(ringbuf_t *ringbuf_in)
 
 
 
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -290,19 +221,13 @@ Playback functions
 *************************
 ************************* */
 
-
-void alsa_play(QString device, int channels, int rate, long length, QString filename,MainWindow *pt)
+/*
+void alsa_play(QString device, int channels, int rate, QString filename,MainWindow *pt)
 {
-
-
-
-
-
     if (!open_device_play(device)) return;
 
-
     parent_play= pt;
-    init_play(channels,rate,length);
+    init_play(channels,rate);
     open_file_play(filename);
     set_hw_parameters_play();
     set_sw_parameters_play();
@@ -344,7 +269,7 @@ bool open_device_play(QString device)
 }
 
 
-void init_play(int channels,int rate, long length)
+void init_play(int channels,int rate)
 {
 
 
@@ -400,10 +325,10 @@ void open_file_play(QString filename)
 
 
 
-
-
-
 }
+
+
+
 
 void set_hw_parameters_play(void)
 {
@@ -532,11 +457,6 @@ void start_play(void)
     }
 
 
-
-
-
-
-
     snd_async_handler_t *pcm_callback;
     snd_async_add_pcm_handler(&pcm_callback,play_handle,async_callback_play,NULL);
 
@@ -593,20 +513,7 @@ void async_callback_play(snd_async_handler_t *ahandler)
             else
             {
 
-                available_frame_play -= nread;    /*
-  int i = 0;
-while(i<1000)
-    {
-    if ((nwrite = snd_pcm_writei (play_handle, buf_play, frames_play))<0) {
-        qDebug()<<"play on audio interface failed ";
-        // recover
-        snd_pcm_prepare(play_handle);
-    } else {
-        //if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
-    }
-    i++;
-    }
-*/
+                available_frame_play -= nread;
             }
 
             avail = snd_pcm_avail_update(play_handle);
@@ -647,7 +554,7 @@ void stop_play(void)
 }
 
 
-
+*/
 
 /*
  ************************

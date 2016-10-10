@@ -16,11 +16,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     util.cpp \
     alsa_util.cpp \
-    alsa_playback.cpp
+    alsa_playback.cpp \
+    ringbuf_c.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
-    alsa_playback.h
+    alsa_playback.h \
+    ringbuf_c.h
 
 FORMS    += mainwindow.ui
 

@@ -12,39 +12,15 @@
 #include <qtimer.h>
 #include <qelapsedtimer.h>
 
+#include "ringbuf_c.h"
 
 
 
 
 
 
-RINGBUF_DEF(main_buf_playback,500000);
 
 
-
-
-QStringList getCardDescription(void)
-{
-
-    QStringList liste;
-    return liste;
-}
-
-
-
-
-
-
-void MainWindow::connectToCard(void)
-{
-}
-
-
-
-
-void MainWindow::link()
-{
-}
 
 
 
@@ -57,33 +33,10 @@ void MainWindow::chooseCard(void)
     int numin = ui->cardchoice_input->currentIndex();
     InputCardName = InputCardNames.at(numin);
     OutputCardName = OutputCardNames.at(numout);
-
-
-
-    /*Afficher("-------------\nPlayback : "+OutputCardLongNames.at(numout)+"\n");
-Afficher(info(OutputCardName, SND_PCM_STREAM_PLAYBACK) );
-Afficher("Capture : "+InputCardLongNames.at(numin)+"\n");
-Afficher(info(InputCardName, SND_PCM_STREAM_CAPTURE) );
-*/
-
-
-
-    return;
-
-
-    //Afficher(param);
-
 }
-
-
-
-
-
-
 
 void MainWindow::cardchoicerefresh(void)
 {
-
     getCardList(SND_PCM_STREAM_PLAYBACK,&OutputCardNames,&OutputCardLongNames);
     getCardList(SND_PCM_STREAM_CAPTURE,&InputCardNames,&InputCardLongNames);
 
@@ -91,19 +44,15 @@ void MainWindow::cardchoicerefresh(void)
     ui->cardchoice->addItems(OutputCardLongNames);
     ui->cardchoice_input->clear();
     ui->cardchoice_input->addItems(InputCardLongNames);
-
-
-
 }
-
-
-
 
 void MainWindow::ding()
 {
 
-   //alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
-    ringbuf_fill(&main_buf_playback);
+    //alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
+    alsa_load_file(0);
+
+    //ringbuf_fill(&left_buf_playback);
 }
 
 
@@ -112,19 +61,19 @@ void MainWindow::topClick()
 {
 
     static int x = 0;
-if(ui->radioClick->isChecked())
-{
-    x++;
-    if(x>4)
-        x=1;
+    if(ui->radioClick->isChecked())
+    {
+        x++;
+        if(x>4)
+            x=1;
 
 
-    if(x==1) alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
-    else alsa_play("hw:1,0",2,44100,2000,"ding2.wav",this);
+   //     if(x==1) alsa_play("hw:1,0",2,44100,"ding.wav",this);
+    //    else alsa_play("hw:1,0",2,44100,"ding2.wav",this);
 
 
 
-}
+    }
 
 }
 
@@ -132,8 +81,8 @@ if(ui->radioClick->isChecked())
 void MainWindow::updateTempo(int tempo)
 {
 
-return;
-clickTimer->start(1000*60/tempo);
+    return;
+    clickTimer->start(1000*60/tempo);
 
 }
 
@@ -170,7 +119,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-/*    clickTimer = new QTimer(this);
+    /*    clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
     clickTimer->start(1000);
    // alsa_record("hw:1,0",2,44100,2000,"test.wav",this);
@@ -182,7 +131,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     data = get_device_info("hw:1,0");
 
-
+    /*
     Afficher(data.name);
     Afficher("max playback "+n2s(data.max_playback));
     Afficher("min playback "+n2s(data.min_playback));
@@ -193,6 +142,13 @@ MainWindow::MainWindow(QWidget *parent) :
     Afficher("max buffer" + n2s(data.max_buffer_size));
     Afficher("min buffer" + n2s(data.min_buffer_size));
 
+*/
+
+
+
+
+
+    //ringbuf_c *a = new ringbuf_c(10);
 
 
 
@@ -200,11 +156,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    alsa_start_playback("hw:1,0", 2, 44100,this,&main_buf_playback);
+
+    alsa_start_playback("hw:1,0", 2, 44100,this);
+
 
     ding();
 
-alsa_conf();
+    //alsa_conf();
 
 }
 

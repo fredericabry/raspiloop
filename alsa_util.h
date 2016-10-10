@@ -45,21 +45,25 @@ typedef struct
 
 
 
+
+
+
+
+
+
 int ringbuf_push(ringbuf_t *ringbuf,short data);
 int ringbuf_pull(ringbuf_t *ringbuf,short *data);
-int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N);
+int ringbuf_pullN(ringbuf_t *ringbuf_in,short *buf_out,int N,short *buf0);
 void ringbuf_pushN(ringbuf_t *ringbuf_out, short *buf_in , int nelements);
-void ringbuf_fill(ringbuf_t *ringbuf_in);
+
 int ringbuf_length(ringbuf_t *ringbuf);
 int ringbuf_freespace(ringbuf_t *ringbuf);
-int ringbuf_copy(ringbuf_t *ringbuf_in,short *buf_out,int nelements);
 
 
 
 
 
 #define RINGBUF_DEF(bufname,length) short bufname##_data[length+1]; ringbuf_t bufname = {bufname##_data,0,0,length}
-
 
 
 
@@ -89,8 +93,8 @@ void open_file_play(QString filename);
 void set_hw_parameters_play(void);
 void set_sw_parameters_play(void);
 void start_play(void);
-void alsa_play(QString device, int channels, int rate, long length, QString filename, MainWindow *pt);
-void init_play(int channels,int rate, long length);
+void alsa_play(QString device, int channels, int rate, QString filename, MainWindow *pt);
+void init_play(int channels, int rate);
 void stop_play(void);
 bool open_device_play(QString device);
 
