@@ -12,7 +12,9 @@
 #include "ringbuf_c.h"
 
 
-#define bufilesize 1000
+#define NFILE 500
+#define THRESHOLD 1000
+#define RINGBUFSIZE 50000
 
 class loop_c:public QObject
 {
@@ -35,7 +37,8 @@ public:
     private slots:
     void datarequest(void);
 
-
+    signals:
+    void send_data(short *buf,int nread);
 
 };
 

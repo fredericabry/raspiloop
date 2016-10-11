@@ -26,6 +26,8 @@ public:
     int head;
     int tail;
 
+    int data_received;//number of buf sent to the ringbuf by the loops connected to it.
+
 
     SNDFILE *soundfile;
 
@@ -38,10 +40,17 @@ public:
     void pushN(short *buf_in, int N);
     int pullN(int N,short *buf0);
     void triggerempty(void);
+    void addloop();
+    void removeloop();
 
+private:
+    int connected_loops;//nbr of loops connected to this ringbuffer
 
-    signals:
+signals:
     void signal_trigger(void);
+
+private slots:
+    void data_available(short *buf,int nread);
 
 
 

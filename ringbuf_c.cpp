@@ -17,6 +17,8 @@ ringbuf_c::ringbuf_c(const int maxlength, const int bufsize, const int trigger):
 
     this->tail = 0;
     this->head = 0;
+    this->connected_loops = 0;
+
 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
@@ -194,8 +196,61 @@ int ringbuf_c::pullN(int N,short *buf0)
 void ringbuf_c::triggerempty(void)
 {
 
-        emit signal_trigger();
+    data_received = 0;//reset the amount of data received
+    emit signal_trigger();
 
 }
 
+void ringbuf_c::addloop()
+{
+    this->connected_loops++;
+  //  qDebug()<<"new loop connection "<< connected_loops;
 
+}
+
+void ringbuf_c::removeloop()
+{
+    this->connected_loops--;
+  //  qDebug()<<"loop disconnected "<< connected_loops;
+
+}
+
+void ringbuf_c::data_available(short *buf, int nread)
+{
+
+//implement mix strategy here
+
+
+
+    data_received++;
+
+    if(data_received == 1)//first loop
+    {
+    memset(buffile,0,NFILE);
+    for(int i = 0;i<nread;i++)
+    {
+        buffile[i]=buf[i]/connected_loops;
+    }
+    }
+    else
+    {
+        for(int i = 0;i<nread;i++)
+        {
+            buffile[i]+=buf[i]/connected_loops;
+        }
+    }
+
+
+    if(data_received >= this->connected_loops)
+    {
+        data_received = 0;
+        //all data has been received, let's push it to the ringbuffer
+        pushN(buffile,NFILE);
+
+    }
+
+
+
+
+
+}

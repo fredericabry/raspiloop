@@ -10,7 +10,7 @@ loop_c::loop_c()
 
 void loop_c::destroyloop()
 {
-
+        this->pRing->removeloop();
         delete this;
 }
 
@@ -21,13 +21,13 @@ void loop_c::init(QString filename,ringbuf_c *pRingBuffer)
 
     SF_INFO sf_info;
 
-    buffile = (short*)malloc(sizeof(short)*bufilesize);
+    buffile = (short*)malloc(sizeof(short)*NFILE);
 
     pRing = pRingBuffer;
-
+    this->pRing->addloop();
 
     connect(pRing,SIGNAL(signal_trigger()), this, SLOT(datarequest()));
-
+    connect(this,SIGNAL(send_data(short*,int)), pRing, SLOT(data_available(short*, int)));
 
     if ((this->soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
         char errstr[256];
@@ -75,19 +75,12 @@ void loop_c::datarequest(void)
 {
     //the associated ringbuffer request more data
 
-
     int nread;
-
-
-
-//qDebug()<<"data request";
 
     if((nread = sf_readf_short(soundfile,buffile,NFILE))>0)
     {
-
-
-        pRing->pushN(buffile,nread);
-
+       // pRing->pushN(buffile,nread);
+        emit send_data(buffile,nread);
     }
 
     if(nread == 0)
@@ -95,17 +88,13 @@ void loop_c::datarequest(void)
         sf_close(soundfile);
         this->soundfile = NULL;
         this->destroyloop();
-
-
     }
 
 }
 
 
-
 loop_c::~loop_c(void)
 {
-
     free(buffile);
 
 }

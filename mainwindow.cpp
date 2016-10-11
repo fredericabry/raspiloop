@@ -44,7 +44,9 @@ void MainWindow::cardchoicerefresh(void)
 
 void MainWindow::ding()
 {
-
+    ringbuf_c *pRing = alsa_find_chan_by_num(0);
+    loop_c *pLoop2 = new loop_c;
+    pLoop2->init("grosse tec.wav",pRing);
 
 }
 
@@ -169,9 +171,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 ringbuf_c *pRing = alsa_find_chan_by_num(1);
 loop_c *pLoop = new loop_c;
-
-
 pLoop->init("grosse tec.wav",pRing);
+
+
+
 
 
 

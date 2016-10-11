@@ -8,9 +8,7 @@
 #include "loop_c.h"
 
 
-#define NFILE 1000
-#define THRESHOLD 1000
-#define RINGBUFSIZE 20000
+
 
 
 
