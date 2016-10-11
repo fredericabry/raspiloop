@@ -3,9 +3,13 @@
 
 #include <sndfile.h>
 #include <alsa/asoundlib.h>
+#include <QMainWindow>
 
-class ringbuf_c
+
+class ringbuf_c : public QObject
 {
+    Q_OBJECT
+
 public:
     ringbuf_c(const int maxlength,const int bufsize, const int trigger);
     ~ringbuf_c();
@@ -29,13 +33,15 @@ public:
     int push(short data);
     int pull(short *data);
     void fill(int channel);
-    void ringbuf_fill(int channel);
     int length();
     int freespace();
     void pushN(short *buf_in, int N);
     int pullN(int N,short *buf0);
     void triggerempty(void);
-    void soundupd(void);
+
+
+    signals:
+    void signal_trigger(void);
 
 
 

@@ -53,18 +53,6 @@ void init_record(int channels,int rate, long length);
 void stop_record(void);
 
 
-void async_callback_play(snd_async_handler_t *ahandler);
-void open_file_play(QString filename);
-void set_hw_parameters_play(void);
-void set_sw_parameters_play(void);
-void start_play(void);
-void alsa_play(QString device, int channels, int rate, QString filename, MainWindow *pt);
-void init_play(int channels, int rate);
-void stop_play(void);
-bool open_device_play(QString device);
-
-
-
 
 
 

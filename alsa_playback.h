@@ -5,8 +5,12 @@
 #include <sndfile.h>
 #include "mainwindow.h"
 #include "ringbuf_c.h"
+#include "loop_c.h"
 
 
+#define NFILE 1000
+#define THRESHOLD 1000
+#define RINGBUFSIZE 20000
 
 
 
@@ -19,7 +23,8 @@ void alsa_begin_playback(ringbuf_c **ringbuf);
 void alsa_write_playback(ringbuf_c **ringbuf);
 bool alsa_open_device_playback(QString device);
 void alsa_conf(void);
-void alsa_load_file(int channel);
-void alsa_start_file(QString filename, int channel);
+ringbuf_c* alsa_find_chan_by_num(int channel);
+
+
 
 #endif // ALSA_PLAYBACK_H

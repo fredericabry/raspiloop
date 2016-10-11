@@ -13,11 +13,7 @@
 #include <qelapsedtimer.h>
 
 #include "ringbuf_c.h"
-
-
-
-
-
+#include "loop_c.h"
 
 
 
@@ -49,10 +45,7 @@ void MainWindow::cardchoicerefresh(void)
 void MainWindow::ding()
 {
 
-    //alsa_play("hw:1,0",2,44100,2000,"ding.wav",this);
-    alsa_load_file(0);
 
-    //ringbuf_fill(&left_buf_playback);
 }
 
 
@@ -70,7 +63,7 @@ void MainWindow::topClick()
 
         if((x==1) || (x == 3))
         {
-alsa_load_file(1);
+
 
 
         }
@@ -78,7 +71,7 @@ alsa_load_file(1);
         else
 
         {
-alsa_load_file(1);
+
 
         }
 
@@ -96,11 +89,7 @@ void MainWindow::updateTempo(int tempo)
 }
 
 
-void MainWindow::click_change(bool val)
-{
-  // AfficherI(val);
 
-}
 
 
 
@@ -120,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bclear,SIGNAL(pressed()),this,SLOT(consoleclear()));
     connect(ui->b_ding,SIGNAL(pressed()),this,SLOT(ding()));
 
-    connect(ui->radioClick,SIGNAL(clicked(bool)),this,SLOT(click_change(bool)));
+
 
     Afficher("Démarrage\n");
 
@@ -175,7 +164,15 @@ MainWindow::MainWindow(QWidget *parent) :
   clickTimer->start(500);
 
 
- alsa_start_file("grosse tec.wav",0);
+ //alsa_start_file("grosse tec.wav",0);
+
+
+ringbuf_c *pRing = alsa_find_chan_by_num(1);
+loop_c *pLoop = new loop_c;
+
+
+pLoop->init("grosse tec.wav",pRing);
+
 
 
 }

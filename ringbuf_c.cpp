@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <sndfile.h>
 #include "ringbuf_c.h"
-
+#include <QMainWindow>
 #include <QFile>
 #include <QTextStream>
 
@@ -20,7 +20,7 @@ ringbuf_c::ringbuf_c(const int maxlength, const int bufsize, const int trigger):
 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
-    buffile = (short*)malloc(10000*sizeof(short));
+    buffile = (short*)malloc(NFILE*sizeof(short));
 
     soundfile = NULL;
 }
@@ -94,13 +94,13 @@ void ringbuf_c::pushN(short *buf_in, int N)
 
 
 
-    if(N > this->freespace())  {/* qDebug()<<"Insuficient free space in ringbuf struct";*/return;}
+    if(N > this->freespace())  { qDebug()<<"ringbuf full";return;}
 
     if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct"; return;}
 
     if(this->head >= this->tail)
     {
-        if(N+this->tail <= this->maxlength)
+        if(N+this->head <= this->maxlength)
         {
             pt = this->ringbuf+(this->head)/*sizeof(short)*/;
             memcpy(pt,buf_in,N*sizeof(short));
@@ -108,6 +108,7 @@ void ringbuf_c::pushN(short *buf_in, int N)
         }
         else
         {
+
             //first let us copy the part that fits
             int first = this->maxlength+1 - this->head; //maxlength + 1 because of the additionnal value in the buffer
             pt = this->ringbuf+(this->head)/*sizeof(short)*/;
@@ -123,6 +124,7 @@ void ringbuf_c::pushN(short *buf_in, int N)
     }
     else
     {
+
         pt = this->ringbuf+(this->head)/*sizeof(short)*/;
         memcpy(pt,buf_in,N*sizeof(short));
         this->head += N;
@@ -189,41 +191,11 @@ int ringbuf_c::pullN(int N,short *buf0)
     return N+N0;
 }
 
-
 void ringbuf_c::triggerempty(void)
 {
-  //qDebug()<<"vide";
-    soundupd();
 
-
-}
-
-
-void ringbuf_c::soundupd()
-{
-    int nread;
-
-
-
-    if(!soundfile) {return; }
-
-
-    if((nread = sf_readf_short(soundfile,buffile,10000))>0)
-    {
-
-
-       this->pushN(buffile,nread);
-
-    }
-
-    if(nread == 0)
-    {
-        sf_close(soundfile);
-        this->soundfile = NULL;
-
-
-
-    }
-
+        emit signal_trigger();
 
 }
+
+

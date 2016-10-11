@@ -20,7 +20,6 @@
 
 
 
-
 MainWindow *parent;
 snd_pcm_t *playback_handle;
 snd_pcm_uframes_t playback_frames,playback_bufsize,playback_period_size;
@@ -31,14 +30,9 @@ short *empty_buf;
 int playback_rate;
 int playback_channels;
 
-
-
 SNDFILE *sf_play;
 
 ringbuf_c** main_buf_playback;
-
-
-
 
 
 void alsa_start_playback(QString device, int channels, int rate, MainWindow *pt)
@@ -107,7 +101,7 @@ void alsa_init_playback(int channels,int rate)
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new ringbuf_c(100000,playback_frames*2,10000);
+        main_buf_playback[i] = new ringbuf_c(RINGBUFSIZE,playback_frames*2,THRESHOLD);
 
     }
 
@@ -314,107 +308,9 @@ void alsa_conf(void)
 
 }
 
-void alsa_load_file(int channel)
-{
-    SF_INFO sf_info;
-    int nread;
-    short *buf;
-    sf_info.format = 0;
-    int fail_count = 0;
 
-start:
-    if ((sf_play = sf_open ("ding2.wav", SFM_READ, &sf_info)) == NULL) {
-        char errstr[256];
-        sf_error_str (0, errstr, sizeof (errstr) - 1);
-        fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
-
-        //system failed to open the file for some reason, let's give two other chances.
-        if(fail_count > 2) {qDebug()<<"file opening failure";return;}
-        else {fail_count++;goto start;}
-
-                   //exit (1);
-    }
-
-    int short_mask = SF_FORMAT_PCM_16;
-
-    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
-    {
-        qDebug()<<"format de fichier incorrect\n";
-        return;
-    }
-    /*
-    if(sf_info.samplerate != rate_play)
-    {
-        parent_play->Afficher("soundfile rate incorrect\n");
-        return;
-    }
-    */
-    if(sf_info.channels != 1)
-    {
-        qDebug()<<"chan nbr incorrect\n";
-        return;
-    }
-
-    buf = (short*)malloc(15000*sizeof(short));
-
-
-
-
-
-    if((nread = sf_readf_short(sf_play,buf,15000))>0)
-    {
-
-        //ringbuf_pushN(main_buf_playback[channel],buf,nread);
-        main_buf_playback[channel]->pushN(buf,nread);
-
-    }
-
-        sf_close(sf_play);
-
-}
-
-void alsa_start_file(QString filename, int channel)
+ringbuf_c* alsa_find_chan_by_num(int channel)
 {
 
-    int nread;
-    SF_INFO sf_info;
-
-    ringbuf_c *pRingBuf = main_buf_playback[channel];
-
-    if ((pRingBuf->soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
-        char errstr[256];
-        sf_error_str (0, errstr, sizeof (errstr) - 1);
-        fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
-
-      return;
-    }
-
-    int short_mask = SF_FORMAT_PCM_16;
-
-    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
-    {
-        qDebug()<<"format de fichier incorrect\n";
-        return;
-    }
-    /*
-    if(sf_info.samplerate != rate_play)
-    {
-        parent_play->Afficher("soundfile rate incorrect\n");
-        return;
-    }
-    */
-    if(sf_info.channels != 1)
-    {
-        qDebug()<<"chan nbr incorrect\n";
-        pRingBuf->soundfile = NULL;
-        return;
-    }
-
-
-
-
-    pRingBuf->soundupd();
-
-
-
+return main_buf_playback[channel];
 }
