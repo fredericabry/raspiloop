@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "alsa_util.h"
 #include "alsa_playback.h"
+#include "alsa_capture.h"
 #include <stdbool.h>
 
 
@@ -12,7 +13,7 @@
 #include <qtimer.h>
 #include <qelapsedtimer.h>
 
-#include "ringbuf_c.h"
+#include "playback_port_c.h"
 #include "loop_c.h"
 
 
@@ -44,9 +45,15 @@ void MainWindow::cardchoicerefresh(void)
 
 void MainWindow::ding()
 {
-    ringbuf_c *pRing = alsa_find_chan_by_num(0);
+    playback_port_c *pRing = alsa_playback_port_by_num(0);
     loop_c *pLoop2 = new loop_c;
-    pLoop2->init("grosse tec.wav",pRing);
+    pLoop2->init("grosse tec.wav",pRing,100*44100);
+
+
+    playback_port_c *pRing2 = alsa_playback_port_by_num(1);
+    pLoop2 = new loop_c;
+    pLoop2->init("grosse tec.wav",pRing2,100*44100);
+
 
 }
 
@@ -131,11 +138,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tempoBox,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
 
 
+
     hw_info data;
 
     data = get_device_info("hw:1,0");
 
-
+    /*
     Afficher(data.name);
     Afficher("max playback "+n2s(data.max_playback));
     Afficher("min playback "+n2s(data.min_playback));
@@ -146,6 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
     Afficher("max buffer" + n2s(data.max_buffer_size));
     Afficher("min buffer" + n2s(data.min_buffer_size));
 
+*/
 
 
 
@@ -154,28 +163,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
-    alsa_start_playback("hw:1,0", 2, 44100,this);
-
+    alsa_start_playback("hw:1,0", 2, 44100);
+    //alsa_start_capture("hw:1,0", 2, 44100);
 
 
 
     clickTimer = new QTimer(this);
-  connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-  clickTimer->start(500);
+    connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
+    clickTimer->start(500);
 
 
- //alsa_start_file("grosse tec.wav",0);
-
-
-ringbuf_c *pRing = alsa_find_chan_by_num(1);
-loop_c *pLoop = new loop_c;
-pLoop->init("grosse tec.wav",pRing);
-
-
-
-
+    ding();
 
 
 }
@@ -189,5 +187,8 @@ pLoop->init("grosse tec.wav",pRing);
 
 MainWindow::~MainWindow()
 {
+
     delete ui;
+    alsa_cleanup();
+
 }

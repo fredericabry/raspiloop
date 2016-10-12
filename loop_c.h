@@ -9,12 +9,16 @@
 #include "alsa_util.h"
 #include "alsa_playback.h"
 #include <stdbool.h>
-#include "ringbuf_c.h"
+#include "playback_port_c.h"
 
 
-#define NFILE 500
-#define THRESHOLD 1000
-#define RINGBUFSIZE 50000
+#define PLAYBACK_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
+#define NFILE 1000
+#define THRESHOLD 5000
+#define RINGBUFSIZE 80000
+
+
+
 
 class loop_c:public QObject
 {
@@ -27,11 +31,12 @@ public:
 
     SNDFILE *soundfile;
     short *buffile;
-    ringbuf_c *pRing;
+    playback_port_c *pRing;
 
+    int frametoplay;
+    bool stop;
 
-
-    void init(QString file,ringbuf_c *pRingBuffer);
+    void init(QString file, playback_port_c *pRingBuffer, int length);
     void destroyloop(void);
 
     private slots:

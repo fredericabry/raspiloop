@@ -11,7 +11,7 @@
 
 
 
-snd_pcm_t *capture_handle;
+
 SNDFILE *sf_record;
 short *buf_record;
 snd_pcm_uframes_t frames_record,bufsize_record;
@@ -24,7 +24,7 @@ long frame_count_record;
 #define FORM_FILE SND_PCM_FORMAT_S16_LE
 
 
-    QTime *myTimer;
+
 
 
 
@@ -34,7 +34,7 @@ Capture functions
 *************************
 ************************* */
 
-
+/*
 
 void stop_record(void)
 {
@@ -375,7 +375,7 @@ __end:
     return devicelist;
 }
 
-
+*/
 int getCardListLength(snd_pcm_stream_t stream)
 {
 
@@ -621,9 +621,7 @@ struct hw_info get_device_info(QString device_name) {
 
 
     if ((err = snd_pcm_open (&handle, device_name.toStdString().c_str(), stream, 0)) < 0) {
-        /*   fprintf (stderr, "cannot open audio device %s (%s)\n",
-                 dev_name,
-                 snd_strerror (err));*/
+
         info.max_playback = 0;
         info.min_playback = 0;
         goto capture;
@@ -774,9 +772,7 @@ capture:
 
 
     if ((err = snd_pcm_open (&handle, device_name.toStdString().c_str(), stream, 0)) < 0) {
-        /*  fprintf (stderr, "cannot open audio device %s (%s)\n",
-                 dev_name,
-                 snd_strerror (err));*/
+
         info.max_capture = 0;
         info.min_capture = 0;
         goto end;
@@ -919,7 +915,6 @@ end:
     return info;
 
 }
-
 
 
 

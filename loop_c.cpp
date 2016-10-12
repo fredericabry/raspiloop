@@ -16,12 +16,16 @@ void loop_c::destroyloop()
 
 
 
-void loop_c::init(QString filename,ringbuf_c *pRingBuffer)
+void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
 {
 
     SF_INFO sf_info;
 
     buffile = (short*)malloc(sizeof(short)*NFILE);
+    frametoplay = length;
+    if(frametoplay<=0)
+        stop = false;
+    else stop = true;
 
     pRing = pRingBuffer;
     this->pRing->addloop();
@@ -80,10 +84,17 @@ void loop_c::datarequest(void)
     if((nread = sf_readf_short(soundfile,buffile,NFILE))>0)
     {
        // pRing->pushN(buffile,nread);
+        if(stop)
+        {
+          this->frametoplay -= nread;
+
+        }
         emit send_data(buffile,nread);
+
+
     }
 
-    if(nread == 0)
+    if((nread == 0)||(stop&&(frametoplay<=0)))
     {
         sf_close(soundfile);
         this->soundfile = NULL;

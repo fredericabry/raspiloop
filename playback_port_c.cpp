@@ -1,10 +1,10 @@
-#include "ringbuf_c.h"
+#include "playback_port_c.h"
 #include "ui_mainwindow.h"
 #include "alsa_util.h"
 #include "alsa_playback.h"
 #include <stdbool.h>
 #include <sndfile.h>
-#include "ringbuf_c.h"
+#include "playback_port_c.h"
 #include <QMainWindow>
 #include <QFile>
 #include <QTextStream>
@@ -12,7 +12,7 @@
 #include <qdebug.h>
 
 
-ringbuf_c::ringbuf_c(const int maxlength, const int bufsize, const int trigger):maxlength(maxlength),bufsize(bufsize),trigger(trigger)
+playback_port_c::playback_port_c(const int maxlength, const int bufsize, const int trigger, const int channel):maxlength(maxlength),bufsize(bufsize),trigger(trigger),channel(channel)
 {
 
     this->tail = 0;
@@ -24,10 +24,10 @@ ringbuf_c::ringbuf_c(const int maxlength, const int bufsize, const int trigger):
     buf = (short*)malloc((bufsize)*sizeof(short));
     buffile = (short*)malloc(NFILE*sizeof(short));
 
-    soundfile = NULL;
+
 }
 
-ringbuf_c::~ringbuf_c()
+playback_port_c::~playback_port_c()
 {
 
     free(ringbuf);
@@ -35,7 +35,7 @@ ringbuf_c::~ringbuf_c()
     free(buffile);
 }
 
-int ringbuf_c::push(short data)
+int playback_port_c::push(short data)
 {
     int next = this->head+1;
     if(next>= this->maxlength+1)
@@ -53,7 +53,7 @@ int ringbuf_c::push(short data)
 
 }
 
-int ringbuf_c::pull(short *data)
+int playback_port_c::pull(short *data)
 {
 
     if(this->head == this->tail)
@@ -75,21 +75,21 @@ int ringbuf_c::pull(short *data)
 
 }
 
-int ringbuf_c::length()
+int playback_port_c::length()
 {
     if(this->head>=this->tail) return this->head-this->tail;
     else return this->maxlength-this->tail + this->head + 1;
 
 }
 
-int ringbuf_c::freespace()
+int playback_port_c::freespace()
 {
 
     return this->maxlength-this->length();
 
 }
 
-void ringbuf_c::pushN(short *buf_in, int N)
+void playback_port_c::pushN(short *buf_in, int N)
 {
     short *pt ;
 
@@ -135,8 +135,12 @@ void ringbuf_c::pushN(short *buf_in, int N)
 
 }
 
-int ringbuf_c::pullN(int N,short *buf0)
+int playback_port_c::pullN(int N)
 {
+
+/*
+    memset(buf,0,N*sizeof(short));
+    return N;*/
 
     short *pt ;
     int N0=0;
@@ -179,9 +183,8 @@ int ringbuf_c::pullN(int N,short *buf0)
 
     if(N0>0)
     {
-        //not enough elements in the ringbuffer, lets fill in with elements from buf0
-        memcpy(this->buf+N/*sizeof(short)*/,buf0,N0*sizeof(short));
-
+        //not enough elements let's fill in with zeros
+        memset(this->buf+N/*sizeof(short)*/,0,N0*sizeof(short));
     }
 
     if(this->length()<trigger)
@@ -193,7 +196,7 @@ int ringbuf_c::pullN(int N,short *buf0)
     return N+N0;
 }
 
-void ringbuf_c::triggerempty(void)
+void playback_port_c::triggerempty(void)
 {
 
     data_received = 0;//reset the amount of data received
@@ -201,24 +204,24 @@ void ringbuf_c::triggerempty(void)
 
 }
 
-void ringbuf_c::addloop()
+void playback_port_c::addloop()
 {
     this->connected_loops++;
-  //  qDebug()<<"new loop connection "<< connected_loops;
+    //qDebug()<<"new loop connection to channel #"<<channel<<" total connections "<< connected_loops;
 
 }
 
-void ringbuf_c::removeloop()
+void playback_port_c::removeloop()
 {
     this->connected_loops--;
-  //  qDebug()<<"loop disconnected "<< connected_loops;
+    //  qDebug()<<"loop disconnected "<< connected_loops;
 
 }
 
-void ringbuf_c::data_available(short *buf, int nread)
+void playback_port_c::data_available(short *buf, int nread)
 {
 
-//implement mix strategy here
+    //implement mix strategy here
 
 
 
@@ -226,11 +229,11 @@ void ringbuf_c::data_available(short *buf, int nread)
 
     if(data_received == 1)//first loop
     {
-    memset(buffile,0,NFILE);
-    for(int i = 0;i<nread;i++)
-    {
-        buffile[i]=buf[i]/connected_loops;
-    }
+        memset(buffile,0,NFILE*sizeof(short));
+        for(int i = 0;i<nread;i++)
+        {
+            buffile[i]=buf[i]/connected_loops;
+        }
     }
     else
     {

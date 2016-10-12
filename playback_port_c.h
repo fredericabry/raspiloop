@@ -1,23 +1,24 @@
-#ifndef RINGBUF_C_H
-#define RINGBUF_C_H
+#ifndef PLAYBACK_PORT_C_H
+#define PLAYBACK_PORT_C_H
 
 #include <sndfile.h>
 #include <alsa/asoundlib.h>
 #include <QMainWindow>
 
 
-class ringbuf_c : public QObject
+class playback_port_c : public QObject
 {
     Q_OBJECT
 
 public:
-    ringbuf_c(const int maxlength,const int bufsize, const int trigger);
-    ~ringbuf_c();
+    playback_port_c(const int maxlength,const int bufsize, const int trigger, const int channel);
+    ~playback_port_c();
 
 
     int const maxlength;
     int const bufsize;
     const int trigger;
+    int const channel;
 
     short *ringbuf;//big buffer for circular storage
     short *buf;//small buffer for transfert
@@ -28,17 +29,13 @@ public:
 
     int data_received;//number of buf sent to the ringbuf by the loops connected to it.
 
-
-    SNDFILE *soundfile;
-
-
     int push(short data);
     int pull(short *data);
     void fill(int channel);
     int length();
     int freespace();
     void pushN(short *buf_in, int N);
-    int pullN(int N,short *buf0);
+    int pullN(int N);
     void triggerempty(void);
     void addloop();
     void removeloop();
@@ -56,7 +53,7 @@ private slots:
 
 };
 
-#endif // RINGBUF_C_H
+#endif // OU_C_H
 
 
 

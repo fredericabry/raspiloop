@@ -3,7 +3,7 @@
 #include "alsa_playback.h"
 #include <stdbool.h>
 
-#include "ringbuf_c.h"
+#include "playback_port_c.h"
 
 #include <QFile>
 #include <QTextStream>
@@ -13,34 +13,30 @@
 
 
 
-#define CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
-#define FRAME_PER_BUFFER 5 //size of the buffer in frame
+
+
+short **playback_buf;
 
 
 
 
-
-MainWindow *parent;
 snd_pcm_t *playback_handle;
-snd_pcm_uframes_t playback_frames,playback_bufsize,playback_period_size;
-snd_pcm_uframes_t hw_buffersize;
-
-short *empty_buf;
+snd_pcm_uframes_t playback_frames,playback_period_size,playback_hw_buffersize;
 
 int playback_rate;
 int playback_channels;
 
-SNDFILE *sf_play;
-
-ringbuf_c** main_buf_playback;
 
 
-void alsa_start_playback(QString device, int channels, int rate, MainWindow *pt)
+playback_port_c** main_buf_playback;
+
+
+void alsa_start_playback(QString device, int channels, int rate)
 {
 
     if (!alsa_open_device_playback(device)) return;
 
-    parent= pt;
+
     alsa_init_playback(channels,rate);
 
 
@@ -86,26 +82,23 @@ void alsa_init_playback(int channels,int rate)
     playback_rate = rate;
 
     //todo fix this
-    playback_frames = CHANNEL_WIDTH;
+    playback_frames = PLAYBACK_CHANNEL_WIDTH;
     playback_period_size = playback_frames*playback_channels;
-    playback_bufsize = FRAME_PER_BUFFER*playback_frames;
-
-
-    empty_buf = (short*)malloc(playback_period_size*sizeof(short));
-
-    for(int i = 0; i<(int)playback_period_size;i++) empty_buf[i] = 0;
 
 
 
-    main_buf_playback = (ringbuf_c**)malloc(channels*sizeof(ringbuf_c));
+
+
+
+    main_buf_playback = (playback_port_c**)malloc(channels*sizeof(playback_port_c));
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new ringbuf_c(RINGBUFSIZE,playback_frames*2,THRESHOLD);
+        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE,playback_frames*2,THRESHOLD,i);
 
     }
 
-
+    playback_buf = (short**)malloc(playback_channels*sizeof(short*));
 
 }
 
@@ -117,7 +110,7 @@ void alsa_set_hw_parameters_playback(void)
     unsigned int rate = playback_rate;
 
 
-    hw_buffersize = 2*playback_channels*CHANNEL_WIDTH;
+    playback_hw_buffersize = 2*playback_channels*PLAYBACK_CHANNEL_WIDTH;
 
     if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
         fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
@@ -162,7 +155,7 @@ void alsa_set_hw_parameters_playback(void)
 
 
 
-    snd_pcm_hw_params_set_buffer_size_near 	( 	playback_handle,hw_params,&hw_buffersize);
+    snd_pcm_hw_params_set_buffer_size_near 	( 	playback_handle,hw_params,&playback_hw_buffersize);
 
 
 
@@ -220,15 +213,44 @@ void alsa_set_sw_parameters_playback(void)
 
 }
 
-void alsa_write_playback(ringbuf_c **ringbuf)
+void alsa_begin_playback(playback_port_c **port)
+{
+
+    int err;
+
+
+    if ((err = snd_pcm_prepare (playback_handle)) < 0) {
+        fprintf (stderr, "cannot prepare audio interface for use (%s)\n",
+                 snd_strerror (err));
+        exit (1);
+    }
+
+
+
+
+    snd_async_handler_t *pcm_callback;
+    snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,port);
+
+
+    for(int i = 0; i < 3 ; i ++)
+    {
+
+        alsa_write_playback(port);
+
+
+    }
+
+}
+
+void alsa_write_playback(playback_port_c **port)
 {
     int err;
-    short *playback_buf[2];
+
 
     for(int i = 0;i<playback_channels;i++)
     {
-        ringbuf[i]->pullN(playback_frames,empty_buf);
-        playback_buf[i] = ringbuf[i]->buf;
+        port[i]->pullN(playback_frames);
+        playback_buf[i] = port[i]->buf;
     }
     if ((err = snd_pcm_writen (playback_handle, (void**)playback_buf,playback_frames))!=(snd_pcm_sframes_t)playback_frames) {
         if(err == -EPIPE)
@@ -257,46 +279,17 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
     snd_pcm_uframes_t avail;
 
     snd_pcm_t *playback_handle = snd_async_handler_get_pcm(ahandler);
-    ringbuf_c **ringbuf = (ringbuf_c**)snd_async_handler_get_callback_private(ahandler);
+    playback_port_c **port = (playback_port_c**)snd_async_handler_get_callback_private(ahandler);
 
     avail = snd_pcm_avail_update(playback_handle);
 
     while(avail >= playback_frames)
     {
-        alsa_write_playback(ringbuf);
+        alsa_write_playback(port);
         avail = snd_pcm_avail_update(playback_handle);
     }
 
     //qDebug()<<"a";
-
-}
-
-void alsa_begin_playback(ringbuf_c **ringbuf)
-{
-
-    int err;
-
-
-    if ((err = snd_pcm_prepare (playback_handle)) < 0) {
-        fprintf (stderr, "cannot prepare audio interface for use (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-
-
-
-    snd_async_handler_t *pcm_callback;
-    snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,ringbuf);
-
-
-    for(int i = 0; i < 3 ; i ++)
-    {
-
-        alsa_write_playback(ringbuf);
-
-
-    }
 
 }
 
@@ -308,9 +301,16 @@ void alsa_conf(void)
 
 }
 
-
-ringbuf_c* alsa_find_chan_by_num(int channel)
+playback_port_c* alsa_playback_port_by_num(int channel)
 {
 
-return main_buf_playback[channel];
+    return main_buf_playback[channel];
+}
+
+void alsa_cleanup()
+{
+    snd_pcm_close(playback_handle);
+    free(playback_buf);
+    free(main_buf_playback);
+    //qDebug()<<"cleaning up";
 }
