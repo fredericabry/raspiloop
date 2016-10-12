@@ -13,12 +13,12 @@ class capture_port_c : public QObject
     Q_OBJECT
 
 public:
-    capture_port_c(const int maxlength,const int bufsize,const int rate);
+    capture_port_c(const unsigned long maxlength,const unsigned long bufsize,const int rate);
     ~capture_port_c();
 
 
-    int const maxlength;
-    int const bufsize;
+    const unsigned long maxlength;
+    const unsigned long bufsize;
     int const rate;
     SNDFILE *soundfile;
 
@@ -34,8 +34,8 @@ public:
 
     void fill(int channel);
     int length();
-    void pushN(int N);
-    void pullN(int pos, int N);
+    void pushN(unsigned long N);
+    void pullN(unsigned long pos, unsigned long N);
     void openfile(QString filename);
     void closefile();
     void destroyport();

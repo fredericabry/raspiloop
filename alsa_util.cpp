@@ -323,6 +323,7 @@ void async_callback_record(snd_async_handler_t *ahandler)
     }
 
 }
+*/
 
 
 QStringList pcm_list(snd_pcm_stream_t stream)
@@ -375,7 +376,7 @@ __end:
     return devicelist;
 }
 
-*/
+
 int getCardListLength(snd_pcm_stream_t stream)
 {
 

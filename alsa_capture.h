@@ -7,9 +7,16 @@
 #include <sndfile.h>
 #include "mainwindow.h"
 #include "capture_port_c.h"
-#include "loop_c.h"
 
 
+
+
+#define CAPTURE_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
+#define CAPTURE_HW_BUFFER_SIZE 4*CAPTURE_CHANNEL_WIDTH //alsa capture buffer size for ONE channel
+#define RINGBUFSIZE_CAPTURE 1000 //size of the capture ringbuffer
+
+#define CAPTURE_SW_THRESHOLD               1  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound from the device
+#define CAPTURE_INTERRUPT_THRESHOLD        CAPTURE_HW_BUFFER_SIZE/4 //when the device buffer data is smaller than this limit, an interrupt is issued
 
 
 
@@ -28,7 +35,7 @@ void alsa_begin_capture(capture_port_c **port);
 void alsa_read_capture(capture_port_c **port);
 void alsa_start_capture_record(int channel,QString filename);
 void alsa_stop_capture_record(int channel);
-
+void alsa_cleanup_capture(void);
 
 
 #endif // ALSA_CAPTURE

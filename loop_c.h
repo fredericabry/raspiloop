@@ -12,13 +12,6 @@
 #include "playback_port_c.h"
 
 
-#define PLAYBACK_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
-#define NFILE 1000
-#define THRESHOLD 5000
-#define RINGBUFSIZE 80000
-
-
-
 
 class loop_c:public QObject
 {

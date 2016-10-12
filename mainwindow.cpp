@@ -47,12 +47,12 @@ void MainWindow::ding()
 {
     playback_port_c *pRing = alsa_playback_port_by_num(0);
     loop_c *pLoop2 = new loop_c;
-    pLoop2->init("grosse tec.wav",pRing,100*44100);
+    pLoop2->init("grosse tec.wav",pRing,15*44100);
 
 
     playback_port_c *pRing2 = alsa_playback_port_by_num(1);
     pLoop2 = new loop_c;
-    pLoop2->init("grosse tec.wav",pRing2,100*44100);
+    pLoop2->init("grosse tec.wav",pRing2,15*44100);
 
 
 }
@@ -61,6 +61,12 @@ void MainWindow::ding()
 
 void MainWindow::topClick()
 {
+
+    unsigned long a;
+    alsa_monito(&a);
+    ui->freespace->display((int)a);
+
+    return;
 
     static int x = 0;
     if(ui->radioClick->isChecked())
@@ -164,7 +170,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     alsa_start_playback("hw:1,0", 2, 44100);
-    //alsa_start_capture("hw:1,0", 2, 44100);
+    alsa_start_capture("hw:1,0", 2, 44100);
 
 
 
@@ -173,7 +179,7 @@ MainWindow::MainWindow(QWidget *parent) :
     clickTimer->start(500);
 
 
-    ding();
+
 
 
 }
@@ -188,7 +194,9 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
 
+    alsa_cleanup_playback();
+    alsa_cleanup_capture();
     delete ui;
-    alsa_cleanup();
+
 
 }

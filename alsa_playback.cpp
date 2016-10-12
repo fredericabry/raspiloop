@@ -91,14 +91,18 @@ void alsa_init_playback(int channels,int rate)
 
 
     main_buf_playback = (playback_port_c**)malloc(channels*sizeof(playback_port_c));
+    playback_buf = (short**)malloc(playback_channels*sizeof(short*));
+
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE,playback_frames*2,THRESHOLD,i);
-
+        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,playback_frames*2,THRESHOLD,i);
+        playback_buf[i] = main_buf_playback[i]->buf;
     }
 
-    playback_buf = (short**)malloc(playback_channels*sizeof(short*));
+
+
+
 
 }
 
@@ -110,7 +114,7 @@ void alsa_set_hw_parameters_playback(void)
     unsigned int rate = playback_rate;
 
 
-    playback_hw_buffersize = 2*playback_channels*PLAYBACK_CHANNEL_WIDTH;
+    playback_hw_buffersize = playback_channels*PLAYBACK_HW_BUFFER_SIZE;
 
     if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
         fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
@@ -193,14 +197,14 @@ void alsa_set_sw_parameters_playback(void)
     }
 
     //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-    err = snd_pcm_sw_params_set_start_threshold(playback_handle, swparams,  2*playback_frames);
+    err = snd_pcm_sw_params_set_start_threshold(playback_handle, swparams, playback_channels*PLAYBACK_SW_THRESHOLD);
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
         exit(1);
     }
 
     //when the device buffer data is smaller than this limit, an interrupt is issued
-    err = snd_pcm_sw_params_set_avail_min(playback_handle, swparams, playback_frames);
+    err = snd_pcm_sw_params_set_avail_min(playback_handle, swparams, playback_channels*PLAYBACK_INTERRUPT_THRESHOLD);
     if (err < 0) {
         printf("Unable to set avail min: %s\n", snd_strerror(err));
         exit(1);
@@ -250,13 +254,16 @@ void alsa_write_playback(playback_port_c **port)
     for(int i = 0;i<playback_channels;i++)
     {
         port[i]->pullN(playback_frames);
-        playback_buf[i] = port[i]->buf;
+
     }
+
+
+
     if ((err = snd_pcm_writen (playback_handle, (void**)playback_buf,playback_frames))!=(snd_pcm_sframes_t)playback_frames) {
         if(err == -EPIPE)
         {
 
-            qDebug()<<"underrun";
+            qDebug()<<"underrun playback";
             if ((err = snd_pcm_prepare (playback_handle)) < 0) {
                 qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
                 exit (1);
@@ -307,10 +314,17 @@ playback_port_c* alsa_playback_port_by_num(int channel)
     return main_buf_playback[channel];
 }
 
-void alsa_cleanup()
+void alsa_cleanup_playback()
 {
     snd_pcm_close(playback_handle);
     free(playback_buf);
     free(main_buf_playback);
     //qDebug()<<"cleaning up";
+}
+
+void alsa_monito(unsigned long *data)
+{
+
+    *data = alsa_playback_port_by_num(0)->freespace();
+
 }

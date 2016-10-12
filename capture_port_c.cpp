@@ -13,7 +13,7 @@
 
 
 
-capture_port_c::capture_port_c(const int maxlength, const int bufsize, const int rate):maxlength(maxlength),bufsize(bufsize),rate(rate)
+capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate):maxlength(maxlength),bufsize(bufsize),rate(rate)
 {
     this->oldest = 0;
 
@@ -35,7 +35,7 @@ capture_port_c::~capture_port_c()
     free(buf);
 }
 
-void capture_port_c::pushN(int N)
+void capture_port_c::pushN(unsigned long N)
 {
     short *dest;
 
@@ -73,7 +73,7 @@ void capture_port_c::pushN(int N)
     }
 }
 
-void capture_port_c::pullN(int pos,int N)
+void capture_port_c::pullN(unsigned long pos, unsigned long N)
 {
     if((N>bufsize)||(pos>bufsize))
     {

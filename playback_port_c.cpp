@@ -12,13 +12,14 @@
 #include <qdebug.h>
 
 
-playback_port_c::playback_port_c(const int maxlength, const int bufsize, const int trigger, const int channel):maxlength(maxlength),bufsize(bufsize),trigger(trigger),channel(channel)
+playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned long bufsize, const unsigned long trigger, const int channel):maxlength(maxlength),bufsize(bufsize),trigger(trigger),channel(channel)
 {
 
     this->tail = 0;
     this->head = 0;
     this->connected_loops = 0;
 
+    //qDebug()<<maxlength;
 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
@@ -37,7 +38,7 @@ playback_port_c::~playback_port_c()
 
 int playback_port_c::push(short data)
 {
-    int next = this->head+1;
+    unsigned long next = this->head+1;
     if(next>= this->maxlength+1)
         next = 0;
 
@@ -63,7 +64,7 @@ int playback_port_c::pull(short *data)
     }
     *data = this->ringbuf[this->tail];
 
-    int next = this->tail + 1;
+    unsigned long next = this->tail + 1;
 
     if(next >= this->maxlength+1) next = 0;
 
@@ -71,25 +72,29 @@ int playback_port_c::pull(short *data)
 
     if(this->length()<trigger)
         triggerempty();
+
+
+
+
     return 0;
 
 }
 
-int playback_port_c::length()
+unsigned long playback_port_c::length()
 {
     if(this->head>=this->tail) return this->head-this->tail;
     else return this->maxlength-this->tail + this->head + 1;
 
 }
 
-int playback_port_c::freespace()
+unsigned long playback_port_c::freespace()
 {
 
     return this->maxlength-this->length();
 
 }
 
-void playback_port_c::pushN(short *buf_in, int N)
+void playback_port_c::pushN(short *buf_in, unsigned long N)
 {
     short *pt ;
 
@@ -135,7 +140,7 @@ void playback_port_c::pushN(short *buf_in, int N)
 
 }
 
-int playback_port_c::pullN(int N)
+int playback_port_c::pullN(unsigned long N)
 {
 
 /*
@@ -143,11 +148,12 @@ int playback_port_c::pullN(int N)
     return N;*/
 
     short *pt ;
-    int N0=0;
-    if(N > this->length()) {
+    unsigned long N0=0;
+    unsigned long length = this->length();
+    if(N > length) {
         /*qDebug()<<"not enough elements"; */
-        N0 = N - this->length();
-        N = this->length();
+        N0 = N - length;
+        N = length;
     }
 
     if((this->head < this->tail)&&(this->tail+N>this->maxlength))
@@ -187,11 +193,14 @@ int playback_port_c::pullN(int N)
         memset(this->buf+N/*sizeof(short)*/,0,N0*sizeof(short));
     }
 
-    if(this->length()<trigger)
+    if(length<trigger)
     {
         triggerempty();
-
+       /* if (length<THRESHOLD_WARNING)
+             qDebug()<<"almost full";*/
     }
+
+
 
     return N+N0;
 }

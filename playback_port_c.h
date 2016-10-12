@@ -11,31 +11,31 @@ class playback_port_c : public QObject
     Q_OBJECT
 
 public:
-    playback_port_c(const int maxlength,const int bufsize, const int trigger, const int channel);
+    playback_port_c(const unsigned long maxlength,const unsigned long bufsize, const unsigned long trigger, const int channel);
     ~playback_port_c();
 
 
-    int const maxlength;
-    int const bufsize;
-    const int trigger;
+    const unsigned long maxlength;
+    const unsigned long bufsize;
+    const unsigned long trigger;
     int const channel;
 
     short *ringbuf;//big buffer for circular storage
     short *buf;//small buffer for transfert
     short *buffile;//small buffer used to read files;
 
-    int head;
-    int tail;
+    unsigned long head;
+    unsigned long tail;
 
     int data_received;//number of buf sent to the ringbuf by the loops connected to it.
 
     int push(short data);
     int pull(short *data);
     void fill(int channel);
-    int length();
-    int freespace();
-    void pushN(short *buf_in, int N);
-    int pullN(int N);
+    unsigned long length();
+    unsigned long freespace();
+    void pushN(short *buf_in, unsigned long N);
+    int pullN(unsigned long N);
     void triggerempty(void);
     void addloop();
     void removeloop();
