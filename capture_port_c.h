@@ -6,6 +6,24 @@
 #include <sndfile.h>
 #include <alsa/asoundlib.h>
 #include <QMainWindow>
+#include <qthread.h>
+
+class capture_port_c;
+
+
+
+class Consumer:public QThread
+{
+    Q_OBJECT
+
+    void run() Q_DECL_OVERRIDE;
+public:
+    capture_port_c* port;
+
+};
+
+
+
 
 
 class capture_port_c : public QObject
@@ -24,23 +42,25 @@ public:
 
     bool recording;
 
-    short *ringbuf;//big buffer for circular storage
+    short *ringbuf;//large buffer for circular storage
     short *buf;//small buffer for transfert
+    short *buffile;//small buffer for file writing
 
-
-    int oldest;
-
-
+    unsigned long head;
+    unsigned long tail;
+    QThread *writeThread;
+    Consumer *consumer;
 
     void fill(int channel);
-    int length();
     void pushN(unsigned long N);
-    void pullN(unsigned long pos, unsigned long N);
+    int pullN(unsigned long N);
     void openfile(QString filename);
     void closefile();
     void destroyport();
-    void startrecord();
+    void startrecord(QString filename);
     void stoprecord();
+    unsigned long  length();
+    unsigned long  freespace();
 
 };
 

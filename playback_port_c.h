@@ -6,6 +6,13 @@
 #include <QMainWindow>
 
 
+
+
+
+
+
+
+
 class playback_port_c : public QObject
 {
     Q_OBJECT
@@ -28,6 +35,8 @@ public:
     unsigned long tail;
 
     int data_received;//number of buf sent to the ringbuf by the loops connected to it.
+
+
 
     int push(short data);
     int pull(short *data);

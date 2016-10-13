@@ -47,12 +47,12 @@ void MainWindow::ding()
 {
     playback_port_c *pRing = alsa_playback_port_by_num(0);
     loop_c *pLoop2 = new loop_c;
-    pLoop2->init("grosse tec.wav",pRing,15*44100);
+    pLoop2->init("rec.wav",pRing,-1);
 
 
     playback_port_c *pRing2 = alsa_playback_port_by_num(1);
     pLoop2 = new loop_c;
-    pLoop2->init("grosse tec.wav",pRing2,15*44100);
+    pLoop2->init("rec.wav",pRing2,-1);
 
 
 }
@@ -104,6 +104,21 @@ void MainWindow::updateTempo(int tempo)
 }
 
 
+void MainWindow::record(void)
+{
+static bool a = true;
+
+
+alsa_start_capture_record(0,"rec.wav");
+
+if(!a)
+ding();
+
+
+a=!a;
+}
+
+
 
 
 
@@ -123,6 +138,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bconnect,SIGNAL(pressed()),this,SLOT(chooseCard()));
     connect(ui->bclear,SIGNAL(pressed()),this,SLOT(consoleclear()));
     connect(ui->b_ding,SIGNAL(pressed()),this,SLOT(ding()));
+    connect(ui->bRecord,SIGNAL(pressed()),this,SLOT(record()));
 
 
 
@@ -169,8 +185,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
+
+
+
+
+
     alsa_start_playback("hw:1,0", 2, 44100);
-    alsa_start_capture("hw:1,0", 2, 44100);
+    alsa_start_capture("hw:1,1", 2, 44100);
 
 
 

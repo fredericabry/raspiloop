@@ -279,6 +279,8 @@ if ((err = snd_pcm_readn (capture_handle, (void**)capture_buf,capture_frames))!=
 }
 else
 {
+
+
     for(int i = 0;i<capture_channels;i++)
     {
         port[i]->pushN((unsigned long)capture_frames);
@@ -289,16 +291,20 @@ else
 
 }
 
+capture_port_c* alsa_capture_port_by_num(int channel)   {return main_buf_capture[channel];}
+
+
 void alsa_start_capture_record(int channel,QString filename)
 {
-
-
+    capture_port_c *pcap = alsa_capture_port_by_num(channel);
+    pcap->startrecord(filename);
 }
 
 void alsa_stop_capture_record(int channel)
 {
 
-
+    capture_port_c *pcap = alsa_capture_port_by_num(channel);
+    pcap->stoprecord();
 }
 
 void alsa_cleanup_capture()

@@ -10,8 +10,8 @@ loop_c::loop_c()
 
 void loop_c::destroyloop()
 {
-        this->pRing->removeloop();
-        delete this;
+    this->pRing->removeloop();
+    delete this;
 }
 
 
@@ -23,8 +23,16 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
 
     buffile = (short*)malloc(sizeof(short)*NFILE);
     frametoplay = length;
-    if(frametoplay<=0)
+    repeat = false;
+    if(frametoplay==0)
         stop = false;
+    else if(frametoplay<0)
+    {
+        stop = false;
+        repeat = true;
+
+    }
+
     else stop = true;
 
     pRing = pRingBuffer;
@@ -38,8 +46,8 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
 
-      destroyloop();
-      return;
+        destroyloop();
+        return;
     }
 
     int short_mask = SF_FORMAT_PCM_16;
@@ -47,7 +55,7 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
     if(sf_info.format != (SF_FORMAT_WAV|short_mask))
     {
         qDebug()<<"format de fichier incorrect\n";
-         destroyloop();
+        destroyloop();
         return;
     }
     /*
@@ -83,10 +91,10 @@ void loop_c::datarequest(void)
 
     if((nread = sf_readf_short(soundfile,buffile,NFILE))>0)
     {
-       // pRing->pushN(buffile,nread);
+        // pRing->pushN(buffile,nread);
         if(stop)
         {
-          this->frametoplay -= nread;
+            this->frametoplay -= nread;
 
         }
         emit send_data(buffile,nread);
@@ -94,18 +102,33 @@ void loop_c::datarequest(void)
 
     }
 
-    if((nread == 0)||(stop&&(frametoplay<=0)))
+    if(
+            (stop&&(frametoplay<=0))
+            ||(nread == 0))
     {
-        sf_close(soundfile);
-        this->soundfile = NULL;
-        this->destroyloop();
+        if(repeat)
+        {
+        sf_seek(soundfile,0,SFM_READ);
+        }
+
+        else{
+            sf_close(soundfile);
+            this->soundfile = NULL;
+            this->destroyloop();
+        }
     }
+
+
+
 
 }
 
 
-loop_c::~loop_c(void)
-{
-    free(buffile);
+
+
+
+            loop_c::~loop_c(void)
+    {
+            free(buffile);
 
 }

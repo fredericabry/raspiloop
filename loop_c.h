@@ -28,6 +28,7 @@ public:
 
     int frametoplay;
     bool stop;
+    bool repeat;
 
     void init(QString file, playback_port_c *pRingBuffer, int length);
     void destroyloop(void);

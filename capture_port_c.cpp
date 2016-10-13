@@ -15,15 +15,17 @@
 
 capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate):maxlength(maxlength),bufsize(bufsize),rate(rate)
 {
-    this->oldest = 0;
+    this->head = 0;
+    this->tail = 0;
 
 
 
-
-    ringbuf = (short*)malloc((maxlength)*sizeof(short));
+    ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     memset(ringbuf,0,maxlength*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
     memset(buf,0,bufsize*sizeof(short));
+    buffile = (short*)malloc((bufsize)*sizeof(short));
+    memset(buffile,0,bufsize*sizeof(short));
     recording = false;
 
 
@@ -35,74 +37,139 @@ capture_port_c::~capture_port_c()
     free(buf);
 }
 
-void capture_port_c::pushN(unsigned long N)
+
+unsigned long capture_port_c::length()
 {
-    short *dest;
+    if(this->head>=this->tail) return this->head-this->tail;
+    else return this->maxlength-this->tail + this->head + 1;
 
-    if(N>bufsize)
-    {
-        qDebug()<<"capture transfert buffer too small";
-        return;
-
-    }
-
-    if(N>maxlength)
-    {
-        qDebug()<<"capture ring buffer too small";
-        return;
-    }
-
-
-    dest = ringbuf + oldest; //position of the oldest sample in the ringbuffer
-
-    if(oldest + N < maxlength)
-    {
-        memcpy(dest,this->buf,N*sizeof(short));
-        oldest = oldest + N;
-
-        return;
-    }
-    else
-    {
-        int N0 = maxlength - oldest;
-        memcpy(dest,this->buf,N0*sizeof(short));
-        memcpy(ringbuf,this->buf+N0,(N-N0)*sizeof(short));
-        oldest = oldest + N - maxlength;
-
-        return;
-    }
 }
 
-void capture_port_c::pullN(unsigned long pos, unsigned long N)
+unsigned long capture_port_c::freespace()
 {
-    if((N>bufsize)||(pos>bufsize))
-    {
-        qDebug()<<"capture transfert buffer too small";
-        return;
+
+    return this->maxlength-this->length();
+
+}
+
+void capture_port_c::pushN(unsigned long N)
+{
+    short *pt ;
+
+    unsigned long freespace = this->freespace();
+
+
+
+    if(N > freespace)  {
+
+
+       // qDebug()<<"capture ringbuf full";
+        //not enough space, we need to forget N-freespace samples
+
+        this->tail+=(N-freespace );
+
+        while(this->tail>maxlength) this->tail-= maxlength;
+
+
+
 
     }
 
-    if((N>maxlength)||(pos>maxlength))
+    if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct"; return;}
+
+    if(this->head >= this->tail)
     {
-        qDebug()<<"capture ring buffer too small";
-        return;
+        if(N+this->head <= this->maxlength)
+        {
+            pt = this->ringbuf+(this->head)/*sizeof(short)*/;
+            memcpy(pt,this->buf,N*sizeof(short));
+            this->head += N;
+        }
+        else
+        {
+
+            //first let us copy the part that fits
+            int first = this->maxlength+1 - this->head; //maxlength + 1 because of the additionnal value in the buffer
+            pt = this->ringbuf+(this->head)/*sizeof(short)*/;
+            memcpy(pt,this->buf,first*sizeof(short));
+            //then what remains
+            int second = N-first;
+            pt = this->ringbuf;
+            memcpy(pt,this->buf+first/*sizeof(short)*/,second*sizeof(short));
+
+            this->head = second;
+
+        }
+    }
+    else
+    {
+
+        pt = this->ringbuf+(this->head)/*sizeof(short)*/;
+        memcpy(pt,this->buf,N*sizeof(short));
+        this->head += N;
     }
 
 
-    if(pos+N<maxlength)
-    {
+}
 
-        memcpy(buf,ringbuf+pos,N*sizeof(short));
+int capture_port_c::pullN(unsigned long N)
+{
+
+/*
+    memset(buf,0,N*sizeof(short));
+    return N;*/
+
+    short *pt ;
+    unsigned long N0=0;
+    unsigned long length = this->length();
+    if(N > length) {
+        qDebug()<<"not enough elements";
+        N0 = N - length;
+        N = length;
+    }
+
+    if((this->head < this->tail)&&(this->tail+N>this->maxlength))
+    {
+        //first let us copy the part that fits
+        int first = this->maxlength+1 - this->tail; //maxlength + 1 because of the additionnal value in the buffer
+        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        memcpy(this->buffile,pt,first*sizeof(short));
+
+        //then what remains
+        int second = N-first;
+        pt = this->ringbuf;
+
+        memcpy(this->buffile+first/*sizeof(short)*/,pt,second*sizeof(short));
+
+        this->tail = second;
+
+
+
+
 
 
     }
     else
     {
-        int N0 = maxlength-pos;
-        memcpy(buf,ringbuf+pos,N0*sizeof(short));
-        memcpy(buf+N0,ringbuf,(N-N0)*sizeof(short));
+        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        memcpy(this->buffile,pt,N*sizeof(short));
+        this->tail += N;
+
     }
 
+
+
+    if(N0>0)
+    {
+        //not enough elements let's fill in with zeros
+       // memset(this->buffile+N/*sizeof(short)*/,0,N0*sizeof(short));
+    }
+
+
+
+
+
+    return N;
 }
 
 void capture_port_c::destroyport()
@@ -146,14 +213,68 @@ void capture_port_c::closefile()
 
 }
 
-void capture_port_c::startrecord()
+void capture_port_c::startrecord(QString filename)
 {
+    if(recording)
+    {
+        qDebug()<<"recording stopped";
+        recording = false;
+        return;
+    }
+qDebug()<<"start recording";
+    recording = true;
 
+    this->openfile(filename);
+
+
+    consumer = new Consumer();
+    consumer->port = this;
+    consumer->start();
+
+  //  int nread = pullN(511);
+//    if (sf_write_raw (soundfile, buf, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
+
+    //start a consumer to record all the data
 
 }
 
 void capture_port_c::stoprecord()
 {
 
+    recording = false;
+    this->closefile();
+}
+
+void Consumer::run()
+{
+    int nread;
+
+    while(1)
+    {
+    if(!port->recording) {this->exit(0);break;}
+
+
+    if(port->length()>=port->bufsize)
+    {
+        nread = port->pullN(port->bufsize);
+        if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
+
+    }
+
+    /*
+
+    if ((nread = snd_pcm_readi (capture_handle, buf_record, frames_record))<0) {
+        qDebug()<<"read from audio interface failed ";
+        // recover
+        snd_pcm_prepare(capture_handle);
+    } else {
+        if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
+
+
+    */
+
+
+
+    }
 
 }

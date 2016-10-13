@@ -49,6 +49,7 @@ private slots:
     void ding(void);
     void topClick(void);
     void updateTempo(int);
+    void record(void);
 
 signals:
 
