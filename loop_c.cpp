@@ -21,7 +21,7 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
 
     SF_INFO sf_info;
 
-    buffile = (short*)malloc(sizeof(short)*NFILE);
+    buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
     frametoplay = length;
     repeat = false;
     if(frametoplay==0)
@@ -89,7 +89,7 @@ void loop_c::datarequest(void)
 
     int nread;
 
-    if((nread = sf_readf_short(soundfile,buffile,NFILE))>0)
+    if((nread = sf_readf_short(soundfile,buffile,NFILE_PLAYBACK))>0)
     {
         // pRing->pushN(buffile,nread);
         if(stop)
@@ -108,7 +108,7 @@ void loop_c::datarequest(void)
     {
         if(repeat)
         {
-        sf_seek(soundfile,0,SFM_READ);
+            sf_seek(soundfile,0,SFM_READ);
         }
 
         else{
@@ -123,12 +123,8 @@ void loop_c::datarequest(void)
 
 }
 
-
-
-
-
-            loop_c::~loop_c(void)
-    {
-            free(buffile);
+loop_c::~loop_c(void)
+{
+    free(buffile);
 
 }

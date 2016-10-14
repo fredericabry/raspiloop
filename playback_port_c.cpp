@@ -23,7 +23,7 @@ playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned l
 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
-    buffile = (short*)malloc(NFILE*sizeof(short));
+    buffile = (short*)malloc(NFILE_PLAYBACK*sizeof(short));
 
 
 }
@@ -101,7 +101,7 @@ void playback_port_c::pushN(short *buf_in, unsigned long N)
 
 
 
-    if(N > this->freespace())  { qDebug()<<"ringbuf full";return;}
+    if(N > this->freespace())  { qDebug()<<"playback ringbuf full"<<N;return;}
 
     if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct"; return;}
 
@@ -238,7 +238,7 @@ void playback_port_c::data_available(short *buf, int nread)
 
     if(data_received == 1)//first loop
     {
-        memset(buffile,0,NFILE*sizeof(short));
+        memset(buffile,0,NFILE_PLAYBACK*sizeof(short));
         for(int i = 0;i<nread;i++)
         {
             buffile[i]=buf[i]/connected_loops;
@@ -257,12 +257,35 @@ void playback_port_c::data_available(short *buf, int nread)
     {
         data_received = 0;
         //all data has been received, let's push it to the ringbuffer
-        pushN(buffile,NFILE);
+        pushN(buffile,NFILE_PLAYBACK);
 
     }
 
 
 
 
+
+}
+
+
+void ConsumerPlayback::run()
+{
+    int nread;
+
+    while(1)
+    {
+        if(port->freespace()>THRESHOLD)
+        {
+
+        if(nread >0 )
+        {
+          //  if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
+
+          //  if(nread > 256) qDebug()<<nread;
+
+        }
+        }
+        sleep(0.001);
+    }
 
 }

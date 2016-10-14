@@ -4,11 +4,24 @@
 #include <sndfile.h>
 #include <alsa/asoundlib.h>
 #include <QMainWindow>
+#include <qthread.h>
 
 
 
 
+class playback_port_c;
 
+
+
+class ConsumerPlayback:public QThread
+{
+    Q_OBJECT
+
+    void run() Q_DECL_OVERRIDE;
+public:
+    playback_port_c* port;
+
+};
 
 
 

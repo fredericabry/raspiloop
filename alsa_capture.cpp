@@ -182,12 +182,12 @@ void alsa_set_sw_parameters_capture(void)
     }
 
     //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-    err = snd_pcm_sw_params_set_start_threshold(capture_handle, swparams,  CAPTURE_SW_THRESHOLD );
+  /*  err = snd_pcm_sw_params_set_start_threshold(capture_handle, swparams,  CAPTURE_SW_THRESHOLD );
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
         exit(1);
     }
-
+*/
     //when the device buffer data is smaller than this limit, an interrupt is issued
     err = snd_pcm_sw_params_set_avail_min(capture_handle, swparams, CAPTURE_INTERRUPT_THRESHOLD);
     if (err < 0) {
@@ -293,7 +293,6 @@ else
 
 capture_port_c* alsa_capture_port_by_num(int channel)   {return main_buf_capture[channel];}
 
-
 void alsa_start_capture_record(int channel,QString filename)
 {
     capture_port_c *pcap = alsa_capture_port_by_num(channel);
@@ -313,4 +312,11 @@ void alsa_cleanup_capture()
     free(capture_buf);
     free(main_buf_capture);
     //qDebug()<<"cleaning up";
+}
+
+void alsa_monitor_capture(int channel, unsigned long *data)
+{
+
+    *data = alsa_capture_port_by_num(channel)->freespace();
+
 }

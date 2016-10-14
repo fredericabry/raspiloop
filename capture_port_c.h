@@ -61,6 +61,7 @@ public:
     void stoprecord();
     unsigned long  length();
     unsigned long  freespace();
+    void freeN(unsigned long N);
 
 };
 

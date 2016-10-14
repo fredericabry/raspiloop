@@ -24,8 +24,8 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
     memset(ringbuf,0,maxlength*sizeof(short));
     buf = (short*)malloc((bufsize)*sizeof(short));
     memset(buf,0,bufsize*sizeof(short));
-    buffile = (short*)malloc((bufsize)*sizeof(short));
-    memset(buffile,0,bufsize*sizeof(short));
+    buffile = (short*)malloc((NFILE_CAPTURE)*sizeof(short));
+    memset(buffile,0,NFILE_CAPTURE*sizeof(short));
     recording = false;
 
 
@@ -61,14 +61,18 @@ void capture_port_c::pushN(unsigned long N)
 
 
     if(N > freespace)  {
+        if(recording)
+        {
+        qDebug()<<"capture buffer full";
+
+        }
 
 
        // qDebug()<<"capture ringbuf full";
         //not enough space, we need to forget N-freespace samples
 
-        this->tail+=(N-freespace );
+        this->freeN(N-freespace);
 
-        while(this->tail>maxlength) this->tail-= maxlength;
 
 
 
@@ -115,15 +119,12 @@ void capture_port_c::pushN(unsigned long N)
 int capture_port_c::pullN(unsigned long N)
 {
 
-/*
-    memset(buf,0,N*sizeof(short));
-    return N;*/
 
     short *pt ;
     unsigned long N0=0;
     unsigned long length = this->length();
     if(N > length) {
-        qDebug()<<"not enough elements";
+       // qDebug()<<"not enough elements";
         N0 = N - length;
         N = length;
     }
@@ -172,6 +173,15 @@ int capture_port_c::pullN(unsigned long N)
     return N;
 }
 
+void capture_port_c::freeN(unsigned long N)
+{
+    this->tail+=(N);
+
+    while(this->tail>maxlength) this->tail-= maxlength;
+
+
+}
+
 void capture_port_c::destroyport()
 {
     delete this;
@@ -217,11 +227,13 @@ void capture_port_c::startrecord(QString filename)
 {
     if(recording)
     {
-        qDebug()<<"recording stopped";
-        recording = false;
+        qDebug()<<"already recording";
+        //recording = false;
         return;
     }
 qDebug()<<"start recording";
+
+   // freeN(10000);//let's make some room
     recording = true;
 
     this->openfile(filename);
@@ -231,10 +243,6 @@ qDebug()<<"start recording";
     consumer->port = this;
     consumer->start();
 
-  //  int nread = pullN(511);
-//    if (sf_write_raw (soundfile, buf, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
-
-    //start a consumer to record all the data
 
 }
 
@@ -242,7 +250,9 @@ void capture_port_c::stoprecord()
 {
 
     recording = false;
+    qDebug()<<"stop recording";
     this->closefile();
+    consumer->quit();
 }
 
 void Consumer::run()
@@ -254,27 +264,17 @@ void Consumer::run()
     if(!port->recording) {this->exit(0);break;}
 
 
-    if(port->length()>=port->bufsize)
-    {
-        nread = port->pullN(port->bufsize);
-        if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
 
-    }
+        nread = port->pullN(NFILE_CAPTURE);
+        if(nread >0 )
+        {
+            if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
 
-    /*
+          //  if(nread > 256) qDebug()<<nread;
 
-    if ((nread = snd_pcm_readi (capture_handle, buf_record, frames_record))<0) {
-        qDebug()<<"read from audio interface failed ";
-        // recover
-        snd_pcm_prepare(capture_handle);
-    } else {
-        if (sf_write_raw (sf_record, buf_record, sizeof(short)* nread*nbr_chan_record) != sizeof(short)* nread*nbr_chan_record)   qDebug()<< "cannot write sndfile";
+        }
 
-
-    */
-
-
-
+        sleep(0.001);
     }
 
 }

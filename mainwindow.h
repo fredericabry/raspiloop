@@ -46,7 +46,7 @@ private slots:
     void cardchoicerefresh(void);
     void chooseCard(void);
     void consoleclear(void);
-    void ding(void);
+    void play(void);
     void topClick(void);
     void updateTempo(int);
     void record(void);
