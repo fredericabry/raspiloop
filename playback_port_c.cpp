@@ -218,7 +218,7 @@ void playback_port_c::triggerempty(void)
 
    if(wait_for_data)
    {
-debugf("playback "+ n2s(this->channel) + "wait for data");
+//debugf("playback "+ n2s(this->channel) + "wait for data");
        return;
    }
 
@@ -238,7 +238,7 @@ debugf("playback "+ n2s(this->channel) + "wait for data");
    }
 */
 
-debugf("playback "+ n2s(this->channel) + "emit data request");
+//debugf("playback "+ n2s(this->channel) + "emit data request");
 
 
 }
@@ -255,7 +255,7 @@ void playback_port_c::addloop(loop_c *pLoop)
 
         this->pLoops = (loop_c**)malloc(sizeof(loop_c*));
         this->pLoops[0] = pLoop;
-        debugf("playback port #"+ n2s(this->channel) + "add loop #" +n2s(connected_loops));
+        //debugf("playback port #"+ n2s(this->channel) + "add loop #" +n2s(connected_loops));
 
     }
     else
@@ -263,7 +263,7 @@ void playback_port_c::addloop(loop_c *pLoop)
 
         this->pLoops = (loop_c**)realloc(this->pLoops,connected_loops*sizeof(loop_c*));
         this->pLoops[connected_loops-1] = pLoop;
-debugf("playback add loop #" +n2s(connected_loops));
+//debugf("playback add loop #" +n2s(connected_loops));
     }
 
 
@@ -283,7 +283,7 @@ void playback_port_c::removeloop()
     this->pLoops = (loop_c**)realloc(this->pLoops,connected_loops*sizeof(loop_c*));
 
 
-    debugf("playback remove loop #" +n2s(connected_loops+1));
+    //debugf("playback remove loop #" +n2s(connected_loops+1));
     //  qDebug()<<"loop disconnected "<< connected_loops;
 
 }
@@ -320,7 +320,7 @@ void playback_port_c::data_available(short *buf, int nread)
     }
 
 
-     debugf("playback "+n2s(channel)+" - "+n2s(data_received) + " - " + n2s(connected_loops));
+     //debugf("playback "+n2s(channel)+" - "+n2s(data_received) + " - " + n2s(connected_loops));
 
 
     if(data_received >= this->connected_loops)
@@ -339,4 +339,11 @@ void playback_port_c::data_available(short *buf, int nread)
 }
 
 
+void playback_port_c::removeallloops(void)
+{
+
+
+  for(int i = 0;i<connected_loops;i++) this->pLoops[i]->destroyloop();
+
+}
 

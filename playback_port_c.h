@@ -40,7 +40,7 @@ public:
     bool wait_for_data;
 
 
-
+    void removeallloops(void);
 
     int push(short data);
     int pull(short *data);

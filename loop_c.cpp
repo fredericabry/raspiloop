@@ -15,7 +15,7 @@ loop_c::loop_c(const QString id):id(id)
 
 void loop_c::destroyloop()
 {
-    debugf("loop "+id+" destroyed");
+  //  debugf("loop "+id+" destroyed");
     this->pRing->removeloop();
     delete this;
 }
@@ -60,7 +60,7 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
 
-             debugf("loop failed ; cannot open sndfile for output ");
+             //debugf("loop failed ; cannot open sndfile for output ");
 
         destroyloop();
         return;
@@ -110,7 +110,7 @@ void loop_c::datarequest(int frames)
 
     if(frames>NFILE_PLAYBACK) frames = NFILE_PLAYBACK;
 
-debugf(id+" data request received");
+//debugf(id+" data request received");
 
 
 
@@ -124,7 +124,7 @@ debugf(id+" data request received");
         }
         //pRing->data_available(buffile,nread);
         emit send_data(buffile,nread);
-            debugf(id+" loop sends data :" +n2s(nread) + " samples");
+            //debugf(id+" loop sends data :" +n2s(nread) + " samples");
 
 
     }
@@ -147,7 +147,7 @@ debugf(id+" data request received");
 
         emit send_data(buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
         //pRing->data_available(buffile,0);
-            debugf("loop sends data :  0 sample");
+            //debugf("loop sends data :  0 sample");
     }
 
 

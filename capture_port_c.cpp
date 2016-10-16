@@ -271,7 +271,7 @@ void Consumer::run()
         nread = port->pullN(NFILE_CAPTURE);
         if(nread >0 )
         {
-            //debugf("capture write "+n2s(nread)+ " samples");
+
             if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
 
           //  if(nread > 256) qDebug()<<nread;

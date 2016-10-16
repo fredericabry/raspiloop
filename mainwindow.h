@@ -34,6 +34,8 @@ public:
     QFile fdebug;
 
     QTimer *clickTimer;
+    QTimer *stepTimer;
+
 
     void Afficher(QString);
     void AfficherI(int i);
@@ -53,6 +55,7 @@ private slots:
     void topClick(void);
     void updateTempo(int);
     void record(void);
+    void topStep(void);
 
 signals:
 

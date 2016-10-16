@@ -18,7 +18,8 @@
 
 #define CAPTURE_INTERRUPT_THRESHOLD      0//  CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
 
-#define TRIGGER_CAPTURE RINGBUFSIZE_CAPTURE/4   //device starts to capture when ringbuf length > this value
+#define TRIGGER_CAPTURE 3*RINGBUFSIZE_CAPTURE/4   //device starts to capture when ringbuf length > this value
+
 
 void alsa_start_capture(QString device, int channels, int rate);
 bool alsa_open_device_capture(QString device);

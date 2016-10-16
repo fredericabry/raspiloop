@@ -18,6 +18,8 @@
 
 FILE *debugfile;
 
+static loop_c *pLoop0 ;
+static loop_c *pLoop1 ;
 
 playback_port_c *pLeft,*pRight;
 
@@ -105,12 +107,21 @@ void MainWindow::record(void)
     {
         pRec0->stoprecord();
         pRec1->stoprecord();
-        play();
+
+        pLoop0= new loop_c("loop 0");
+        pLoop1= new loop_c("loop 1");
+
+        pLoop0->init("rec0.wav",pLeft,-1);
+        pLoop1->init("rec1.wav",pRight,-1);
+
+
 
     }
     else
     {
 
+        pLeft->removeallloops();
+        pRight->removeallloops();
         pRec0->startrecord("rec0.wav");
         pRec1->startrecord("rec1.wav");
     }
@@ -118,37 +129,34 @@ void MainWindow::record(void)
 }
 void MainWindow::play()
 {
-static bool playing = false;
-static loop_c *pLoop0 ;
-static loop_c *pLoop1 ;
+    static bool playing = false;
 
 
 
-if(!playing)
-{
+
+    if(!playing)
+    {
 
 
-    pLoop0= new loop_c("loop 0");
-    pLoop1= new loop_c("loop 1");
 
 
-    pLoop0->init("rec0.wav",pLeft,-1);
-    pLoop1->init("rec1.wav",pRight,-1);
+        pLoop0->init("rec0.wav",pLeft,-1);
+        pLoop1->init("rec1.wav",pRight,-1);
 
-    ui->bPlay->setText("Stop !");
+        ui->bPlay->setText("Stop !");
 
-}
-else
-{
-    pLoop0->destroyloop();
-    pLoop1->destroyloop();
-    ui->bPlay->setText("Play !");
-
-
-}
+    }
+    else
+    {
+        pLoop0->destroyloop();
+        pLoop1->destroyloop();
+        ui->bPlay->setText("Play !");
 
 
-playing =!playing;
+    }
+
+
+    playing =!playing;
 
 
 }
@@ -161,7 +169,22 @@ playing =!playing;
 void debugf(QString txt)
 {
 
-fprintf(debugfile,"%s\n",txt.toStdString().c_str());
+    fprintf(debugfile,"%s\n",txt.toStdString().c_str());
+
+}
+
+
+
+
+void MainWindow::topStep()
+{
+    static int step =0;
+
+
+step++;
+qDebug()<<"step "<<step;
+record();
+
 
 }
 
@@ -244,11 +267,19 @@ MainWindow::MainWindow(QWidget *parent) :
     pRight = alsa_playback_port_by_num(1);
 
 
+
+
+
     clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
     clickTimer->start(500);
 
 
+    topStep();
+
+    stepTimer = new QTimer(this);
+    connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
+   stepTimer->start(5000);
 
 
 

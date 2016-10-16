@@ -181,7 +181,7 @@ void alsa_set_sw_parameters_capture(void)
         exit(1);
     }
 
-    //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
+    //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound from the device
   /*  err = snd_pcm_sw_params_set_start_threshold(capture_handle, swparams,  CAPTURE_SW_THRESHOLD );
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
