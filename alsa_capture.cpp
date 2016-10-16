@@ -265,6 +265,7 @@ if ((err = snd_pcm_readn (capture_handle, (void**)capture_buf,capture_frames))!=
     {
 
         qDebug()<<"overrun capture";
+          debugf("overrun capture");
         if ((err = snd_pcm_prepare (capture_handle)) < 0) {
             qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
             exit (1);
@@ -279,6 +280,7 @@ if ((err = snd_pcm_readn (capture_handle, (void**)capture_buf,capture_frames))!=
 }
 else
 {
+
 
 
     for(int i = 0;i<capture_channels;i++)

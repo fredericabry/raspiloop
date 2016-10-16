@@ -12,15 +12,15 @@
 #include "playback_port_c.h"
 
 
-
 class loop_c:public QObject
 {
 Q_OBJECT
 
 public:
-    loop_c();
+    loop_c(const QString id);
     ~loop_c();
 
+    const QString id;
 
     SNDFILE *soundfile;
     short *buffile;
@@ -30,11 +30,14 @@ public:
     bool stop;
     bool repeat;
 
+
     void init(QString file, playback_port_c *pRingBuffer, int length);
     void destroyloop(void);
+    void test(QString a);
+
 
     private slots:
-    void datarequest(void);
+    void datarequest(int frames);
 
     signals:
     void send_data(short *buf,int nread);

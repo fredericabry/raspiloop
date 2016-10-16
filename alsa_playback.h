@@ -14,17 +14,17 @@
 
 
 
-#define NFILE_PLAYBACK PLAYBACK_CHANNEL_WIDTH*5 //file reading buffer size
+#define NFILE_PLAYBACK PLAYBACK_CHANNEL_WIDTH*10 //file reading buffer size
 
 
-#define RINGBUFSIZE_PLAYBACK 3000 //size of the playback ringbuffer
+#define RINGBUFSIZE_PLAYBACK 5000 //size of the playback ringbuffer
 #define THRESHOLD RINGBUFSIZE_PLAYBACK/2 //interrupt when length(ringbuffer) < this value
 
 
 
 #define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
-//#define PLAYBACK_SW_THRESHOLD               PLAYBACK_HW_BUFFER_SIZE/8  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-#define PLAYBACK_INTERRUPT_THRESHOLD        PLAYBACK_HW_BUFFER_SIZE/4 //when the device buffer data is smaller than this limit, an interrupt is issued
+#define PLAYBACK_SW_THRESHOLD               PLAYBACK_HW_BUFFER_SIZE/4  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
+#define PLAYBACK_INTERRUPT_THRESHOLD        1*PLAYBACK_HW_BUFFER_SIZE/4 //when the device buffer data is smaller than this limit, an interrupt is issued
 
 
 

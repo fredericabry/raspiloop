@@ -8,20 +8,9 @@
 
 
 
-
-class playback_port_c;
-
+class loop_c;
 
 
-class ConsumerPlayback:public QThread
-{
-    Q_OBJECT
-
-    void run() Q_DECL_OVERRIDE;
-public:
-    playback_port_c* port;
-
-};
 
 
 
@@ -48,6 +37,8 @@ public:
     unsigned long tail;
 
     int data_received;//number of buf sent to the ringbuf by the loops connected to it.
+    bool wait_for_data;
+
 
 
 
@@ -59,14 +50,18 @@ public:
     void pushN(short *buf_in, unsigned long N);
     int pullN(unsigned long N);
     void triggerempty(void);
-    void addloop();
+    void addloop(loop_c *pLoop);
     void removeloop();
 
-private:
-    int connected_loops;//nbr of loops connected to this ringbuffer
+    loop_c **pLoops;
+int connected_loops;//nbr of loops connected to this ringbuffer
+
+
+
+
 
 signals:
-    void signal_trigger(void);
+    void signal_trigger(int frames);
 
 private slots:
     void data_available(short *buf,int nread);

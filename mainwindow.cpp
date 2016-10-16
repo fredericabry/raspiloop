@@ -16,7 +16,7 @@
 #include "playback_port_c.h"
 #include "loop_c.h"
 
-
+FILE *debugfile;
 
 
 playback_port_c *pLeft,*pRight;
@@ -55,8 +55,8 @@ void MainWindow::topClick()
     unsigned long a;
     alsa_monitor_playback(0,&a);
     ui->playback_freespace->display((int)a);
-  //  alsa_monitor_capture(0,&a);
-  //  ui->capture_freespace->display((int)a);
+    alsa_monitor_capture(0,&a);
+    ui->capture_freespace->display((int)a);
     return;
 
     static int x = 0;
@@ -97,7 +97,7 @@ void MainWindow::updateTempo(int tempo)
 
 void MainWindow::record(void)
 {
-    return;
+
 
     pRec0 = alsa_capture_port_by_num(0);
     pRec1 = alsa_capture_port_by_num(1);
@@ -123,12 +123,13 @@ static loop_c *pLoop0 ;
 static loop_c *pLoop1 ;
 
 
+
 if(!playing)
 {
 
 
-    pLoop0= new loop_c;
-    pLoop1= new loop_c;
+    pLoop0= new loop_c("loop 0");
+    pLoop1= new loop_c("loop 1");
 
 
     pLoop0->init("rec0.wav",pLeft,-1);
@@ -157,6 +158,15 @@ playing =!playing;
 
 
 
+void debugf(QString txt)
+{
+
+fprintf(debugfile,"%s\n",txt.toStdString().c_str());
+
+}
+
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -178,8 +188,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     Afficher("Démarrage\n");
 
+    debugfile = fopen("debufile.txt","w");
 
-
+    debugf("Init");
 
     cardchoicerefresh();
 

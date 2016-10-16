@@ -231,7 +231,7 @@ void capture_port_c::startrecord(QString filename)
         //recording = false;
         return;
     }
-qDebug()<<"start recording";
+//qDebug()<<"start recording";
 
    // freeN(10000);//let's make some room
     recording = true;
@@ -250,7 +250,7 @@ void capture_port_c::stoprecord()
 {
 
     recording = false;
-    qDebug()<<"stop recording";
+   //qDebug()<<"stop recording";
     this->closefile();
     consumer->quit();
 }
@@ -264,17 +264,22 @@ void Consumer::run()
     if(!port->recording) {this->exit(0);break;}
 
 
+    if(port->length()<TRIGGER_CAPTURE) {goto end;}
+
+
 
         nread = port->pullN(NFILE_CAPTURE);
         if(nread >0 )
         {
+            //debugf("capture write "+n2s(nread)+ " samples");
             if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
 
           //  if(nread > 256) qDebug()<<nread;
 
         }
 
-        sleep(0.001);
+        end:
+        sleep(0.0002);
     }
 
 }

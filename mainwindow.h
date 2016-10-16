@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <alsa/asoundlib.h>
+#include <qfile.h>
 
+void debugf(QString txt);
 
 
 #define n2s QString::number
@@ -29,6 +31,7 @@ public:
     QStringList OutputCardLongNames;
     QString InputCardName;
     QString OutputCardName;
+    QFile fdebug;
 
     QTimer *clickTimer;
 
