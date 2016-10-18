@@ -146,6 +146,7 @@ void playback_port_c::pushN(short *buf_in, unsigned long N)
 
 int playback_port_c::pullN(unsigned long N)
 {
+    static bool fg_empty = false;
 
     /*
     memset(buf,0,N*sizeof(short));
@@ -194,8 +195,12 @@ int playback_port_c::pullN(unsigned long N)
     if(N0>0)
     {
         //not enough elements let's fill in with zeros
+
+        if(!fg_empty) {fg_empty = true;qDebug()<<"zeros";fg_empty=true;}
+
+
         memset(this->buf+N/*sizeof(short)*/,0,N0*sizeof(short));
-    }
+    }else fg_empty = false;
 
     if(length<trigger)
     {

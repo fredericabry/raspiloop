@@ -62,6 +62,7 @@ public:
     void destroyport();
     void startrecord(QString filename);
     void stoprecord();
+    void empty(void);
     unsigned long  length();
     unsigned long  freespace();
     void freeN(unsigned long N);

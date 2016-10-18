@@ -10,6 +10,7 @@
 #include <QTextStream>
 
 #include <qdebug.h>
+#include <qelapsedtimer.h>
 
 
 
@@ -55,6 +56,15 @@ unsigned long capture_port_c::freespace()
 
 }
 
+void capture_port_c::empty(void)
+{
+
+    ring_lock.lock();
+    tail = head-1;
+    ring_lock.unlock();
+
+}
+
 void capture_port_c::pushN(unsigned long N)
 {
 
@@ -81,11 +91,11 @@ void capture_port_c::pushN(unsigned long N)
 
         this->freeN(N-freespace);
 
-
-
-
-
     }
+
+
+
+
 
     if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct"; ring_lock.unlock(); return;}
 
@@ -135,7 +145,7 @@ int capture_port_c::pullN(unsigned long N)
 
 
 
-    ring_lock.lock();
+
 
     short *pt ;
     unsigned long N0=0;
@@ -143,7 +153,7 @@ int capture_port_c::pullN(unsigned long N)
 
 
     if(N > length) {
-         qDebug()<<"not enough elements";
+         //qDebug()<<"not enough elements";
         N0 = N - length;
         N = length;
     }
@@ -196,7 +206,6 @@ int capture_port_c::pullN(unsigned long N)
 
 
 
-ring_lock.unlock();
     return N;
 }
 
@@ -232,13 +241,34 @@ void capture_port_c::openfile(QString filename)
 
     const char * fn = filename.toStdString().c_str();
 
+
+
+
+    /*
     if ((soundfile = sf_open (fn, SFM_WRITE, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",fn, errstr);
 
         exit (1);
+    }*/
+
+    int cmpt = 0;
+    while ((soundfile = sf_open (fn, SFM_WRITE, &sf_info)) == NULL) {
+        char errstr[256];
+        sf_error_str (0, errstr, sizeof (errstr) - 1);
+        fprintf (stderr, "cannot open sndfile \"%s\" for input (%s)\n",fn, errstr);
+
+        cmpt++;
+
+        qDebug()<<cmpt;
+
+        if(cmpt>100) exit(1);
     }
+
+
+
+
 //debugf("open file");
 
 }
@@ -247,7 +277,7 @@ void capture_port_c::closefile()
 {
     int err;
     if ((err = sf_close(soundfile))) {
-        qDebug()<<"cannot open sndfile  for output error# "<< err;
+        qDebug()<<"cannot close sndfile  for output error# "<< err;
 
         exit (1);
     }
@@ -256,16 +286,19 @@ void capture_port_c::closefile()
 
 void capture_port_c::startrecord(QString filename)
 {
+
+
+
     if(recording)
     {
         qDebug()<<"already recording";
         //recording = false;
         return;
     }
-   // debugf("start record");
-    //qDebug()<<"start recording";
 
- //   tail = head-1;
+
+   empty();
+
 
 
     recording = true;
@@ -284,13 +317,19 @@ void capture_port_c::stoprecord()
 {
     if(!recording) return;
 
+
+    ring_lock.lock();
+    consumer->quit();
+    ring_lock.unlock();
     //debugf("stop record");
 
     recording = false;
     //qDebug()<<"stop recording";
     this->closefile();
 
-    consumer->quit();
+
+
+
 }
 
 void Consumer::run()
@@ -301,7 +340,7 @@ void Consumer::run()
     {
         if(!port->recording) {this->exit(0);break;}
 
-
+        port->ring_lock.lock();
         if(port->length()>TRIGGER_CAPTURE)
         {
 
@@ -315,9 +354,11 @@ void Consumer::run()
                 //  if(nread > 256) qDebug()<<nread;
 
             }
-        }
 
-        QThread::usleep(100);
+
+        }
+        port->ring_lock.unlock();
+        QThread::usleep(500);
 
     }
 

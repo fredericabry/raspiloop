@@ -19,17 +19,26 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
    if( !connect(this,SIGNAL(send_data(short*,int)), pRing, SLOT(data_available(short*, int))))
                    qDebug()<<"connection failed";
 
-    if ((this->soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
-        char errstr[256];
-        sf_error_str (0, errstr, sizeof (errstr) - 1);
-        fprintf (stderr, "cannot open sndfile for output %s\n", errstr);
 
-             //debugf("loop failed ; cannot open sndfile for output ");
 
-        destroyloop();
-        return;
-    }
 
+
+   int cmpt = 0;
+   while ((this->soundfile = sf_open (filename.toStdString().c_str(), SFM_RDWR, &sf_info)) == NULL) {
+       char errstr[256];
+       sf_error_str (0, errstr, sizeof (errstr) - 1);
+       fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",filename.toStdString().c_str(), errstr);
+
+       cmpt++;
+
+       qDebug()<<cmpt;
+
+       if(cmpt>10)
+       {
+           destroyloop();
+           return;
+       }
+   }
 
 
 
@@ -89,6 +98,15 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 void loop_c::destroyloop()
 {
   //  debugf("loop "+id+" destroyed");
+    sf_close(soundfile);
+
+    if(!disconnect(pRing,SIGNAL(signal_trigger(int)), this, SLOT(datarequest(int))))
+        qDebug()<<"disconnection failed";
+
+   if( !disconnect(this,SIGNAL(send_data(short*,int)), pRing, SLOT(data_available(short*, int))))
+                   qDebug()<<"disconnection failed";
+
+
     this->pRing->removeloop();
     delete this;
 }
@@ -114,9 +132,9 @@ void loop_c::datarequest(int frames)
 
     if(frames>NFILE_PLAYBACK) frames = NFILE_PLAYBACK;
 
-//debugf(id+" data request received");
+//qDebug()<<id<<" data request received";
 
-
+    sf_read_short(soundfile,buffile,0) ;
 
     if((nread = sf_readf_short(soundfile,buffile,frames))>0)
     {
@@ -143,8 +161,7 @@ void loop_c::datarequest(int frames)
         }
 
         else{
-            sf_close(soundfile);
-            this->soundfile = NULL;
+
             this->destroyloop();
 
         }
