@@ -20,6 +20,10 @@ FILE *debugfile;
 
 static loop_c *pLoop0 ;
 static loop_c *pLoop1 ;
+static loop_c *pLoop2 ;
+static loop_c *pLoop3 ;
+
+
 
 playback_port_c *pLeft,*pRight;
 
@@ -100,63 +104,88 @@ void MainWindow::updateTempo(int tempo)
 void MainWindow::record(void)
 {
 
-
-    pRec0 = alsa_capture_port_by_num(0);
-    pRec1 = alsa_capture_port_by_num(1);
-    if(pRec0->recording)
-    {
-        pRec0->stoprecord();
-        pRec1->stoprecord();
-
-        pLoop0= new loop_c("loop 0");
-        pLoop1= new loop_c("loop 1");
-
-        pLoop0->init("rec0.wav",pLeft,-1);
-        pLoop1->init("rec1.wav",pRight,-1);
+static bool record = false;
 
 
 
-    }
+
+   pRec0 = alsa_capture_port_by_num(0);
+   pRec1 = alsa_capture_port_by_num(1);
+
+
+
+   if(record)
+   {
+       pRec0->stoprecord();
+       pRec1->stoprecord();
+       record = false;
+
+
+   }
+
     else
-    {
 
-        pLeft->removeallloops();
-        pRight->removeallloops();
-        pRec0->startrecord("rec0.wav");
-        pRec1->startrecord("rec1.wav");
-    }
+   {
+
+    pRec0->startrecord("rec0.wav");
+    pRec1->startrecord("rec1.wav");
+    record = true;
+   }
+
+
+
+
 
 }
+
+
+
+
+
 void MainWindow::play()
 {
-    static bool playing = false;
+
+    static bool test = true;
+    pRec0 = alsa_capture_port_by_num(0);
+    pRec1 = alsa_capture_port_by_num(1);
+
+        if(test)
+        {
+
+
+            pRec0->stoprecord();
+            pRec1->stoprecord();
+            pRec0->startrecord("rec0_2.wav");
+            pRec1->startrecord("rec1_2.wav");
+            pLoop2->destroyloop();
+            pLoop3->destroyloop();
+            pLoop0= new loop_c("loop 0","rec0.wav",pLeft,-1);
+            pLoop1= new loop_c("loop 1","rec1.wav",pRight,-1);
 
 
 
 
-    if(!playing)
-    {
 
 
 
+        }
+        else
+        {
 
-        pLoop0->init("rec0.wav",pLeft,-1);
-        pLoop1->init("rec1.wav",pRight,-1);
-
-        ui->bPlay->setText("Stop !");
-
-    }
-    else
-    {
-        pLoop0->destroyloop();
-        pLoop1->destroyloop();
-        ui->bPlay->setText("Play !");
-
-
-    }
+            pRec0->stoprecord();
+            pRec1->stoprecord();
+            pRec0->startrecord("rec0.wav");
+            pRec1->startrecord("rec1.wav");
+            pLoop0->destroyloop();
+           pLoop1->destroyloop();
+            pLoop2= new loop_c("loop 0","rec0_2.wav",pLeft,-1);
+            pLoop3= new loop_c("loop 1","rec1_2.wav",pRight,-1);
 
 
-    playing =!playing;
+        }
+
+
+        test = !test;
 
 
 }
@@ -182,8 +211,8 @@ void MainWindow::topStep()
 
 
 step++;
-qDebug()<<"step "<<step;
-record();
+//qDebug()<<"step "<<step;
+play();
 
 
 }
@@ -253,22 +282,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
-
-
-
-
     alsa_start_playback("hw:1,0", 2, 44100);
     alsa_start_capture("hw:1,1", 2, 44100);
 
+
+
+    QThread::sleep(0.5);
 
     pLeft = alsa_playback_port_by_num(0);
     pRight = alsa_playback_port_by_num(1);
 
 
 
-
+   pLoop2= new loop_c("loop 0","rec0.wav",pLeft,-1);
+   pLoop3= new loop_c("loop 1","rec1.wav",pRight,-1);
 
     clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
@@ -279,8 +306,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
-   stepTimer->start(5000);
-
+   stepTimer->start(1000);
 
 
 }

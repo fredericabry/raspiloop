@@ -7,47 +7,11 @@
 
 
 
-loop_c::loop_c(const QString id):id(id)
+loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2, int length):id(id),filename(filename)
 {
 
-}
-
-
-void loop_c::destroyloop()
-{
-  //  debugf("loop "+id+" destroyed");
-    this->pRing->removeloop();
-    delete this;
-}
-
-
-void loop_c::test(QString c)
-{
-    qDebug()<<c;
-
-}
-
-void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
-{
-
-    SF_INFO sf_info;
-
-    buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
-    frametoplay = length;
-    repeat = false;
-    if(frametoplay==0)
-        stop = false;
-    else if(frametoplay<0)
-    {
-        stop = false;
-        repeat = true;
-
-    }
-
-    else stop = true;
-
-    pRing = pRingBuffer;
-
+    pRing = pRing2;
+        SF_INFO sf_info;
 
     if(!connect(pRing,SIGNAL(signal_trigger(int)), this, SLOT(datarequest(int))))
         qDebug()<<"connection failed";
@@ -65,6 +29,29 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
         destroyloop();
         return;
     }
+
+
+
+
+
+
+
+    buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
+    frametoplay = length;
+    repeat = false;
+    if(frametoplay==0)
+        stop = false;
+    else if(frametoplay<0)
+    {
+        stop = false;
+        repeat = true;
+
+    }
+
+    else stop = true;
+
+
+
 
     int short_mask = SF_FORMAT_PCM_16;
 
@@ -92,11 +79,28 @@ void loop_c::init(QString filename,playback_port_c *pRingBuffer,int length)
 
 
 
-   this->pRing->addloop(this);
+   pRing->addloop(this);
 
 
 
 }
+
+
+void loop_c::destroyloop()
+{
+  //  debugf("loop "+id+" destroyed");
+    this->pRing->removeloop();
+    delete this;
+}
+
+
+void loop_c::test(QString c)
+{
+    qDebug()<<c;
+
+}
+
+
 
 
 void loop_c::datarequest(int frames)
@@ -116,7 +120,7 @@ void loop_c::datarequest(int frames)
 
     if((nread = sf_readf_short(soundfile,buffile,frames))>0)
     {
-        // pRing->pushN(buffile,nread);
+
         if(stop)
         {
             this->frametoplay -= nread;

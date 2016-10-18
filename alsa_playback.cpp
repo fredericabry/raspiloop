@@ -10,7 +10,7 @@
 
 #include <qdebug.h>
 
-
+#include "poll.h"
 
 
 
@@ -185,6 +185,14 @@ void alsa_set_hw_parameters_playback(void)
 
 }
 
+
+
+
+
+
+
+
+
 void alsa_set_sw_parameters_playback(void)
 {
     int err;
@@ -268,7 +276,7 @@ void alsa_write_playback(playback_port_c **port)
         {
 
             qDebug()<<"underrun playback " ;
-                 debugf("underrun playback");
+
             if ((err = snd_pcm_prepare (playback_handle)) < 0) {
                 qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
                 exit (1);
@@ -295,6 +303,9 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
 
     avail = snd_pcm_avail_update(playback_handle);
 
+
+
+
     while(avail >= playback_frames)
     {
         alsa_write_playback(port);
@@ -315,6 +326,7 @@ void alsa_conf(void)
 
 playback_port_c* alsa_playback_port_by_num(int channel)
 {
+
 
     return main_buf_playback[channel];
 }

@@ -28,11 +28,14 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
     memset(buffile,0,NFILE_CAPTURE*sizeof(short));
     recording = false;
 
+    ring_lock.unlock();
+
 
 }
 
 capture_port_c::~capture_port_c()
 {
+    consumer->exit(0);
     free(ringbuf);
     free(buf);
 }
@@ -54,6 +57,11 @@ unsigned long capture_port_c::freespace()
 
 void capture_port_c::pushN(unsigned long N)
 {
+
+    ring_lock.lock();
+
+
+
     short *pt ;
 
     unsigned long freespace = this->freespace();
@@ -63,12 +71,12 @@ void capture_port_c::pushN(unsigned long N)
     if(N > freespace)  {
         if(recording)
         {
-        qDebug()<<"capture buffer full";
+            qDebug()<<"capture buffer full";
 
         }
 
 
-       // qDebug()<<"capture ringbuf full";
+        // qDebug()<<"capture ringbuf full";
         //not enough space, we need to forget N-freespace samples
 
         this->freeN(N-freespace);
@@ -79,13 +87,14 @@ void capture_port_c::pushN(unsigned long N)
 
     }
 
-    if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct"; return;}
+    if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct"; ring_lock.unlock(); return;}
 
     if(this->head >= this->tail)
     {
         if(N+this->head <= this->maxlength)
         {
             pt = this->ringbuf+(this->head)/*sizeof(short)*/;
+               //    qDebug()<<"5"<<" ; "<<this->tail<<" ; "<<this->head<<" ; "<<length()<<" ; "<<N;
             memcpy(pt,this->buf,N*sizeof(short));
             this->head += N;
         }
@@ -109,22 +118,32 @@ void capture_port_c::pushN(unsigned long N)
     {
 
         pt = this->ringbuf+(this->head)/*sizeof(short)*/;
+               //qDebug()<<"4"<<" ; "<<this->tail<<" ; "<<this->head<<" ; "<<length()<<" ; "<<N;
         memcpy(pt,this->buf,N*sizeof(short));
         this->head += N;
     }
 
 
+     if(head > maxlength) qDebug()<<"err 3";
+
+
+    ring_lock.unlock();
 }
 
 int capture_port_c::pullN(unsigned long N)
 {
 
 
+
+    ring_lock.lock();
+
     short *pt ;
     unsigned long N0=0;
     unsigned long length = this->length();
+
+
     if(N > length) {
-       // qDebug()<<"not enough elements";
+         qDebug()<<"not enough elements";
         N0 = N - length;
         N = length;
     }
@@ -134,17 +153,19 @@ int capture_port_c::pullN(unsigned long N)
         //first let us copy the part that fits
         int first = this->maxlength+1 - this->tail; //maxlength + 1 because of the additionnal value in the buffer
         pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+
+       //qDebug()<<"1"<<" ; "<<this->tail<<" ; "<<this->head<<" ; "<<length<<" ; "<<N;
         memcpy(this->buffile,pt,first*sizeof(short));
 
         //then what remains
         int second = N-first;
         pt = this->ringbuf;
-
+       //qDebug()<<"2"<<" ; "<<this->tail<<" ; "<<this->head<<" ; "<<length<<" ; "<<N;
         memcpy(this->buffile+first/*sizeof(short)*/,pt,second*sizeof(short));
 
         this->tail = second;
 
-
+        if(tail > maxlength) qDebug()<<"err 1";
 
 
 
@@ -153,8 +174,14 @@ int capture_port_c::pullN(unsigned long N)
     else
     {
         pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        //qDebug()<<"3"<<" ; "<<this->tail<<" ; "<<this->head<<" ; "<<length<<" ; "<<N;
         memcpy(this->buffile,pt,N*sizeof(short));
+
+         if(tail+N > maxlength) qDebug()<<"err 2"<<" ; "<<this->tail<<" ; "<<this->head<<" ; "<<length<<" ; "<<this->length()<<" ; "<<N;
+
         this->tail += N;
+
+
 
     }
 
@@ -163,18 +190,20 @@ int capture_port_c::pullN(unsigned long N)
     if(N0>0)
     {
         //not enough elements let's fill in with zeros
-       // memset(this->buffile+N/*sizeof(short)*/,0,N0*sizeof(short));
+        // memset(this->buffile+N/*sizeof(short)*/,0,N0*sizeof(short));
     }
 
 
 
 
-
+ring_lock.unlock();
     return N;
 }
 
 void capture_port_c::freeN(unsigned long N)
 {
+    if(length()<N) N = length();
+
     this->tail+=(N);
 
     while(this->tail>maxlength) this->tail-= maxlength;
@@ -201,14 +230,16 @@ void capture_port_c::openfile(QString filename)
 
     sf_info.format = SF_FORMAT_WAV|short_mask;
 
-    if ((soundfile = sf_open (filename.toStdString().c_str(), SFM_WRITE, &sf_info)) == NULL) {
+    const char * fn = filename.toStdString().c_str();
+
+    if ((soundfile = sf_open (fn, SFM_WRITE, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
-        fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n", "test.wav", errstr);
+        fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",fn, errstr);
 
         exit (1);
     }
-
+//debugf("open file");
 
 }
 
@@ -231,9 +262,12 @@ void capture_port_c::startrecord(QString filename)
         //recording = false;
         return;
     }
-//qDebug()<<"start recording";
+   // debugf("start record");
+    //qDebug()<<"start recording";
 
-   // freeN(10000);//let's make some room
+ //   tail = head-1;
+
+
     recording = true;
 
     this->openfile(filename);
@@ -248,10 +282,14 @@ void capture_port_c::startrecord(QString filename)
 
 void capture_port_c::stoprecord()
 {
+    if(!recording) return;
+
+    //debugf("stop record");
 
     recording = false;
-   //qDebug()<<"stop recording";
+    //qDebug()<<"stop recording";
     this->closefile();
+
     consumer->quit();
 }
 
@@ -261,25 +299,26 @@ void Consumer::run()
 
     while(1)
     {
-    if(!port->recording) {this->exit(0);break;}
+        if(!port->recording) {this->exit(0);break;}
 
 
-    if(port->length()<TRIGGER_CAPTURE) {goto end;}
-
-
-
-        nread = port->pullN(NFILE_CAPTURE);
-        if(nread >0 )
+        if(port->length()>TRIGGER_CAPTURE)
         {
 
-            if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
 
-          //  if(nread > 256) qDebug()<<nread;
+            nread = port->pullN(NFILE_CAPTURE);
+            if(nread >0 )
+            {
 
+                if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
+                //debugf("write record"+n2s(nread));
+                //  if(nread > 256) qDebug()<<nread;
+
+            }
         }
 
-        end:
-        sleep(0.0002);
+        QThread::usleep(100);
+
     }
 
 }

@@ -53,7 +53,7 @@ public:
     void addloop(loop_c *pLoop);
     void removeloop();
 
-    loop_c **pLoops;
+   // loop_c **pLoops;
 int connected_loops;//nbr of loops connected to this ringbuffer
 
 

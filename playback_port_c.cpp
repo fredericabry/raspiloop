@@ -37,7 +37,7 @@ playback_port_c::~playback_port_c()
     free(ringbuf);
     free(buf);
     free(buffile);
-    free(pLoops);
+    //free(pLoops);
 }
 
 int playback_port_c::push(short data)
@@ -245,11 +245,14 @@ void playback_port_c::triggerempty(void)
 
 void playback_port_c::addloop(loop_c *pLoop)
 {
+
     this->connected_loops++;
 
     this->wait_for_data = false;
 
+    if(connected_loops <= 0) {qDebug()<<"err";return;}
 
+    /*
     if(connected_loops == 1)
     {
 
@@ -266,12 +269,9 @@ void playback_port_c::addloop(loop_c *pLoop)
 //debugf("playback add loop #" +n2s(connected_loops));
     }
 
+*/
 
 
-
-   // qDebug()<<connected_loops;
-    //for(int i = 0;i<connected_loops;i++) this->pLoops[i]->test("a");
-    //qDebug()<<"new loop connection to channel #"<<channel<<" total connections "<< connected_loops;
 
 }
 
@@ -280,8 +280,9 @@ void playback_port_c::removeloop()
     this->connected_loops--;
 
 
+    /*if (connected_loops >0)
     this->pLoops = (loop_c**)realloc(this->pLoops,connected_loops*sizeof(loop_c*));
-
+*/
 
     //debugf("playback remove loop #" +n2s(connected_loops+1));
     //  qDebug()<<"loop disconnected "<< connected_loops;
@@ -343,7 +344,7 @@ void playback_port_c::removeallloops(void)
 {
 
 
-  for(int i = 0;i<connected_loops;i++) this->pLoops[i]->destroyloop();
+  //for(int i = 0;i<connected_loops;i++) this->pLoops[i]->destroyloop();
 
 }
 

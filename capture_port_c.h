@@ -7,6 +7,7 @@
 #include <alsa/asoundlib.h>
 #include <QMainWindow>
 #include <qthread.h>
+#include <qmutex.h>
 
 class capture_port_c;
 
@@ -21,6 +22,8 @@ public:
     capture_port_c* port;
 
 };
+
+
 
 
 
@@ -62,6 +65,7 @@ public:
     unsigned long  length();
     unsigned long  freespace();
     void freeN(unsigned long N);
+    QMutex ring_lock;
 
 };
 

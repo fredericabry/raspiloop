@@ -17,21 +17,23 @@ class loop_c:public QObject
 Q_OBJECT
 
 public:
-    loop_c(const QString id);
+    loop_c(const QString id,const QString filename, playback_port_c *pRing, int length);
     ~loop_c();
 
     const QString id;
+    const QString filename;
+    playback_port_c *pRing;
 
     SNDFILE *soundfile;
     short *buffile;
-    playback_port_c *pRing;
+
 
     int frametoplay;
     bool stop;
     bool repeat;
 
 
-    void init(QString file, playback_port_c *pRingBuffer, int length);
+
     void destroyloop(void);
     void test(QString a);
 

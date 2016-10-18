@@ -13,12 +13,14 @@
 
 #define CAPTURE_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
 #define CAPTURE_HW_BUFFER_SIZE 4*CAPTURE_CHANNEL_WIDTH //alsa capture buffer size for ONE channel
-#define RINGBUFSIZE_CAPTURE 10000 //size of the capture ringbuffer
-#define NFILE_CAPTURE RINGBUFSIZE_CAPTURE/5//file writting buffer size
+#define RINGBUFSIZE_CAPTURE 4000 //size of the capture ringbuffer
+#define NFILE_CAPTURE RINGBUFSIZE_CAPTURE/8//file writting buffer size
 
-#define CAPTURE_INTERRUPT_THRESHOLD      0//  CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
+#define CAPTURE_INTERRUPT_THRESHOLD        0.1*CAPTURE_HW_BUFFER_SIZE //when the device buffer data is bigger than this limit, an interrupt is issued
 
-#define TRIGGER_CAPTURE 3*RINGBUFSIZE_CAPTURE/4   //device starts to capture when ringbuf length > this value
+#define TRIGGER_CAPTURE RINGBUFSIZE_CAPTURE/4   //device starts to stream to file when ringbuf length > this value
+
+#define CAPTURE_SW_THRESHOLD               1  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
 
 
 void alsa_start_capture(QString device, int channels, int rate);

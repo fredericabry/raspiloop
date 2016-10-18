@@ -182,12 +182,12 @@ void alsa_set_sw_parameters_capture(void)
     }
 
     //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound from the device
-  /*  err = snd_pcm_sw_params_set_start_threshold(capture_handle, swparams,  CAPTURE_SW_THRESHOLD );
+    err = snd_pcm_sw_params_set_start_threshold(capture_handle, swparams,  CAPTURE_SW_THRESHOLD );
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
         exit(1);
     }
-*/
+
     //when the device buffer data is smaller than this limit, an interrupt is issued
     err = snd_pcm_sw_params_set_avail_min(capture_handle, swparams, CAPTURE_INTERRUPT_THRESHOLD);
     if (err < 0) {
@@ -253,42 +253,39 @@ void alsa_async_callback_capture(snd_async_handler_t *ahandler)
 
 void alsa_read_capture(capture_port_c **port)
 {
+
+
     int err;
 
+    if ((err = snd_pcm_readn (capture_handle, (void**)capture_buf,capture_frames))!=(snd_pcm_sframes_t)capture_frames) {
+        if(err == -EPIPE)
+        {
 
+            qDebug()<<"overrun capture";
 
-
-
-
-if ((err = snd_pcm_readn (capture_handle, (void**)capture_buf,capture_frames))!=(snd_pcm_sframes_t)capture_frames) {
-    if(err == -EPIPE)
-    {
-
-        qDebug()<<"overrun capture";
-          debugf("overrun capture");
-        if ((err = snd_pcm_prepare (capture_handle)) < 0) {
-            qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
-            exit (1);
+            if ((err = snd_pcm_prepare (capture_handle)) < 0) {
+                qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
+                exit (1);
+            }
+        }
+        else
+        {
+            qDebug()<<"play on audio interface failed ";
+            qDebug()<<err;
+            exit(0);
         }
     }
     else
     {
-        qDebug()<<"play on audio interface failed ";
-        qDebug()<<err;
-        exit(0);
+
+
+
+        for(int i = 0;i<capture_channels;i++)
+        {
+            port[i]->pushN((unsigned long)capture_frames);
+
+        }
     }
-}
-else
-{
-
-
-
-    for(int i = 0;i<capture_channels;i++)
-    {
-        port[i]->pushN((unsigned long)capture_frames);
-
-    }
-}
 
 
 }
