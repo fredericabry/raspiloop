@@ -7,7 +7,11 @@
 #include "playback_port_c.h"
 #include "loop_c.h"
 
-
+#include <sndfile.h>
+#include <alsa/asoundlib.h>
+#include <QMainWindow>
+#include <qthread.h>
+#include <qmutex.h>
 
 #define PLAYBACK_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
 
@@ -23,8 +27,20 @@
 
 
 #define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
-#define PLAYBACK_SW_THRESHOLD               PLAYBACK_HW_BUFFER_SIZE/4  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-#define PLAYBACK_INTERRUPT_THRESHOLD        1*PLAYBACK_HW_BUFFER_SIZE/4 //when the device buffer data is smaller than this limit, an interrupt is issued
+#define PLAYBACK_SW_THRESHOLD               PLAYBACK_HW_BUFFER_SIZE*0.8  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
+#define PLAYBACK_INTERRUPT_THRESHOLD        PLAYBACK_CHANNEL_WIDTH //when the device buffer data is smaller than this limit, an interrupt is issued
+
+
+
+class ConsumerPlayback:public QThread
+{
+    Q_OBJECT
+
+    void run() Q_DECL_OVERRIDE;
+
+ public:
+    playback_port_c **port;
+};
 
 
 
@@ -42,5 +58,7 @@ void alsa_conf(void);
 void alsa_cleanup_playback(void);
 playback_port_c* alsa_playback_port_by_num(int channel);
 void alsa_monitor_playback(int channel,unsigned long *data);
+
+void write_and_poll_loop(playback_port_c **port);
 
 #endif // ALSA_PLAYBACK_H

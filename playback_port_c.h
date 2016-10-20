@@ -5,10 +5,11 @@
 #include <alsa/asoundlib.h>
 #include <QMainWindow>
 #include <qthread.h>
-
+#include <qmutex.h>
 
 
 class loop_c;
+
 
 
 
@@ -56,8 +57,7 @@ public:
    // loop_c **pLoops;
 int connected_loops;//nbr of loops connected to this ringbuffer
 
-
-
+    QMutex ring_lock;
 
 
 signals:

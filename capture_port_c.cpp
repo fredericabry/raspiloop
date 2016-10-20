@@ -14,12 +14,12 @@
 
 
 
-capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate):maxlength(maxlength),bufsize(bufsize),rate(rate)
+capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int id):maxlength(maxlength),bufsize(bufsize),rate(rate),id(id)
 {
     this->head = 0;
     this->tail = 0;
 
-
+ring_lock.lock();
 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     memset(ringbuf,0,maxlength*sizeof(short));
@@ -36,6 +36,7 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
 
 capture_port_c::~capture_port_c()
 {
+    ring_lock.lock();
     consumer->exit(0);
     free(ringbuf);
     free(buf);
@@ -44,6 +45,7 @@ capture_port_c::~capture_port_c()
 
 unsigned long capture_port_c::length()
 {
+
     if(this->head>=this->tail) return this->head-this->tail;
     else return this->maxlength-this->tail + this->head + 1;
 
@@ -51,6 +53,7 @@ unsigned long capture_port_c::length()
 
 unsigned long capture_port_c::freespace()
 {
+
 
     return this->maxlength-this->length();
 
@@ -211,6 +214,7 @@ int capture_port_c::pullN(unsigned long N)
 
 void capture_port_c::freeN(unsigned long N)
 {
+
     if(length()<N) N = length();
 
     this->tail+=(N);
@@ -288,20 +292,23 @@ void capture_port_c::startrecord(QString filename)
 {
 
 
-
+//qDebug()<<id<<"-start record 1";
     if(recording)
     {
         qDebug()<<"already recording";
-        //recording = false;
-        return;
+         return;
     }
 
 
-   empty();
-
+      ring_lock.lock();
+      freeN(0);
+      ring_lock.unlock();
 
 
     recording = true;
+
+
+
 
     this->openfile(filename);
 
@@ -309,25 +316,29 @@ void capture_port_c::startrecord(QString filename)
     consumer = new Consumer();
     consumer->port = this;
     consumer->start();
-
+//qDebug()<<id<<"-start record 2";
 
 }
 
 void capture_port_c::stoprecord()
 {
+//qDebug()<<id<<"-stop record 1";
     if(!recording) return;
 
 
-    ring_lock.lock();
-    consumer->quit();
-    ring_lock.unlock();
-    //debugf("stop record");
 
-    recording = false;
+//qDebug()<<id<<"-stop record 2";
+
+    consumer->quit();
+
+
+//qDebug()<<id<<"-stop record 3";
+
+
     //qDebug()<<"stop recording";
     this->closefile();
-
-
+recording = false;
+//qDebug()<<id<<"-stop record 4";
 
 
 }
@@ -336,9 +347,9 @@ void Consumer::run()
 {
     int nread;
 
-    while(1)
+    while(port->recording)
     {
-        if(!port->recording) {this->exit(0);break;}
+
 
         port->ring_lock.lock();
         if(port->length()>TRIGGER_CAPTURE)
@@ -348,7 +359,7 @@ void Consumer::run()
             nread = port->pullN(NFILE_CAPTURE);
             if(nread >0 )
             {
-
+              //  qDebug()<<port->id<<"-consumer";
                 if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
                 //debugf("write record"+n2s(nread));
                 //  if(nread > 256) qDebug()<<nread;
@@ -358,6 +369,7 @@ void Consumer::run()
 
         }
         port->ring_lock.unlock();
+
         QThread::usleep(500);
 
     }

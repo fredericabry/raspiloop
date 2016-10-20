@@ -10,6 +10,9 @@
 loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2, int length):id(id),filename(filename)
 {
 
+
+      //     qDebug()<<"created 0 "<<id;
+
     pRing = pRing2;
         SF_INFO sf_info;
 
@@ -21,6 +24,7 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 
 
 
+  // qDebug()<<"created 1 "<<id;
 
 
    int cmpt = 0;
@@ -41,12 +45,13 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
    }
 
 
+  // qDebug()<<"created 2 "<<id;
 
 
 
 
     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
-    frametoplay = length;
+    frametoplay = (length*441)/10;
     repeat = false;
     if(frametoplay==0)
         stop = false;
@@ -60,6 +65,7 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
     else stop = true;
 
 
+    //qDebug()<<"created 3 "<<id;
 
 
     int short_mask = SF_FORMAT_PCM_16;
@@ -87,8 +93,13 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 
 
 
+   // qDebug()<<"created 4 "<<id;
 
    pRing->addloop(this);
+
+
+   //qDebug()<<"created 5 "<<id;
+
 
 
 
@@ -98,6 +109,9 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 void loop_c::destroyloop()
 {
   //  debugf("loop "+id+" destroyed");
+  //  qDebug()<<"loop destroyed "<<id;
+
+
     sf_close(soundfile);
 
     if(!disconnect(pRing,SIGNAL(signal_trigger(int)), this, SLOT(datarequest(int))))
@@ -125,7 +139,7 @@ void loop_c::datarequest(int frames)
 {
     //the associated ringbuffer request more data
 
-
+   // qDebug()<<"data request "<<id;
 
     int nread;
 
@@ -146,13 +160,13 @@ void loop_c::datarequest(int frames)
         }
         //pRing->data_available(buffile,nread);
         emit send_data(buffile,nread);
-            //debugf(id+" loop sends data :" +n2s(nread) + " samples");
+        //debugf(id+" loop sends data :" +n2s(nread) + " samples");
 
 
     }
 
     if(            (stop&&(frametoplay<=0))
-                   ||(nread == 0))
+                   ||(nread <= 0))
     {
         if(repeat)
         {
@@ -168,7 +182,7 @@ void loop_c::datarequest(int frames)
 
         emit send_data(buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
         //pRing->data_available(buffile,0);
-            //debugf("loop sends data :  0 sample");
+        //debugf("loop sends data :  0 sample");
     }
 
 

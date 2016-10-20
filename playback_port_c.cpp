@@ -29,6 +29,8 @@ playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned l
     data_received = 0;
 
 
+
+
 }
 
 playback_port_c::~playback_port_c()
@@ -101,13 +103,13 @@ unsigned long playback_port_c::freespace()
 void playback_port_c::pushN(short *buf_in, unsigned long N)
 {
     short *pt ;
+ring_lock.lock();
 
 
 
+    if(N > this->freespace())  { qDebug()<<"playback ringbuf full"<<N;ring_lock.unlock();return;}
 
-    if(N > this->freespace())  { qDebug()<<"playback ringbuf full"<<N;return;}
-
-    if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct"; return;}
+    if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct";ring_lock.unlock(); return;}
 
     if(this->head >= this->tail)
     {
@@ -140,12 +142,14 @@ void playback_port_c::pushN(short *buf_in, unsigned long N)
         memcpy(pt,buf_in,N*sizeof(short));
         this->head += N;
     }
-
+ring_lock.unlock();
 
 }
 
 int playback_port_c::pullN(unsigned long N)
 {
+
+    ring_lock.lock();
     static bool fg_empty = false;
 
     /*
@@ -180,7 +184,6 @@ int playback_port_c::pullN(unsigned long N)
 
 
 
-
     }
     else
     {
@@ -196,7 +199,7 @@ int playback_port_c::pullN(unsigned long N)
     {
         //not enough elements let's fill in with zeros
 
-        if(!fg_empty) {fg_empty = true;qDebug()<<"zeros";fg_empty=true;}
+        if(!fg_empty) {fg_empty = true;/*qDebug()<<"zeros";*/fg_empty=true;}
 
 
         memset(this->buf+N/*sizeof(short)*/,0,N0*sizeof(short));
@@ -209,7 +212,7 @@ int playback_port_c::pullN(unsigned long N)
              qDebug()<<"almost full";*/
     }
 
-
+ring_lock.unlock();
 
     return N+N0;
 }
@@ -352,4 +355,6 @@ void playback_port_c::removeallloops(void)
   //for(int i = 0;i<connected_loops;i++) this->pLoops[i]->destroyloop();
 
 }
+
+
 

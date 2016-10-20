@@ -12,12 +12,16 @@
 
 #include "poll.h"
 
-
+#include "qthread.h"
 
 
 short **playback_buf;
 
 
+bool playing;
+
+
+ConsumerPlayback *consumer;
 
 
 snd_pcm_t *playback_handle;
@@ -87,7 +91,7 @@ void alsa_init_playback(int channels,int rate)
     playback_frames = PLAYBACK_CHANNEL_WIDTH;
     playback_period_size = playback_frames*playback_channels;
 
-
+    playing = true;
 
 
 
@@ -242,17 +246,16 @@ void alsa_begin_playback(playback_port_c **port)
 
 
 
-    snd_async_handler_t *pcm_callback;
-    snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,port);
+    //   snd_async_handler_t *pcm_callback;
+    //   snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,port);
+
+    consumer = new ConsumerPlayback();
+    consumer->port = port;
+    consumer->start();
 
 
-    for(int i = 0; i < 3 ; i ++)
-    {
-
-        alsa_write_playback(port);
 
 
-    }
 
 }
 
@@ -291,7 +294,7 @@ void alsa_write_playback(playback_port_c **port)
     }
 
 }
-
+/*
 void alsa_async_callback_playback(snd_async_handler_t *ahandler)
 {
 
@@ -308,13 +311,23 @@ void alsa_async_callback_playback(snd_async_handler_t *ahandler)
 
     while(avail >= playback_frames)
     {
-        alsa_write_playback(port);
+        alsa_write_playback(port);    for(int i = 0; i < 3 ; i ++)
+    {
+
+        //alsa_write_playback(port);
+
+
+
+
+    }
         avail = snd_pcm_avail_update(playback_handle);
     }
 
     //qDebug()<<"a";
 
 }
+*/
+
 
 void alsa_conf(void)
 {
@@ -333,9 +346,12 @@ playback_port_c* alsa_playback_port_by_num(int channel)
 
 void alsa_cleanup_playback()
 {
+    playing = false;
+    consumer->quit();
     snd_pcm_close(playback_handle);
     free(playback_buf);
     free(main_buf_playback);
+
     //qDebug()<<"cleaning up";
 }
 
@@ -345,3 +361,90 @@ void alsa_monitor_playback(int channel,unsigned long *data)
     *data = alsa_playback_port_by_num(channel)->freespace();
 
 }
+
+
+
+
+
+int wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
+{
+    unsigned short revents;
+    while (1) {
+        poll(ufds, count, -1);
+        snd_pcm_poll_descriptors_revents(handle, ufds, count, &revents);
+        if (revents & POLLERR)
+            return -EIO;
+        if (revents & POLLOUT)
+            return 0;
+    }
+}
+
+void write_and_poll_loop(playback_port_c **port)
+{
+    struct pollfd *ufds;
+
+    int err, count;
+    count = snd_pcm_poll_descriptors_count (playback_handle);
+    if (count <= 0) {
+        qDebug()<<"Invalid poll descriptors count\n";
+        return ;
+    }
+
+    ufds = (struct pollfd*)malloc(sizeof(struct pollfd) * count);
+    if (ufds == NULL) {
+        qDebug()<<"No enough memory\n";
+        return ;
+    }
+    if ((err = snd_pcm_poll_descriptors(playback_handle, ufds, count)) < 0) {
+        qDebug()<<"Unable to obtain poll descriptors for playback: "<<snd_strerror(err);
+        return ;
+    }
+
+
+
+
+
+    while (playing) {
+        err = wait_for_poll(playback_handle, ufds, count);
+        if (err < 0) {qDebug()<<"polling error";return;}
+        else
+        {
+            break;
+        }
+
+    }
+
+
+    snd_pcm_uframes_t avail;
+    avail = snd_pcm_avail_update(playback_handle);
+
+
+    while(avail >= playback_frames)
+    {
+        alsa_write_playback(port);
+        avail = snd_pcm_avail_update(playback_handle);
+    }
+
+}
+
+void ConsumerPlayback::run()
+{
+
+    while(playing)
+    {
+
+
+        write_and_poll_loop(port);
+        QThread::usleep(1500);
+
+    }
+
+}
+
+
+
+
+
+
+
+

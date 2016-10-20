@@ -34,13 +34,14 @@ class capture_port_c : public QObject
     Q_OBJECT
 
 public:
-    capture_port_c(const unsigned long maxlength,const unsigned long bufsize,const int rate);
+    capture_port_c(const unsigned long maxlength,const unsigned long bufsize,const int rate,const int id);
     ~capture_port_c();
 
 
     const unsigned long maxlength;
     const unsigned long bufsize;
     int const rate;
+    int const id;
     SNDFILE *soundfile;
 
     bool recording;

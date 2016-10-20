@@ -104,6 +104,7 @@ void MainWindow::updateTempo(int tempo)
 void MainWindow::record(void)
 {
 
+
     static bool record = false;
 
 
@@ -144,6 +145,7 @@ void MainWindow::record(void)
 
 void MainWindow::play()
 {
+
     static int num = 0;
 
     static bool test = true;
@@ -153,10 +155,9 @@ void MainWindow::play()
 
     if(test)
     {
-        //pLoop0->destroyloop();
-        //pLoop1->destroyloop();
-        //pLoop0= new loop_c("loop 0","rec0_"+n2s(num-1)+".wav",pLeft,-1);
-        //pLoop1= new loop_c("loop 1","rec1_"+n2s(num-1)+".wav",pRight,-1);
+
+        pLoop0= new loop_c("loop 0","rec0_"+n2s(num-1)+".wav",pLeft,500);
+        pLoop1= new loop_c("loop 1","rec1_"+n2s(num-1)+".wav",pRight,500);
 
         pRec0->stoprecord();
        pRec1->stoprecord();
@@ -165,14 +166,13 @@ void MainWindow::play()
        pRec0->startrecord("rec0_"+n2s(num)+".wav");
        pRec1->startrecord("rec1_"+n2s(num)+".wav");
 
-    //    pLoop2->destroyloop();
-    //    pLoop3->destroyloop();
+
     }
    else
     {
 
-        //pLoop2= new loop_c("loop 0","rec0_"+n2s(num)+".wav",pLeft,-1);
-        //pLoop3= new loop_c("loop 1","rec1_"+n2s(num)+".wav",pRight,-1);
+        pLoop2= new loop_c("loop 0","rec0_"+n2s(num)+".wav",pLeft,500);
+        pLoop3= new loop_c("loop 1","rec1_"+n2s(num)+".wav",pRight,500);
 
         pRec0->stoprecord();
         pRec1->stoprecord();
@@ -181,8 +181,7 @@ void MainWindow::play()
         pRec0->startrecord("rec0_"+n2s(num-1)+".wav");
         pRec1->startrecord("rec1_"+n2s(num-1)+".wav");
 
-     //   pLoop0->destroyloop();
-      //  pLoop1->destroyloop();
+
     }
 
     test = !test;
@@ -211,7 +210,7 @@ void MainWindow::topStep()
 
     step++;
 
-    qDebug()<<"step "<<step;
+    qDebug()<<"loop "<<step;
     play();
 
 
@@ -294,11 +293,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    pLoop0= new loop_c("loop 0","rec0_0.wav",pLeft,-1);
-    pLoop1= new loop_c("loop 1","rec1_0.wav",pRight,-1);
+    pLoop2= new loop_c("loop 0","rec0_0.wav",pLeft,0);
+    pLoop3= new loop_c("loop 1","rec1_0.wav",pRight,0);
+
+
+
 
     pRec0 = alsa_capture_port_by_num(0);
-    pRec1 = alsa_capture_port_by_num(1);
+   pRec1 = alsa_capture_port_by_num(1);
 
     clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
@@ -309,7 +311,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
-    stepTimer->start(100);
+    stepTimer->start(500);
 
 
 }
