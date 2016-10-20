@@ -216,7 +216,7 @@ void alsa_begin_capture(capture_port_c **port)
     }
 
 
-    snd_pcm_start(capture_handle);
+    snd_pcm_start(capture_handle); //Start the device
 
     consumerCapture = new ConsumerCapture();
     consumerCapture->port = port;
@@ -314,7 +314,11 @@ void alsa_stop_capture_record(int channel)
 
 void alsa_cleanup_capture()
 {
+
+
     recording = false;
+
+    QThread::msleep(100); //give some time to the consumer thread to stop quietly
     consumerCapture->quit();
     snd_pcm_close(capture_handle);
     free(capture_buf);
@@ -347,7 +351,7 @@ void alsa_monitor_capture(int channel, unsigned long *data)
 int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
     unsigned short revents;
-    while (1) {
+    while (recording) {
 
         poll(ufds, count, -1);
 
@@ -390,7 +394,7 @@ void read_and_poll_loop(capture_port_c **port)
     while (recording)
     {
         err = wait_for_poll_IN(capture_handle, ufds, count);
-        if (err < 0) {qDebug()<<"polling error";return;}
+        if (err < 0) {qDebug()<<"capture polling error: ";return;}
         else
         {
 

@@ -28,7 +28,7 @@
 
 #define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
 #define PLAYBACK_SW_THRESHOLD               PLAYBACK_HW_BUFFER_SIZE*0.8  //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-#define PLAYBACK_INTERRUPT_THRESHOLD        PLAYBACK_CHANNEL_WIDTH //when the device buffer data is smaller than this limit, an interrupt is issued
+//#define PLAYBACK_INTERRUPT_THRESHOLD        PLAYBACK_CHANNEL_WIDTH //when the device buffer data is smaller than this limit, an interrupt is issued
 
 
 

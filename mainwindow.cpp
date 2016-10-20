@@ -156,8 +156,8 @@ void MainWindow::play()
     if(test)
     {
 
-        pLoop0= new loop_c("loop 0","rec0_"+n2s(num-1)+".wav",pLeft,500);
-        pLoop1= new loop_c("loop 1","rec1_"+n2s(num-1)+".wav",pRight,500);
+        pLoop0= new loop_c("loop 0","rec0_"+n2s(num-1)+".wav",pLeft,1000);
+        pLoop1= new loop_c("loop 1","rec1_"+n2s(num-1)+".wav",pRight,1000);
 
         pRec0->stoprecord();
        pRec1->stoprecord();
@@ -171,8 +171,8 @@ void MainWindow::play()
    else
     {
 
-        pLoop2= new loop_c("loop 0","rec0_"+n2s(num)+".wav",pLeft,500);
-        pLoop3= new loop_c("loop 1","rec1_"+n2s(num)+".wav",pRight,500);
+        pLoop2= new loop_c("loop 0","rec0_"+n2s(num)+".wav",pLeft,1000);
+        pLoop3= new loop_c("loop 1","rec1_"+n2s(num)+".wav",pRight,1000);
 
         pRec0->stoprecord();
         pRec1->stoprecord();
@@ -210,7 +210,7 @@ void MainWindow::topStep()
 
     step++;
 
-    qDebug()<<"loop "<<step;
+  if(step%10 == 0)  qDebug()<<"loop "<<step;
     play();
 
 
@@ -311,7 +311,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
-    stepTimer->start(500);
+    stepTimer->start(1000);
 
 
 }

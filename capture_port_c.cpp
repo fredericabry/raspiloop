@@ -292,7 +292,7 @@ void capture_port_c::startrecord(QString filename)
 {
 
 
-//qDebug()<<id<<"-start record 1";
+
     if(recording)
     {
         qDebug()<<"already recording";
@@ -304,13 +304,13 @@ void capture_port_c::startrecord(QString filename)
       freeN(0);
       ring_lock.unlock();
 
-
+this->openfile(filename);
     recording = true;
 
 
 
 
-    this->openfile(filename);
+
 
 
     consumer = new Consumer();
@@ -326,26 +326,18 @@ void capture_port_c::stoprecord()
     if(!recording) return;
 
 
-
-//qDebug()<<id<<"-stop record 2";
+    recording = false;
 
     consumer->quit();
 
-
-//qDebug()<<id<<"-stop record 3";
-
-
-    //qDebug()<<"stop recording";
     this->closefile();
-recording = false;
-//qDebug()<<id<<"-stop record 4";
 
 
 }
 
 void Consumer::run()
 {
-    int nread;
+    int nread,err;
 
     while(port->recording)
     {
@@ -360,7 +352,7 @@ void Consumer::run()
             if(nread >0 )
             {
               //  qDebug()<<port->id<<"-consumer";
-                if (sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile";
+                if (err = sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile"<<err;
                 //debugf("write record"+n2s(nread));
                 //  if(nread > 256) qDebug()<<nread;
 

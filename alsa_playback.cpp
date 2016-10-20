@@ -218,11 +218,14 @@ void alsa_set_sw_parameters_playback(void)
     }
 
     //when the device buffer data is smaller than this limit, an interrupt is issued
-    err = snd_pcm_sw_params_set_avail_min(playback_handle, swparams, playback_channels*PLAYBACK_INTERRUPT_THRESHOLD);
+  /*  err = snd_pcm_sw_params_set_avail_min(playback_handle, swparams, playback_channels*PLAYBACK_INTERRUPT_THRESHOLD);
     if (err < 0) {
         printf("Unable to set avail min: %s\n", snd_strerror(err));
         exit(1);
-    }
+    }*/
+
+
+
 
     if (snd_pcm_sw_params(playback_handle, swparams) < 0) {
         fprintf(stderr, "unable to install sw params:\n");
@@ -244,7 +247,7 @@ void alsa_begin_playback(playback_port_c **port)
     }
 
 
-
+   snd_pcm_start(playback_handle); //Start the device
 
     //   snd_async_handler_t *pcm_callback;
     //   snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,port);
@@ -347,6 +350,11 @@ playback_port_c* alsa_playback_port_by_num(int channel)
 void alsa_cleanup_playback()
 {
     playing = false;
+
+
+
+
+    QThread::msleep(100); //give some time to the consumer thread to stop quietly
     consumer->quit();
     snd_pcm_close(playback_handle);
     free(playback_buf);
@@ -406,7 +414,7 @@ void write_and_poll_loop(playback_port_c **port)
 
     while (playing) {
         err = wait_for_poll(playback_handle, ufds, count);
-        if (err < 0) {qDebug()<<"polling error";return;}
+        if (err < 0) {qDebug()<<"playback polling error";return;}
         else
         {
             break;
