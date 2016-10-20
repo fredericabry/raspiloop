@@ -108,7 +108,7 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 
 void loop_c::destroyloop()
 {
-  //  debugf("loop "+id+" destroyed");
+
   //  qDebug()<<"loop destroyed "<<id;
 
 
@@ -160,7 +160,7 @@ void loop_c::datarequest(int frames)
         }
         //pRing->data_available(buffile,nread);
         emit send_data(buffile,nread);
-        //debugf(id+" loop sends data :" +n2s(nread) + " samples");
+
 
 
     }
@@ -182,7 +182,7 @@ void loop_c::datarequest(int frames)
 
         emit send_data(buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
         //pRing->data_available(buffile,0);
-        //debugf("loop sends data :  0 sample");
+
     }
 
 

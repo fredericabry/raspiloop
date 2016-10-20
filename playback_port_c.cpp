@@ -42,49 +42,6 @@ playback_port_c::~playback_port_c()
     //free(pLoops);
 }
 
-int playback_port_c::push(short data)
-{
-    unsigned long next = this->head+1;
-    if(next>= this->maxlength+1)
-        next = 0;
-
-    if(next == this->tail) //buffer is full
-        return -1;
-
-
-    this->ringbuf[this->head] = data;//inserting new data
-
-    this->head = next;
-
-    return 0;
-
-}
-
-int playback_port_c::pull(short *data)
-{
-
-    if(this->head == this->tail)
-    {
-        triggerempty();
-        return -1; //buffer is empty
-    }
-    *data = this->ringbuf[this->tail];
-
-    unsigned long next = this->tail + 1;
-
-    if(next >= this->maxlength+1) next = 0;
-
-    this->tail = next;
-
-    if(this->length()<trigger)
-        triggerempty();
-
-
-
-
-    return 0;
-
-}
 
 unsigned long playback_port_c::length()
 {
@@ -152,9 +109,7 @@ int playback_port_c::pullN(unsigned long N)
     ring_lock.lock();
     static bool fg_empty = false;
 
-    /*
-    memset(buf,0,N*sizeof(short));
-    return N;*/
+
 
     short *pt ;
     unsigned long N0=0;
@@ -226,7 +181,7 @@ void playback_port_c::triggerempty(void)
 
    if(wait_for_data)
    {
-//debugf("playback "+ n2s(this->channel) + "wait for data");
+
        return;
    }
 
@@ -246,7 +201,7 @@ void playback_port_c::triggerempty(void)
    }
 */
 
-//debugf("playback "+ n2s(this->channel) + "emit data request");
+
 
 
 }
@@ -266,7 +221,7 @@ void playback_port_c::addloop(loop_c *pLoop)
 
         this->pLoops = (loop_c**)malloc(sizeof(loop_c*));
         this->pLoops[0] = pLoop;
-        //debugf("playback port #"+ n2s(this->channel) + "add loop #" +n2s(connected_loops));
+
 
     }
     else
@@ -274,7 +229,7 @@ void playback_port_c::addloop(loop_c *pLoop)
 
         this->pLoops = (loop_c**)realloc(this->pLoops,connected_loops*sizeof(loop_c*));
         this->pLoops[connected_loops-1] = pLoop;
-//debugf("playback add loop #" +n2s(connected_loops));
+
     }
 
 */
@@ -292,7 +247,7 @@ void playback_port_c::removeloop()
     this->pLoops = (loop_c**)realloc(this->pLoops,connected_loops*sizeof(loop_c*));
 */
 
-    //debugf("playback remove loop #" +n2s(connected_loops+1));
+
     //  qDebug()<<"loop disconnected "<< connected_loops;
 
 }
@@ -308,7 +263,7 @@ void playback_port_c::data_available(short *buf, int nread)
     data_received++;
 
 
-       // debugf("playback "+n2s(channel)+" data received - "+n2s(nread)+" values");
+
 
 
 
@@ -329,7 +284,7 @@ void playback_port_c::data_available(short *buf, int nread)
     }
 
 
-     //debugf("playback "+n2s(channel)+" - "+n2s(data_received) + " - " + n2s(connected_loops));
+
 
 
     if(data_received >= this->connected_loops)

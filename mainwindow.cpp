@@ -16,7 +16,7 @@
 #include "playback_port_c.h"
 #include "loop_c.h"
 
-FILE *debugfile;
+
 
 static loop_c *pLoop0 ;
 static loop_c *pLoop1 ;
@@ -105,36 +105,6 @@ void MainWindow::record(void)
 {
 
 
-    static bool record = false;
-
-
-
-
-    pRec0 = alsa_capture_port_by_num(0);
-    pRec1 = alsa_capture_port_by_num(1);
-
-
-
-    if(record)
-    {
-        pRec0->stoprecord();
-        pRec1->stoprecord();
-        record = false;
-
-
-    }
-
-    else
-
-    {
-
-        pRec0->startrecord("rec0.wav");
-        pRec1->startrecord("rec1.wav");
-        record = true;
-    }
-
-
-
 
 
 }
@@ -156,14 +126,14 @@ void MainWindow::play()
     if(test)
     {
 
-        pLoop0= new loop_c("loop 0","rec0_"+n2s(num-1)+".wav",pLeft,1000);
-        pLoop1= new loop_c("loop 1","rec1_"+n2s(num-1)+".wav",pRight,1000);
+        pLoop0= new loop_c("loop 0","rec0_"+n2s(num-1)+".wav",pLeft,2000);
+        pLoop1= new loop_c("loop 1","rec1_"+n2s(num-1)+".wav",pRight,2000);
 
         pRec0->stoprecord();
        pRec1->stoprecord();
-     //   sleep(0);
+      //  sleep(0);
 
-       pRec0->startrecord("rec0_"+n2s(num)+".wav");
+      pRec0->startrecord("rec0_"+n2s(num)+".wav");
        pRec1->startrecord("rec1_"+n2s(num)+".wav");
 
 
@@ -171,8 +141,8 @@ void MainWindow::play()
    else
     {
 
-        pLoop2= new loop_c("loop 0","rec0_"+n2s(num)+".wav",pLeft,1000);
-        pLoop3= new loop_c("loop 1","rec1_"+n2s(num)+".wav",pRight,1000);
+        pLoop2= new loop_c("loop 0","rec0_"+n2s(num)+".wav",pLeft,2000);
+        pLoop3= new loop_c("loop 1","rec1_"+n2s(num)+".wav",pRight,2000);
 
         pRec0->stoprecord();
         pRec1->stoprecord();
@@ -193,15 +163,6 @@ void MainWindow::play()
 
 
 
-void debugf(QString txt)
-{
-
-    fprintf(debugfile,"%s\n",txt.toStdString().c_str());
-
-}
-
-
-
 
 void MainWindow::topStep()
 {
@@ -210,7 +171,7 @@ void MainWindow::topStep()
 
     step++;
 
-  if(step%10 == 0)  qDebug()<<"loop "<<step;
+  if(step%1 == 0)  qDebug()<<"loop "<<step;
     play();
 
 
@@ -239,9 +200,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     Afficher("Démarrage\n");
 
-    debugfile = fopen("debufile.txt","w");
 
-    debugf("Init");
+
+
 
     cardchoicerefresh();
 
@@ -279,10 +240,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
+    QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
+    system(txt.toStdString().c_str());
+  //  Afficher(txt);
 
 
     alsa_start_playback("hw:1,0", 2, 44100);
-    alsa_start_capture("hw:1,1", 2, 44100);
+    alsa_start_capture("hw:1,0", 2, 44100);
 
 
 
@@ -293,25 +257,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    pLoop2= new loop_c("loop 0","rec0_0.wav",pLeft,0);
-    pLoop3= new loop_c("loop 1","rec1_0.wav",pRight,0);
+  //  pLoop2= new loop_c("loop 0","rec0_0.wav",pLeft,0);
+  //  pLoop3= new loop_c("loop 1","rec1_0.wav",pRight,0);
 
 
 
 
-    pRec0 = alsa_capture_port_by_num(0);
+   pRec0 = alsa_capture_port_by_num(0);
    pRec1 = alsa_capture_port_by_num(1);
 
-    clickTimer = new QTimer(this);
-    connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-    clickTimer->start(500);
+//   pRec0->startrecord("rec0.wav");
+//   pRec1->startrecord("rec1.wav");
 
 
     topStep();
+clickTimer = new QTimer(this);
+connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
+clickTimer->start(500);
 
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
-    stepTimer->start(1000);
+    stepTimer->start(2000);
 
 
 }

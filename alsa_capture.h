@@ -20,8 +20,11 @@
 #define TRIGGER_CAPTURE RINGBUFSIZE_CAPTURE/4   //device starts to stream to file when ringbuf length > this value
 
 
+#define CAPTURE_READBUF_SLEEP (unsigned long)5000 //usec
 
-#define CAPTURE_AVAIL_MIN        CAPTURE_CHANNEL_WIDTH*2 //when the device buffer data is bigger than this limit, an interrupt is issued
+#define CAPTURE_WRITEFILE_SLEEP (unsigned long)10000
+
+#define CAPTURE_AVAIL_MIN        7*CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
 
 
 
@@ -35,6 +38,7 @@ class ConsumerCapture:public QThread
 
  public:
     capture_port_c **port;
+
 };
 
 

@@ -8,6 +8,9 @@
 #include <QMainWindow>
 #include <qthread.h>
 #include <qmutex.h>
+#include "qtimer.h"
+#include "qrunnable.h"
+
 
 class capture_port_c;
 
@@ -20,6 +23,10 @@ class Consumer:public QThread
     void run() Q_DECL_OVERRIDE;
 public:
     capture_port_c* port;
+    void update(void);
+private slots:
+    void updtimer();
+
 
 };
 
@@ -52,8 +59,9 @@ public:
 
     unsigned long head;
     unsigned long tail;
-    QThread *writeThread;
+
     Consumer *consumer;
+
 
     void fill(int channel);
     void pushN(unsigned long N);

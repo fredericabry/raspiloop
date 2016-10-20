@@ -150,6 +150,7 @@ void alsa_set_hw_parameters_capture(void)
 
 
 
+
     snd_pcm_hw_params_set_period_size_near(capture_handle, hw_params, &capture_period_size,0);
 
 
@@ -182,15 +183,9 @@ void alsa_set_sw_parameters_capture(void)
         exit(1);
     }
 
- /*   //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound from the device
-    err = snd_pcm_sw_params_set_start_threshold(capture_handle, swparams,  CAPTURE_SW_THRESHOLD );
-    if (err < 0) {
-        printf("Unable to set start threshold: %s\n", snd_strerror(err));
-        exit(1);
-    }
-*/
-    //when the device buffer data is smaller than this limit, an interrupt is issued
-    err = snd_pcm_sw_params_set_avail_min(capture_handle, swparams, CAPTURE_AVAIL_MIN);
+
+    //when the device buffer data is bigger than this limit, an interrupt is issued
+    err = snd_pcm_sw_params_set_avail_min(capture_handle, swparams, capture_channels*CAPTURE_AVAIL_MIN);
     if (err < 0) {
         printf("Unable to set avail min: %s\n", snd_strerror(err));
         exit(1);
@@ -237,26 +232,7 @@ void alsa_begin_capture(capture_port_c **port)
 
 }
 
-void alsa_async_callback_capture(snd_async_handler_t *ahandler)
-{
 
-
-    snd_pcm_uframes_t avail;
-
-    snd_pcm_t *capture_handle = snd_async_handler_get_pcm(ahandler);
-    capture_port_c **port = (capture_port_c**)snd_async_handler_get_callback_private(ahandler);
-
-    avail = snd_pcm_avail_update(capture_handle);
-
-    while(avail >= capture_frames)
-    {
-        alsa_read_capture(port);
-        avail = snd_pcm_avail_update(capture_handle);
-    }
-
-
-
-}
 
 void alsa_read_capture(capture_port_c **port)
 {
@@ -407,11 +383,13 @@ void read_and_poll_loop(capture_port_c **port)
     snd_pcm_uframes_t avail;
     avail = snd_pcm_avail_update(capture_handle);
 
+//    qDebug()<<avail;
 
     while(avail >= capture_frames)
     {
         alsa_read_capture(port);
         avail = snd_pcm_avail_update(capture_handle);
+
     }
 
 }
@@ -424,7 +402,7 @@ void ConsumerCapture::run()
 
 
         read_and_poll_loop(port);
-        QThread::usleep(1500);
+        QThread::usleep(CAPTURE_READBUF_SLEEP);
 
     }
 

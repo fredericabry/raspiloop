@@ -210,19 +210,12 @@ void alsa_set_sw_parameters_playback(void)
         exit(1);
     }
 
-    //threshold setting the ammount of data in the device buffer required for Alsa to stream the sound to the device
-    err = snd_pcm_sw_params_set_start_threshold(playback_handle, swparams, playback_channels*PLAYBACK_SW_THRESHOLD);
+    //threshold setting the ammount of data in the device buffer required for Alsa to allow interupts
+    err = snd_pcm_sw_params_set_avail_min(playback_handle, swparams, playback_channels*PLAYBACK_AVAIL_MIN);
     if (err < 0) {
         printf("Unable to set start threshold: %s\n", snd_strerror(err));
         exit(1);
     }
-
-    //when the device buffer data is smaller than this limit, an interrupt is issued
-  /*  err = snd_pcm_sw_params_set_avail_min(playback_handle, swparams, playback_channels*PLAYBACK_INTERRUPT_THRESHOLD);
-    if (err < 0) {
-        printf("Unable to set avail min: %s\n", snd_strerror(err));
-        exit(1);
-    }*/
 
 
 
@@ -297,39 +290,8 @@ void alsa_write_playback(playback_port_c **port)
     }
 
 }
-/*
-void alsa_async_callback_playback(snd_async_handler_t *ahandler)
-{
 
 
-    snd_pcm_uframes_t avail;
-
-    snd_pcm_t *playback_handle = snd_async_handler_get_pcm(ahandler);
-    playback_port_c **port = (playback_port_c**)snd_async_handler_get_callback_private(ahandler);
-
-    avail = snd_pcm_avail_update(playback_handle);
-
-
-
-
-    while(avail >= playback_frames)
-    {
-        alsa_write_playback(port);    for(int i = 0; i < 3 ; i ++)
-    {
-
-        //alsa_write_playback(port);
-
-
-
-
-    }
-        avail = snd_pcm_avail_update(playback_handle);
-    }
-
-    //qDebug()<<"a";
-
-}
-*/
 
 
 void alsa_conf(void)
@@ -426,7 +388,7 @@ void write_and_poll_loop(playback_port_c **port)
     snd_pcm_uframes_t avail;
     avail = snd_pcm_avail_update(playback_handle);
 
-
+   // qDebug()<<avail;
     while(avail >= playback_frames)
     {
         alsa_write_playback(port);
@@ -443,7 +405,7 @@ void ConsumerPlayback::run()
 
 
         write_and_poll_loop(port);
-        QThread::usleep(1500);
+        QThread::usleep(PLAYBACK_READBUF_SLEEP);
 
     }
 
