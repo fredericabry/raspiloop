@@ -50,6 +50,7 @@ public:
     int const rate;
     int const id;
     SNDFILE *soundfile;
+    QString filedir;
 
     bool recording;
 

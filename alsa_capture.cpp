@@ -250,6 +250,8 @@ void alsa_read_capture(capture_port_c **port)
                 qDebug()<<"cannot prepare audio interface for use " << snd_strerror (err);
                 exit (1);
             }
+
+            snd_pcm_start(capture_handle);
         }
         else
         {
@@ -299,7 +301,7 @@ void alsa_cleanup_capture()
     snd_pcm_close(capture_handle);
     free(capture_buf);
     free(main_buf_capture);
-    //qDebug()<<"cleaning up";
+
 }
 
 void alsa_monitor_capture(int channel, unsigned long *data)
@@ -326,8 +328,11 @@ void alsa_monitor_capture(int channel, unsigned long *data)
 
 int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
+
     unsigned short revents;
     while (recording) {
+
+
 
         poll(ufds, count, -1);
 
@@ -338,6 +343,8 @@ int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
         if (revents & POLLIN)
             return 0;
     }
+
+    qDebug()<<"buuug";
 }
 
 void read_and_poll_loop(capture_port_c **port)

@@ -9,6 +9,9 @@
 #include <QFile>
 #include <QTextStream>
 
+#include "qdir.h"
+#include "qlockfile.h"
+
 #include <qdebug.h>
 #include <qelapsedtimer.h>
 #include "qthreadpool.h"
@@ -28,16 +31,12 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
     buffile = (short*)malloc((NFILE_CAPTURE)*sizeof(short));
     memset(buffile,0,NFILE_CAPTURE*sizeof(short));
     recording = false;
-
-    ring_lock.unlock();
-
-
     consumer = new Consumer();
     consumer->port = this;
 
     consumer->start();
 
-
+ ring_lock.unlock();
 
 }
 
@@ -94,8 +93,8 @@ void capture_port_c::pushN(unsigned long N)
         {
             if(!fg_full)
             {
-            qDebug()<<"capture buffer full";
-            fg_full = true;
+                qDebug()<<"capture buffer full";
+                fg_full = true;
             }
         }
 
@@ -256,7 +255,18 @@ void capture_port_c::openfile(QString filename)
 
     sf_info.format = SF_FORMAT_WAV|short_mask;
 
+    QDir r;
+
+    r.remove(filename);//in case there is already a file named like that
+
+
+    filename.replace(filename.length()-3,3,"tmp");
+    filedir = filename;
+
+
+
     const char * fn = filename.toStdString().c_str();
+
 
     int cmpt = 0;
     while ((soundfile = sf_open (fn, SFM_WRITE, &sf_info)) == NULL) {
@@ -287,12 +297,22 @@ void capture_port_c::closefile()
         exit (1);
     }
 
+    QDir r;
+
+
+
+    QString old = filedir;
+    filedir.replace(filedir.length()-3,3,"wav");
+
+
+    r.rename(old,filedir);
+
 }
 
 void capture_port_c::startrecord(QString filename)
 {
 
-
+    //qDebug()<<"start record "<<id;
 
     if(recording)
     {
@@ -322,14 +342,14 @@ void capture_port_c::startrecord(QString filename)
 
 void capture_port_c::stoprecord()
 {
-    //qDebug()<<id<<"-stop record 1";
+    //qDebug()<<"stop record "<<id;
     if(!recording) return;
 
 
     recording = false;
 
 
-   // consumer->quit();
+    // consumer->quit();
 
     this->closefile();
 
@@ -353,36 +373,36 @@ void Consumer::updtimer(void)
 void Consumer::update(void)
 {
 
-//qDebug()<<"tooop";
+    //qDebug()<<"tooop";
 
 
-if(!port->recording) return;
+    if(!port->recording) return;
 
 
-int nread,err;
-
-
-
-
-port->ring_lock.lock();
+    int nread,err;
 
 
 
-nread = port->pullN(NFILE_CAPTURE);
+
+    port->ring_lock.lock();
 
 
 
-if(nread >0 )
-{
-    //  qDebug()<<port->id<<"-consumer";
-    if ((err = sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) ) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile"<<err;
+    nread = port->pullN(NFILE_CAPTURE);
 
-    //  if(nread > 256) qDebug()<<nread;
 
-}
-//qDebug()<<nread;
 
-port->ring_lock.unlock();
+    if(nread >0 )
+    {
+        //  qDebug()<<port->id<<"-consumer";
+        if ((err = sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) ) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile"<<err;
+
+        //  if(nread > 256) qDebug()<<nread;
+
+    }
+    //qDebug()<<nread;
+
+    port->ring_lock.unlock();
 
 
 
@@ -393,7 +413,7 @@ port->ring_lock.unlock();
 void Consumer::run()
 {
 
-  /*  QTimer timer;
+    /*  QTimer timer;
     timer.moveToThread(this);
     timer.start(10);
 

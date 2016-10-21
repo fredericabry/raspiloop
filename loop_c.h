@@ -34,7 +34,7 @@ public:
 
 
 
-    void destroyloop(void);
+    void destroyloop(bool opened);
     void test(QString a);
 
 

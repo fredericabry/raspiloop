@@ -15,15 +15,12 @@
 
 #define PLAYBACK_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
 
-
-
-
 #define NFILE_PLAYBACK PLAYBACK_CHANNEL_WIDTH*10 //file reading buffer size
 
 #define PLAYBACK_READBUF_SLEEP 5000 //usec
 
 
-#define RINGBUFSIZE_PLAYBACK 5000 //size of the playback ringbuffer
+#define RINGBUFSIZE_PLAYBACK 10000 //size of the playback ringbuffer
 #define THRESHOLD RINGBUFSIZE_PLAYBACK/2 //interrupt when length(ringbuffer) < this value
 
 

@@ -17,14 +17,11 @@
 #define RINGBUFSIZE_CAPTURE 10000 //size of the capture ringbuffer
 #define NFILE_CAPTURE CAPTURE_CHANNEL_WIDTH*10//file writting buffer size
 
-#define TRIGGER_CAPTURE RINGBUFSIZE_CAPTURE/4   //device starts to stream to file when ringbuf length > this value
-
-
 #define CAPTURE_READBUF_SLEEP (unsigned long)5000 //usec
 
 #define CAPTURE_WRITEFILE_SLEEP (unsigned long)10000
 
-#define CAPTURE_AVAIL_MIN        7*CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
+#define CAPTURE_AVAIL_MIN        6*CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
 
 
 
