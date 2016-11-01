@@ -1089,6 +1089,19 @@
      <string>capture free space</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="b_shutdown">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>430</y>
+      <width>99</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>shutdown</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">

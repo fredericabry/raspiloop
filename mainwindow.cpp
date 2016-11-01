@@ -145,8 +145,8 @@ void MainWindow::play()
     else
     {
 
-        pRec0->stoprecord();
-        pRec1->stoprecord();
+       pRec0->stoprecord();
+       pRec1->stoprecord();
 
 //QThread::usleep(15000);
         pLoop2= new loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,1000);
@@ -156,7 +156,7 @@ void MainWindow::play()
 
         //  sleep(0);
 
-        pRec0->startrecord("rec0_"+n2s(num)+".wav");
+       pRec0->startrecord("rec0_"+n2s(num)+".wav");
         pRec1->startrecord("rec1_"+n2s(num)+".wav");
 
 
@@ -168,7 +168,12 @@ void MainWindow::play()
 
 
 
+void MainWindow::shutdown()
+{
 
+    exit(0);
+
+}
 
 
 
@@ -207,6 +212,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bPlay,SIGNAL(pressed()),this,SLOT(play()));
     connect(ui->bRecord,SIGNAL(pressed()),this,SLOT(record()));
 
+    connect(ui->b_shutdown,SIGNAL(pressed()),this,SLOT(shutdown()));
 
 
     Afficher("Démarrage\n");
@@ -253,7 +259,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
     system(txt.toStdString().c_str());
-    //  Afficher(txt);
+
+
+
+
 
 
 
@@ -268,29 +277,36 @@ MainWindow::MainWindow(QWidget *parent) :
     pRight = alsa_playback_port_by_num(1);
 
 
-
-    //  pLoop2= new loop_c("loop 0","rec0_0.wav",pLeft,0);
-    //  pLoop3= new loop_c("loop 1","rec1_0.wav",pRight,0);
-
-
-
-
     pRec0 = alsa_capture_port_by_num(0);
     pRec1 = alsa_capture_port_by_num(1);
 
-    //   pRec0->startrecord("rec0.wav");
-    //   pRec1->startrecord("rec1.wav");
+
+    pRec0->startrecord("rec0_test.wav");
+     pRec1->startrecord("rec1_test.wav");
 
 
-    topStep();
+
+
     clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-    clickTimer->start(500);
+    clickTimer->start(200);
 
+
+return;
+    topStep();
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
-    stepTimer->start(1000);
+    stepTimer->start(500);
 
+
+
+
+    //txt = "sudo chrt -f -p 29 "+n2s(QCoreApplication::applicationPid());
+    txt = "chrt -f -p 50 "+n2s(QCoreApplication::applicationPid());
+
+
+ //   system(txt.toStdString().c_str());
+    //  Afficher(txt);
 
 }
 

@@ -79,8 +79,13 @@ void capture_port_c::pushN(unsigned long N)
 {
     static bool fg_full = false;
 
-    ring_lock.lock();
 
+    if(!ring_lock.tryLock())
+       {
+
+        qDebug()<<"locked";
+        ring_lock.lock();
+    }
 
 
     short *pt ;
@@ -359,14 +364,6 @@ void capture_port_c::stoprecord()
 
 
 
-void Consumer::updtimer(void)
-{
-
-    update();
-
-}
-
-
 
 
 
@@ -380,6 +377,8 @@ void Consumer::update(void)
 
 
     int nread,err;
+
+
 
 
 

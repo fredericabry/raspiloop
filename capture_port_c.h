@@ -24,8 +24,7 @@ class Consumer:public QThread
 public:
     capture_port_c* port;
     void update(void);
-private slots:
-    void updtimer();
+
 
 
 };

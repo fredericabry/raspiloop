@@ -191,6 +191,10 @@ void alsa_set_sw_parameters_capture(void)
         exit(1);
     }
 
+
+
+
+
     if (snd_pcm_sw_params(capture_handle, swparams) < 0) {
         fprintf(stderr, "unable to install sw params:\n");
         exit(1);

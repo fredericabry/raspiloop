@@ -56,6 +56,7 @@ private slots:
     void updateTempo(int);
     void record(void);
     void topStep(void);
+    void shutdown(void);
 
 signals:
 
