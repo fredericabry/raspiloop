@@ -10,7 +10,7 @@
 #include <qmutex.h>
 #include "qtimer.h"
 #include "qrunnable.h"
-
+#include "qelapsedtimer.h"
 
 class capture_port_c;
 
@@ -23,8 +23,13 @@ class Consumer:public QThread
     void run() Q_DECL_OVERRIDE;
 public:
     capture_port_c* port;
-    void update(void);
 
+    bool consumerLock;
+QElapsedTimer t;
+    QTimer timer;
+
+public slots:
+        void update(void);
 
 
 };
@@ -54,11 +59,13 @@ public:
     bool recording;
 
     short *ringbuf;//large buffer for circular storage
-    short *buf;//small buffer for transfert
-    short *buffile;//small buffer for file writing
+    short *bufin;//small buffer for transfert to the ringbuffer
+    short *buffile;//small buffer for file writing from the ringbuffer
 
     unsigned long head;
     unsigned long tail;
+
+    unsigned long readStartPoint,readEndPoint;
 
     Consumer *consumer;
 
@@ -71,7 +78,7 @@ public:
     void destroyport();
     void startrecord(QString filename);
     void stoprecord();
-    void empty(void);
+
     unsigned long  length();
     unsigned long  freespace();
     void freeN(unsigned long N);

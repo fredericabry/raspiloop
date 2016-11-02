@@ -85,7 +85,7 @@ void alsa_init_capture(int channels,int rate)
     for(int i =0;i<channels;i++)
     {
         main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames*capture_channels,rate,i);
-        capture_buf[i] = main_buf_capture[i]->buf;
+        capture_buf[i] = main_buf_capture[i]->bufin;
     }
 
 
@@ -329,13 +329,11 @@ void alsa_monitor_capture(int channel, unsigned long *data)
 
 
 
-
 int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
 
     unsigned short revents;
     while (recording) {
-
 
 
         poll(ufds, count, -1);
@@ -345,7 +343,10 @@ int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
         if (revents & POLLERR)
             return -EIO;
         if (revents & POLLIN)
+        {
+
             return 0;
+        }
     }
 
     qDebug()<<"buuug";
@@ -353,6 +354,9 @@ int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 
 void read_and_poll_loop(capture_port_c **port)
 {
+
+
+
     struct pollfd *ufds;
 
 
@@ -377,9 +381,9 @@ void read_and_poll_loop(capture_port_c **port)
 
 
 
-
     while (recording)
     {
+
         err = wait_for_poll_IN(capture_handle, ufds, count);
         if (err < 0) {qDebug()<<"capture polling error: ";return;}
         else
@@ -391,6 +395,7 @@ void read_and_poll_loop(capture_port_c **port)
     }
 
 
+
     snd_pcm_uframes_t avail;
     avail = snd_pcm_avail_update(capture_handle);
 
@@ -398,22 +403,31 @@ void read_and_poll_loop(capture_port_c **port)
 
     while(avail >= capture_frames)
     {
-        alsa_read_capture(port);
-        avail = snd_pcm_avail_update(capture_handle);
+       alsa_read_capture(port);
+       avail = snd_pcm_avail_update(capture_handle);
 
     }
 
+
+
 }
+
+
+
+
 
 void ConsumerCapture::run()
 {
+
 
     while(recording)
     {
 
 
+
+
         read_and_poll_loop(port);
-        QThread::usleep(CAPTURE_READBUF_SLEEP);
+      //  QThread::usleep(CAPTURE_READBUF_SLEEP);
 
     }
 

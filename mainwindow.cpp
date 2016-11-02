@@ -18,6 +18,8 @@
 #include "qdir.h"
 
 
+#define LOOP_LENGTH 100
+
 static loop_c *pLoop0 ;
 static loop_c *pLoop1 ;
 static loop_c *pLoop2 ;
@@ -131,8 +133,8 @@ void MainWindow::play()
 
     //    QThread::usleep(15000);
 
-       pLoop0= new loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,1000);
-        pLoop1= new loop_c("loop 1_2","rec1_"+n2s(num)+".wav",pRight,1000);
+       pLoop0= new loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,LOOP_LENGTH);
+        pLoop1= new loop_c("loop 1_2","rec1_"+n2s(num)+".wav",pRight,LOOP_LENGTH);
 
 
         //  sleep(0);
@@ -149,8 +151,8 @@ void MainWindow::play()
        pRec1->stoprecord();
 
 //QThread::usleep(15000);
-        pLoop2= new loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,1000);
-        pLoop3= new loop_c("loop 2_2","rec1_"+n2s(num-1)+".wav",pRight,1000);
+        pLoop2= new loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,LOOP_LENGTH);
+        pLoop3= new loop_c("loop 2_2","rec1_"+n2s(num-1)+".wav",pRight,LOOP_LENGTH);
 
 
 
@@ -260,53 +262,45 @@ MainWindow::MainWindow(QWidget *parent) :
     QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
     system(txt.toStdString().c_str());
 
+    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
+    system(txt.toStdString().c_str());
 
 
 
 
-
-
-    alsa_start_playback("hw:1,0", 2, 44100);
+  //  alsa_start_playback("hw:1,0", 2, 44100);
     alsa_start_capture("hw:1,0", 2, 44100);
 
 
 
     QThread::sleep(0.5);
 
-    pLeft = alsa_playback_port_by_num(0);
-    pRight = alsa_playback_port_by_num(1);
+//    pLeft = alsa_playback_port_by_num(0);
+//    pRight = alsa_playback_port_by_num(1);
 
 
     pRec0 = alsa_capture_port_by_num(0);
     pRec1 = alsa_capture_port_by_num(1);
 
 
+  /*  clickTimer = new QTimer(this);
+    connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
+    clickTimer->start(200);
+*/
+
+
     pRec0->startrecord("rec0_test.wav");
      pRec1->startrecord("rec1_test.wav");
 
+     return;
 
-
-
-    clickTimer = new QTimer(this);
-    connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
-    clickTimer->start(200);
-
-
-return;
+    QThread::sleep(1);
     topStep();
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
-    stepTimer->start(500);
+    stepTimer->start(LOOP_LENGTH);
 
-
-
-
-    //txt = "sudo chrt -f -p 29 "+n2s(QCoreApplication::applicationPid());
-    txt = "chrt -f -p 50 "+n2s(QCoreApplication::applicationPid());
-
-
- //   system(txt.toStdString().c_str());
-    //  Afficher(txt);
+return;
 
 }
 
