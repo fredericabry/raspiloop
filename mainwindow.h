@@ -5,8 +5,8 @@
 #include <alsa/asoundlib.h>
 #include <qfile.h>
 
-
-
+#define DIRECTORY "/home/pi/usb/"
+//#define DIRECTORY ""
 
 #define n2s QString::number
 

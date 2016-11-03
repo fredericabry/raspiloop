@@ -14,12 +14,12 @@
 
 #define CAPTURE_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
 #define CAPTURE_HW_BUFFER_SIZE 3*CAPTURE_CHANNEL_WIDTH //alsa capture buffer size for ONE channel
-#define RINGBUFSIZE_CAPTURE 20000 //size of the capture ringbuffer
-#define NFILE_CAPTURE CAPTURE_CHANNEL_WIDTH//file writting buffer size
+#define RINGBUFSIZE_CAPTURE 44100 //size of the capture ringbuffer
+#define NFILE_CAPTURE CAPTURE_CHANNEL_WIDTH*5//file writting buffer size
 
-#define CAPTURE_READBUF_SLEEP (unsigned long)1000 //usec
+#define CAPTURE_READBUF_SLEEP (unsigned long)5000 //usec
 
-#define CAPTURE_WRITEFILE_SLEEP (unsigned long)1 //ms
+#define CAPTURE_WRITEFILE_SLEEP (unsigned long)10 //ms
 
 #define CAPTURE_AVAIL_MIN       5*CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
 

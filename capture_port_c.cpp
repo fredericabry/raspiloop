@@ -17,6 +17,8 @@
 #include "qthreadpool.h"
 
 
+
+
 capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int id):maxlength(maxlength),bufsize(bufsize),rate(rate),id(id)
 {
 
@@ -75,23 +77,16 @@ unsigned long capture_port_c::freespace()
 
 
 
-QElapsedTimer t;
 
 void capture_port_c::pushN(unsigned long N)
 {
-    t.start();
-    qDebug()<<"top";
+
+
     static bool fg_full = false;
     short *pt ;
     int test;
 
-    //ring_lock.lock();
-
-    if(!ring_lock.tryLock())
-    {
-        //qDebug()<<"lock fail 2";
-        ring_lock.lock();
-    }
+    ring_lock.lock();
 
 
     unsigned long freespace = this->freespace();
@@ -118,6 +113,7 @@ void capture_port_c::pushN(unsigned long N)
 
     test = 0;
 
+
     if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct";  return;}
 
     if(nuHead >= nuTail)
@@ -143,6 +139,7 @@ void capture_port_c::pushN(unsigned long N)
 
             nuHead = second;
             test = 2;
+            QElapsedTimer t;
         }
     }
     else
@@ -162,10 +159,11 @@ void capture_port_c::pushN(unsigned long N)
    // ring_lock.lock();
 
 
+
     ring_lock.lock();
     this->head = nuHead;
     ring_lock.unlock();
-qDebug()<<t.nsecsElapsed()/1000;
+
    // if(this->freespace()<8000) {qDebug()<<"almost full :"<<this->freespace();}
 
 }
@@ -288,6 +286,8 @@ void capture_port_c::openfile(QString filename)
 
     QDir r;
 
+    filename = DIRECTORY+filename;
+
     r.remove(filename);//in case there is already a file named like that
 
 
@@ -353,10 +353,14 @@ void capture_port_c::startrecord(QString filename)
 
 
 
-    //ring_lock.lock();
-    //freeN(length()/2);
+    ring_lock.lock();
+    if(freespace()<2000)
+    {
+        qDebug()<<"full full..";
+        freeN(2000);
+    }
    // empty();
-  //  ring_lock.unlock();
+    ring_lock.unlock();
 
     this->openfile(filename);
 
@@ -392,10 +396,12 @@ void capture_port_c::stoprecord()
 
 
 
-
+QElapsedTimer t;
 
 void Consumer::update(void)
 {
+int t1;
+static int tmax = 0;
 
 
     int nread,err;
@@ -413,11 +419,21 @@ void Consumer::update(void)
 
     nread = port->pullN(NFILE_CAPTURE);
 
+
+
+t.start();
     if(nread >0 )
     {
-        if ((err = sf_write_raw (port->soundfile, port->buffile, sizeof(short)* nread) ) != sizeof(short)* nread)   qDebug()<< "cannot write sndfile"<<err;
+
+
+
+        if ((err = sf_writef_short (port->soundfile, port->buffile,  nread) ) != nread)   qDebug()<< "cannot write sndfile"<<err;
 
     }
+t1 = t.elapsed();
+if(t1 > tmax) tmax = t1;
+if((nread > 0)&&(t1>10)) qDebug()<<t1<<"ms (max : "<<tmax<<" ms)";
+
 
     QTimer::singleShot(CAPTURE_WRITEFILE_SLEEP, this, SLOT(update()));
 

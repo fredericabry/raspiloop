@@ -18,7 +18,9 @@
 #include "qdir.h"
 
 
-#define LOOP_LENGTH 100
+
+
+#define LOOP_LENGTH 10000
 
 static loop_c *pLoop0 ;
 static loop_c *pLoop1 ;
@@ -125,7 +127,7 @@ void MainWindow::play()
     num=1;
 
 
-    if(test)
+   if(test)
     {
 
        pRec0->stoprecord();
@@ -268,15 +270,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-  //  alsa_start_playback("hw:1,0", 2, 44100);
+
+    alsa_start_playback("hw:1,0", 2, 44100);
     alsa_start_capture("hw:1,0", 2, 44100);
 
 
 
     QThread::sleep(0.5);
 
-//    pLeft = alsa_playback_port_by_num(0);
-//    pRight = alsa_playback_port_by_num(1);
+    pLeft = alsa_playback_port_by_num(0);
+    pRight = alsa_playback_port_by_num(1);
 
 
     pRec0 = alsa_capture_port_by_num(0);
@@ -289,12 +292,19 @@ MainWindow::MainWindow(QWidget *parent) :
 */
 
 
-    pRec0->startrecord("rec0_test.wav");
-     pRec1->startrecord("rec1_test.wav");
+    //pRec0->startrecord("rec0_test.wav");
+    //pRec1->startrecord("rec1_test.wav");
 
-     return;
 
-    QThread::sleep(1);
+
+
+
+
+
+
+
+
+ //   QThread::sleep(1);
     topStep();
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));

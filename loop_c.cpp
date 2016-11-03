@@ -11,7 +11,7 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 {
 
 
-   //     qDebug()<<"created 0 "<<id;
+  //  qDebug()<<"Loop created "<<id;
 
     pRing = pRing2;
     SF_INFO sf_info;
@@ -26,9 +26,9 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 
  //   qDebug()<<"created 1 "<<id;
 
+    QString filename2 = DIRECTORY+filename;
 
-
-    if ((this->soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
+    if ((this->soundfile = sf_open (filename2.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",filename.toStdString().c_str(), errstr);

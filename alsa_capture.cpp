@@ -352,10 +352,19 @@ int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
     qDebug()<<"buuug";
 }
 
+
+
+
+
 void read_and_poll_loop(capture_port_c **port)
 {
 
+static bool test = false;
 
+
+if(test) {qDebug()<<"overlap";return;}
+
+test = true;
 
     struct pollfd *ufds;
 
@@ -408,13 +417,12 @@ void read_and_poll_loop(capture_port_c **port)
 
     }
 
-
+test = false;
 
 }
 
 
-
-
+QElapsedTimer t2;
 
 void ConsumerCapture::run()
 {
@@ -425,9 +433,10 @@ void ConsumerCapture::run()
 
 
 
+         read_and_poll_loop(port);
 
-        read_and_poll_loop(port);
-      //  QThread::usleep(CAPTURE_READBUF_SLEEP);
+
+        QThread::usleep(CAPTURE_READBUF_SLEEP);
 
     }
 
