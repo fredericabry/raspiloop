@@ -19,7 +19,7 @@
 
 #define CAPTURE_READBUF_SLEEP (unsigned long)5000 //usec
 
-#define CAPTURE_WRITEFILE_SLEEP (unsigned long)10 //ms
+#define CAPTURE_WRITEFILE_SLEEP (unsigned long)10000 //us
 
 #define CAPTURE_AVAIL_MIN       5*CAPTURE_HW_BUFFER_SIZE/10 //when the device buffer data is bigger than this limit, an interrupt is issued
 

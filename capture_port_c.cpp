@@ -22,7 +22,6 @@
 capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int id):maxlength(maxlength),bufsize(bufsize),rate(rate),id(id)
 {
 
-
     ring_lock.lock();
 
     this->head = 0;
@@ -32,15 +31,17 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
     memset(ringbuf,0,maxlength*sizeof(short));
     bufin = (short*)malloc((bufsize)*sizeof(short));
     memset(bufin,0,bufsize*sizeof(short));
-
     buffile = (short*)malloc((NFILE_CAPTURE)*sizeof(short));
     memset(buffile,0,NFILE_CAPTURE*sizeof(short));
+
+
     recording = false;
     consumer = new Consumer();
     consumer->port = this;
     ring_lock.unlock();
 
     consumer->start();
+
 
 
 }
@@ -68,14 +69,6 @@ unsigned long capture_port_c::freespace()
 {
     return this->maxlength-this->length();
 }
-
-
-
-
-
-
-
-
 
 
 void capture_port_c::pushN(unsigned long N)
@@ -139,7 +132,7 @@ void capture_port_c::pushN(unsigned long N)
 
             nuHead = second;
             test = 2;
-            QElapsedTimer t;
+
         }
     }
     else
@@ -156,7 +149,7 @@ void capture_port_c::pushN(unsigned long N)
 
 
 
-   // ring_lock.lock();
+    // ring_lock.lock();
 
 
 
@@ -164,17 +157,9 @@ void capture_port_c::pushN(unsigned long N)
     this->head = nuHead;
     ring_lock.unlock();
 
-   // if(this->freespace()<8000) {qDebug()<<"almost full :"<<this->freespace();}
+    // if(this->freespace()<8000) {qDebug()<<"almost full :"<<this->freespace();}
 
 }
-
-
-
-
-
-
-
-
 
 
 int capture_port_c::pullN(unsigned long N)
@@ -239,16 +224,6 @@ int capture_port_c::pullN(unsigned long N)
 
     return N;
 }
-
-
-
-
-
-
-
-
-
-
 
 
 void capture_port_c::freeN(unsigned long N)
@@ -345,6 +320,7 @@ void capture_port_c::startrecord(QString filename)
 
     //qDebug()<<"start record "<<id;
 
+
     if(recording)
     {
         qDebug()<<"already recording";
@@ -359,12 +335,13 @@ void capture_port_c::startrecord(QString filename)
         qDebug()<<"full full..";
         freeN(2000);
     }
-   // empty();
+    // empty();
     ring_lock.unlock();
 
     this->openfile(filename);
 
     recording = true;
+    consumer->consumerLock = false;
     consumer->update();
 
 
@@ -384,14 +361,12 @@ void capture_port_c::stoprecord()
 
     recording = false;
 
-
-    // consumer->quit();
-
     this->closefile();
 
 
-}
 
+
+}
 
 
 
@@ -400,72 +375,68 @@ QElapsedTimer t;
 
 void Consumer::update(void)
 {
-int t1;
-static int tmax = 0;
-
-
+    int t1;
+    static int tmax = 0;
     int nread,err;
 
 
     if(!port->recording)
-    {
-        QTimer::singleShot(CAPTURE_WRITEFILE_SLEEP, this, SLOT(update()));
         return;
-    }
 
 
+    if(consumerLock) {return;}
 
+    consumerLock = true;
 
 
     nread = port->pullN(NFILE_CAPTURE);
 
 
 
-t.start();
+    t.start();
     if(nread >0 )
     {
-
-
 
         if ((err = sf_writef_short (port->soundfile, port->buffile,  nread) ) != nread)   qDebug()<< "cannot write sndfile"<<err;
 
     }
-t1 = t.elapsed();
-if(t1 > tmax) tmax = t1;
-if((nread > 0)&&(t1>10)) qDebug()<<t1<<"ms (max : "<<tmax<<" ms)";
+    t1 = t.elapsed();
+    if(t1 > tmax) tmax = t1;
+
+    if (t1 > 10) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms";
 
 
-    QTimer::singleShot(CAPTURE_WRITEFILE_SLEEP, this, SLOT(update()));
-
+    consumerLock = false;
 
 }
-
 
 
 void Consumer::run()
 {
 
 
-    update();
-
-
-
-   /* consumerLock = false;
 
     while(1)
     {
 
-        if(!consumerLock) update();
-
+        update();
         QThread::usleep(CAPTURE_WRITEFILE_SLEEP);
+    }
 
 
-
-    }*/
-
+}
 
 
+Consumer::~Consumer()
+{
+    timer->stop();
 
 
+}
+
+Consumer::Consumer(void)
+{
+
+    connect(this, SIGNAL(finished()), this, SLOT(deleteLater()));
 
 }

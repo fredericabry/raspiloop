@@ -23,10 +23,10 @@ class Consumer:public QThread
     void run() Q_DECL_OVERRIDE;
 public:
     capture_port_c* port;
-
+     ~Consumer();
+    Consumer();
     bool consumerLock;
-QElapsedTimer t;
-    QTimer timer;
+    QTimer *timer;
 
 public slots:
         void update(void);

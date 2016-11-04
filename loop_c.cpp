@@ -2,7 +2,7 @@
 #include <qdebug.h>
 #include "mainwindow.h"
 
-
+#include "QElapsedTimer"
 
 
 
@@ -63,6 +63,7 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 
 
     int short_mask = SF_FORMAT_PCM_16;
+
 
     if(sf_info.format != (SF_FORMAT_WAV|short_mask))
     {
@@ -127,10 +128,12 @@ if (opened)
 
 
 
-
+QElapsedTimer te;
 
 void loop_c::datarequest(int frames)
 {
+    int t1;
+    static int tmax = 0;
     //the associated ringbuffer request more data
 
     // qDebug()<<"data request "<<id;
@@ -142,16 +145,28 @@ void loop_c::datarequest(int frames)
 
     //qDebug()<<id<<" data request received";
 
-    sf_read_short(soundfile,buffile,0) ;
-
+//    sf_read_short(soundfile,buffile,0) ;
+te.start();
     if((nread = sf_readf_short(soundfile,buffile,frames))>0)
     {
+t1 =te.elapsed();
+
         if(stop)
         {
             this->frametoplay -= nread;
         }
         emit send_data(buffile,nread);
+
+
+        if(t1 > tmax) tmax = t1;
+
+        if (t1 > 2) qDebug()<<"load delay: "<<t1<<"ms max : "<<tmax<<" ms";
+
+
+
     }
+
+
 
     if((stop&&(frametoplay<=0))||(nread <= 0))
     {

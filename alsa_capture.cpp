@@ -422,7 +422,7 @@ test = false;
 }
 
 
-QElapsedTimer t2;
+
 
 void ConsumerCapture::run()
 {

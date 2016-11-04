@@ -20,7 +20,7 @@
 
 
 
-#define LOOP_LENGTH 10000
+#define LOOP_LENGTH 500
 
 static loop_c *pLoop0 ;
 static loop_c *pLoop1 ;
@@ -122,26 +122,26 @@ void MainWindow::play()
 
     static int num = 0;
 
-    static bool test = true;
+    static bool test = false;
 
     num=1;
 
 
-   if(test)
+    if(test)
     {
 
-       pRec0->stoprecord();
-       pRec1->stoprecord();
+        pRec0->stoprecord();
+        pRec1->stoprecord();
 
-    //    QThread::usleep(15000);
+        //    QThread::usleep(15000);
 
-       pLoop0= new loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,LOOP_LENGTH);
+        pLoop0= new loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,LOOP_LENGTH);
         pLoop1= new loop_c("loop 1_2","rec1_"+n2s(num)+".wav",pRight,LOOP_LENGTH);
 
 
         //  sleep(0);
 
-       pRec0->startrecord("rec0_"+n2s(num-1)+".wav");
+        pRec0->startrecord("rec0_"+n2s(num-1)+".wav");
         pRec1->startrecord("rec1_"+n2s(num-1)+".wav");
 
 
@@ -149,10 +149,10 @@ void MainWindow::play()
     else
     {
 
-       pRec0->stoprecord();
-       pRec1->stoprecord();
+        pRec0->stoprecord();
+        pRec1->stoprecord();
 
-//QThread::usleep(15000);
+        //QThread::usleep(15000);
         pLoop2= new loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,LOOP_LENGTH);
         pLoop3= new loop_c("loop 2_2","rec1_"+n2s(num-1)+".wav",pRight,LOOP_LENGTH);
 
@@ -160,7 +160,7 @@ void MainWindow::play()
 
         //  sleep(0);
 
-       pRec0->startrecord("rec0_"+n2s(num)+".wav");
+        pRec0->startrecord("rec0_"+n2s(num)+".wav");
         pRec1->startrecord("rec1_"+n2s(num)+".wav");
 
 
@@ -286,7 +286,7 @@ MainWindow::MainWindow(QWidget *parent) :
     pRec1 = alsa_capture_port_by_num(1);
 
 
-  /*  clickTimer = new QTimer(this);
+    /*  clickTimer = new QTimer(this);
     connect(clickTimer,SIGNAL(timeout()), this, SLOT(topClick()));
     clickTimer->start(200);
 */
@@ -304,13 +304,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
- //   QThread::sleep(1);
+    //   QThread::sleep(1);
     topStep();
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
     stepTimer->start(LOOP_LENGTH);
 
-return;
+    return;
 
 }
 
