@@ -332,7 +332,7 @@ void capture_port_c::startrecord(QString filename)
     ring_lock.lock();
     if(freespace()<2000)
     {
-        qDebug()<<"full full..";
+
         freeN(2000);
     }
     // empty();

@@ -19,18 +19,20 @@ SOURCES += main.cpp\
     util.cpp \
     alsa_util.cpp \
     alsa_playback.cpp \
-    loop_c.cpp \
     alsa_capture.cpp \
     playback_port_c.cpp \
-    capture_port_c.cpp
+    capture_port_c.cpp \
+    playback_loop_c.cpp \
+    capture_loop_c.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
     alsa_playback.h \
-    loop_c.h \
     alsa_capture.h \
     playback_port_c.h \
-    capture_port_c.h
+    capture_port_c.h \
+    playback_loop_c.h \
+    capture_loop_c.h
 
 FORMS    += mainwindow.ui
 

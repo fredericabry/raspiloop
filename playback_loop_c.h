@@ -12,13 +12,13 @@
 #include "playback_port_c.h"
 
 
-class loop_c:public QObject
+class playback_loop_c:public QObject
 {
 Q_OBJECT
 
 public:
-    loop_c(const QString id,const QString filename, playback_port_c *pRing, int length);
-    ~loop_c();
+    playback_loop_c(const QString id,const QString filename, playback_port_c *pRing, int length);
+    ~playback_loop_c();
 
     const QString id;
     const QString filename;

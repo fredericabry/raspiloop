@@ -8,7 +8,7 @@
 #include <QMainWindow>
 #include <QFile>
 #include <QTextStream>
-#include "loop_c.h"
+#include "playback_loop_c.h"
 #include <qdebug.h>
 
 
@@ -206,7 +206,7 @@ void playback_port_c::triggerempty(void)
 
 }
 
-void playback_port_c::addloop(loop_c *pLoop)
+void playback_port_c::addloop(playback_loop_c *pLoop)
 {
 
     this->connected_loops++;

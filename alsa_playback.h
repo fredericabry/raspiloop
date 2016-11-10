@@ -5,7 +5,7 @@
 #include <sndfile.h>
 #include "mainwindow.h"
 #include "playback_port_c.h"
-#include "loop_c.h"
+#include "playback_loop_c.h"
 
 #include <sndfile.h>
 #include <alsa/asoundlib.h>

@@ -14,7 +14,7 @@
 #include <qelapsedtimer.h>
 
 #include "playback_port_c.h"
-#include "loop_c.h"
+#include "playback_loop_c.h"
 #include "qdir.h"
 
 
@@ -22,10 +22,10 @@
 
 #define LOOP_LENGTH 500
 
-static loop_c *pLoop0 ;
-static loop_c *pLoop1 ;
-static loop_c *pLoop2 ;
-static loop_c *pLoop3 ;
+static playback_loop_c *pLoop0 ;
+static playback_loop_c *pLoop1 ;
+static playback_loop_c *pLoop2 ;
+static playback_loop_c *pLoop3 ;
 
 
 
@@ -135,8 +135,8 @@ void MainWindow::play()
 
         //    QThread::usleep(15000);
 
-        pLoop0= new loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,LOOP_LENGTH);
-        pLoop1= new loop_c("loop 1_2","rec1_"+n2s(num)+".wav",pRight,LOOP_LENGTH);
+        pLoop0= new playback_loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,LOOP_LENGTH);
+        pLoop1= new playback_loop_c("loop 1_2","rec1_"+n2s(num)+".wav",pRight,LOOP_LENGTH);
 
 
         //  sleep(0);
@@ -153,8 +153,8 @@ void MainWindow::play()
         pRec1->stoprecord();
 
         //QThread::usleep(15000);
-        pLoop2= new loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,LOOP_LENGTH);
-        pLoop3= new loop_c("loop 2_2","rec1_"+n2s(num-1)+".wav",pRight,LOOP_LENGTH);
+        pLoop2= new playback_loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,LOOP_LENGTH);
+        pLoop3= new playback_loop_c("loop 2_2","rec1_"+n2s(num-1)+".wav",pRight,LOOP_LENGTH);
 
 
 
@@ -264,7 +264,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
     system(txt.toStdString().c_str());
 
-    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
+    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
 
 

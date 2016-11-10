@@ -8,7 +8,7 @@
 #include <qmutex.h>
 
 
-class loop_c;
+class playback_loop_c;
 
 
 
@@ -51,7 +51,7 @@ public:
     void pushN(short *buf_in, unsigned long N);
     int pullN(unsigned long N);
     void triggerempty(void);
-    void addloop(loop_c *pLoop);
+    void addloop(playback_loop_c *pLoop);
     void removeloop();
 
    // loop_c **pLoops;

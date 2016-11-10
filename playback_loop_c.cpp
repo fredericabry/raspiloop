@@ -1,4 +1,4 @@
-#include "loop_c.h"
+#include "playback_loop_c.h"
 #include <qdebug.h>
 #include "mainwindow.h"
 
@@ -7,7 +7,7 @@
 
 
 
-loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2, int length):id(id),filename(filename)
+playback_loop_c::playback_loop_c(const QString id, const QString filename, playback_port_c *pRing2, int length):id(id),filename(filename)
 {
 
 
@@ -100,7 +100,7 @@ loop_c::loop_c(const QString id, const QString filename, playback_port_c *pRing2
 }
 
 
-void loop_c::destroyloop(bool opened)
+void playback_loop_c::destroyloop(bool opened)
 {
 
     if(!disconnect(pRing,SIGNAL(signal_trigger(int)), this, SLOT(datarequest(int))))
@@ -130,7 +130,7 @@ if (opened)
 
 QElapsedTimer te;
 
-void loop_c::datarequest(int frames)
+void playback_loop_c::datarequest(int frames)
 {
     int t1;
     static int tmax = 0;
@@ -190,7 +190,7 @@ t1 =te.elapsed();
 
 }
 
-loop_c::~loop_c(void)
+playback_loop_c::~playback_loop_c(void)
 {
     free(buffile);
 
