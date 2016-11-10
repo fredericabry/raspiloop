@@ -23,6 +23,9 @@ short **capture_buf;
 bool recording;
 ConsumerCapture *consumerCapture;
 
+
+
+
 void alsa_start_capture(QString device, int channels, int rate)
 {
 
@@ -84,7 +87,7 @@ void alsa_init_capture(int channels,int rate)
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames*capture_channels,rate,i);
+        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames/**capture_channels*/,rate,i);
         capture_buf[i] = main_buf_capture[i]->bufin;
     }
 
@@ -222,7 +225,7 @@ void alsa_begin_capture(capture_port_c **port)
     consumerCapture->start();
 
 
-  /*  snd_async_handler_t *pcm_callback;
+    /*  snd_async_handler_t *pcm_callback;
     snd_async_add_pcm_handler(&pcm_callback,capture_handle,alsa_async_callback_capture,port);
 
 
@@ -236,14 +239,9 @@ void alsa_begin_capture(capture_port_c **port)
 
 }
 
-
-
 void alsa_read_capture(capture_port_c **port)
 {
-
-
     int err;
-
     if ((err = snd_pcm_readn (capture_handle, (void**)capture_buf,capture_frames))!=(snd_pcm_sframes_t)capture_frames) {
         if(err == -EPIPE)
         {
@@ -266,9 +264,6 @@ void alsa_read_capture(capture_port_c **port)
     }
     else
     {
-
-
-
         for(int i = 0;i<capture_channels;i++)
         {
             port[i]->pushN((unsigned long)capture_frames);
@@ -276,30 +271,13 @@ void alsa_read_capture(capture_port_c **port)
         }
     }
 
-
 }
 
 capture_port_c* alsa_capture_port_by_num(int channel)   {return main_buf_capture[channel];}
 
-void alsa_start_capture_record(int channel,QString filename)
-{
-    capture_port_c *pcap = alsa_capture_port_by_num(channel);
-    pcap->startrecord(filename);
-}
-
-void alsa_stop_capture_record(int channel)
-{
-
-    capture_port_c *pcap = alsa_capture_port_by_num(channel);
-    pcap->stoprecord();
-}
-
 void alsa_cleanup_capture()
 {
-
-
     recording = false;
-
     QThread::msleep(100); //give some time to the consumer thread to stop quietly
     consumerCapture->quit();
     snd_pcm_close(capture_handle);
@@ -307,27 +285,6 @@ void alsa_cleanup_capture()
     free(main_buf_capture);
 
 }
-
-void alsa_monitor_capture(int channel, unsigned long *data)
-{
-
-    *data = alsa_capture_port_by_num(channel)->freespace();
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
@@ -352,19 +309,15 @@ int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
     qDebug()<<"buuug";
 }
 
-
-
-
-
 void read_and_poll_loop(capture_port_c **port)
 {
 
-static bool test = false;
+    static bool test = false;
 
 
-if(test) {qDebug()<<"overlap";return;}
+    if(test) {qDebug()<<"overlap";return;}
 
-test = true;
+    test = true;
 
     struct pollfd *ufds;
 
@@ -408,21 +361,18 @@ test = true;
     snd_pcm_uframes_t avail;
     avail = snd_pcm_avail_update(capture_handle);
 
-//    qDebug()<<avail;
+    //    qDebug()<<avail;
 
     while(avail >= capture_frames)
     {
-       alsa_read_capture(port);
-       avail = snd_pcm_avail_update(capture_handle);
+        alsa_read_capture(port);
+        avail = snd_pcm_avail_update(capture_handle);
 
     }
 
-test = false;
+    test = false;
 
 }
-
-
-
 
 void ConsumerCapture::run()
 {
@@ -430,12 +380,7 @@ void ConsumerCapture::run()
 
     while(recording)
     {
-
-
-
-         read_and_poll_loop(port);
-
-
+        read_and_poll_loop(port);
         QThread::usleep(CAPTURE_READBUF_SLEEP);
 
     }

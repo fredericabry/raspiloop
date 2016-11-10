@@ -11,7 +11,7 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 {
 
 
-  //  qDebug()<<"Loop created "<<id;
+    //  qDebug()<<"Loop created "<<id;
 
     pRing = pRing2;
     SF_INFO sf_info;
@@ -22,9 +22,9 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
     if( !connect(this,SIGNAL(send_data(short*,int)), pRing, SLOT(data_available(short*, int))))
         qDebug()<<"connection failed";
 
-     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
+    buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
 
- //   qDebug()<<"created 1 "<<id;
+    //   qDebug()<<"created 1 "<<id;
 
     QString filename2 = DIRECTORY+filename;
 
@@ -34,12 +34,12 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
         fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",filename.toStdString().c_str(), errstr);
 
 
-            destroyloop(false);
-            return;
-         }
+        destroyloop(false);
+        return;
+    }
 
 
-  //   qDebug()<<"created 2 "<<id;
+    //   qDebug()<<"created 2 "<<id;
 
 
 
@@ -59,7 +59,7 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
     else stop = true;
 
 
- //   qDebug()<<"created 3 "<<id;
+    //   qDebug()<<"created 3 "<<id;
 
 
     int short_mask = SF_FORMAT_PCM_16;
@@ -88,14 +88,14 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
 
 
- //    qDebug()<<"created 4 "<<id;
+    //    qDebug()<<"created 4 "<<id;
 
     pRing->addloop(this);
 
 
- //  qDebug()<<"created "<<id;
+    //  qDebug()<<"created "<<id;
 
-   //   qDebug()<<"loop created "<<id;
+    //   qDebug()<<"loop created "<<id;
 
 }
 
@@ -110,17 +110,17 @@ void playback_loop_c::destroyloop(bool opened)
         qDebug()<<"disconnection failed";
 
 
-if (opened)
-{
-    sf_close(soundfile);
+    if (opened)
+    {
+        sf_close(soundfile);
 
-    this->pRing->removeloop();
-}
-
-
+        this->pRing->removeloop();
+    }
 
 
- //    qDebug()<<"loop destroyed "<<id;
+
+
+    //    qDebug()<<"loop destroyed "<<id;
 
     delete this;
 }
@@ -134,7 +134,7 @@ void playback_loop_c::datarequest(int frames)
 {
     int t1;
     static int tmax = 0;
-    //the associated ringbuffer request more data
+    //the associated playback port requests more data
 
     // qDebug()<<"data request "<<id;
 
@@ -145,11 +145,11 @@ void playback_loop_c::datarequest(int frames)
 
     //qDebug()<<id<<" data request received";
 
-//    sf_read_short(soundfile,buffile,0) ;
-te.start();
+    //    sf_read_short(soundfile,buffile,0) ;
+    te.start();
     if((nread = sf_readf_short(soundfile,buffile,frames))>0)
     {
-t1 =te.elapsed();
+        t1 =te.elapsed();
 
         if(stop)
         {

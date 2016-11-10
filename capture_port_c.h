@@ -12,30 +12,6 @@
 #include "qrunnable.h"
 #include "qelapsedtimer.h"
 
-class capture_port_c;
-
-
-
-class Consumer:public QThread
-{
-    Q_OBJECT
-
-    void run() Q_DECL_OVERRIDE;
-public:
-    capture_port_c* port;
-     ~Consumer();
-    Consumer();
-    bool consumerLock;
-    QTimer *timer;
-
-public slots:
-        void update(void);
-
-
-};
-
-
-
 
 
 
@@ -53,36 +29,19 @@ public:
     const unsigned long bufsize;
     int const rate;
     int const id;
-    SNDFILE *soundfile;
-    QString filedir;
-
-    bool recording;
 
     short *ringbuf;//large buffer for circular storage
     short *bufin;//small buffer for transfert to the ringbuffer
-    short *buffile;//small buffer for file writing from the ringbuffer
 
     unsigned long head;
-    unsigned long tail;
 
-    unsigned long readStartPoint,readEndPoint;
+    QMutex ring_lock;
 
-    Consumer *consumer;
-
-
-    void fill(int channel);
     void pushN(unsigned long N);
-    int pullN(unsigned long N);
     void openfile(QString filename);
     void closefile();
     void destroyport();
-    void startrecord(QString filename);
-    void stoprecord();
 
-    unsigned long  length();
-    unsigned long  freespace();
-    void freeN(unsigned long N);
-    QMutex ring_lock;
 
 };
 

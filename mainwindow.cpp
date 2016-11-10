@@ -15,17 +15,27 @@
 
 #include "playback_port_c.h"
 #include "playback_loop_c.h"
+
+#include "capture_loop_c.h"
+#include "capture_port_c.h"
+
+
 #include "qdir.h"
 
 
 
 
-#define LOOP_LENGTH 500
+#define LOOP_LENGTH 1000
 
 static playback_loop_c *pLoop0 ;
 static playback_loop_c *pLoop1 ;
 static playback_loop_c *pLoop2 ;
 static playback_loop_c *pLoop3 ;
+
+capture_loop_c *pCaptureLoop0;
+capture_loop_c *pCaptureLoop1;
+capture_loop_c *pCaptureLoop2;
+capture_loop_c *pCaptureLoop3;
 
 
 
@@ -62,11 +72,7 @@ void MainWindow::cardchoicerefresh(void)
 void MainWindow::topClick()
 {
 
-    unsigned long a;
-    alsa_monitor_playback(0,&a);
-    ui->playback_freespace->display((int)a);
-    alsa_monitor_capture(0,&a);
-    ui->capture_freespace->display((int)a);
+
     return;
 
     static int x = 0;
@@ -113,55 +119,47 @@ void MainWindow::record(void)
 
 }
 
-
-
-
-
 void MainWindow::play()
 {
 
     static int num = 0;
 
-    static bool test = false;
+    static bool test = true;
 
-    num=1;
+    num=0;
 
 
     if(test)
     {
 
-        pRec0->stoprecord();
-        pRec1->stoprecord();
-
-        //    QThread::usleep(15000);
-
-        pLoop0= new playback_loop_c("loop 1_1","rec0_"+n2s(num)+".wav",pLeft,LOOP_LENGTH);
-        pLoop1= new playback_loop_c("loop 1_2","rec1_"+n2s(num)+".wav",pRight,LOOP_LENGTH);
 
 
-        //  sleep(0);
+        pCaptureLoop2->destroyLoop();
+        pCaptureLoop3->destroyLoop();
 
-        pRec0->startrecord("rec0_"+n2s(num-1)+".wav");
-        pRec1->startrecord("rec1_"+n2s(num-1)+".wav");
+
+        pLoop0= new playback_loop_c("loop 1_1","rec0_1.wav",pLeft,LOOP_LENGTH);
+        pLoop1= new playback_loop_c("loop 1_2","rec1_1.wav",pRight,LOOP_LENGTH);
+
+        pCaptureLoop0 = new capture_loop_c("record 0","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop1 = new capture_loop_c("record 1","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+
+
+
 
 
     }
     else
     {
 
-        pRec0->stoprecord();
-        pRec1->stoprecord();
+        pCaptureLoop0->destroyLoop();
+        pCaptureLoop1->destroyLoop();
 
-        //QThread::usleep(15000);
-        pLoop2= new playback_loop_c("loop 2_1","rec0_"+n2s(num-1)+".wav",pLeft,LOOP_LENGTH);
-        pLoop3= new playback_loop_c("loop 2_2","rec1_"+n2s(num-1)+".wav",pRight,LOOP_LENGTH);
+        pLoop2= new playback_loop_c("loop 2_1","rec0_1.wav",pLeft,LOOP_LENGTH);
+        pLoop3= new playback_loop_c("loop 2_2","rec1_1.wav",pRight,LOOP_LENGTH);
 
-
-
-        //  sleep(0);
-
-        pRec0->startrecord("rec0_"+n2s(num)+".wav");
-        pRec1->startrecord("rec1_"+n2s(num)+".wav");
+       pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
 
 
     }
@@ -170,16 +168,12 @@ void MainWindow::play()
 
 }
 
-
-
 void MainWindow::shutdown()
 {
 
     exit(0);
 
 }
-
-
 
 void MainWindow::topStep()
 {
@@ -196,8 +190,6 @@ void MainWindow::topStep()
 
 
 }
-
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -292,23 +284,39 @@ MainWindow::MainWindow(QWidget *parent) :
 */
 
 
-    //pRec0->startrecord("rec0_test.wav");
-    //pRec1->startrecord("rec1_test.wav");
 
 
 
 
 
+   pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+    pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
 
 
 
 
 
     //   QThread::sleep(1);
-    topStep();
+    // topStep();
+
+
+
+
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
     stepTimer->start(LOOP_LENGTH);
+
+
+
+
+
+
+
+
+
+
+
+
 
     return;
 

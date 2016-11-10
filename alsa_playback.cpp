@@ -325,17 +325,6 @@ void alsa_cleanup_playback()
     //qDebug()<<"cleaning up";
 }
 
-void alsa_monitor_playback(int channel,unsigned long *data)
-{
-
-    *data = alsa_playback_port_by_num(channel)->freespace();
-
-}
-
-
-
-
-
 int wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
     unsigned short revents;
@@ -399,16 +388,11 @@ void write_and_poll_loop(playback_port_c **port)
 
 void ConsumerPlayback::run()
 {
-
     while(playing)
     {
-
-
         write_and_poll_loop(port);
         QThread::usleep(PLAYBACK_READBUF_SLEEP);
-
     }
-
 }
 
 
