@@ -32,9 +32,10 @@ capture_loop_c::~capture_loop_c()
 
 void capture_loop_c::destroyLoop()
 {
+
     recording = false;
-    closefile();
-    delete this;
+
+
 }
 
 int capture_loop_c::pullN(unsigned long N)
@@ -76,6 +77,7 @@ int capture_loop_c::pullN(unsigned long N)
     }
     else
     {
+
         pt = this->pPort->ringbuf+(nuTail)/*sizeof(short)*/;
         memcpy(this->buffile,pt,N*sizeof(short));
         nuTail += N;
@@ -107,12 +109,14 @@ void capture_loop_c::openfile(QString filename)
 
     r.remove(filename);//in case there is already a file named like that
 
-    filedir = filename.remove(filename.length()-3,3) + "tmp";
+   // filedir = filename.remove(filename.length()-3,3) + "tmp";
+    filedir = filename;
+
 
     const char * fn = filedir.toStdString().c_str();
 
     int cmpt = 0;
-    while ((soundfile = sf_open (filedir.toStdString().c_str(), SFM_WRITE, &sf_info)) == NULL) {
+    while ((soundfile = sf_open (filedir.toStdString().c_str(), SFM_RDWR, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile \"%s\" for input (%s)\n",fn, errstr);
@@ -123,6 +127,8 @@ void capture_loop_c::openfile(QString filename)
 
         if(cmpt>100) exit(1);
     }
+
+    sf_command (soundfile, SFC_SET_UPDATE_HEADER_AUTO, NULL, SF_TRUE) ;
 
 }
 
@@ -139,9 +145,9 @@ void capture_loop_c::closefile()
 
 
     QString old = filedir;
-    filedir.replace(filedir.length()-3,3,"wav");
+   // filedir.replace(filedir.length()-3,3,"wav");
 
-    if(!r.rename(old,filedir)) qDebug()<<"cannot rename file";
+ //   if(!r.rename(old,filedir)) qDebug()<<"cannot rename file";
 }
 
 void captureLoopConsumer::update(void)
@@ -156,7 +162,6 @@ void captureLoopConsumer::update(void)
     if(nread >0 )
     {
         telapsed.start();
-
         if ((err = sf_writef_short (port->soundfile, port->buffile,  nread) ) != nread)   qDebug()<< "cannot write sndfile"<<err;
 
         t1 = telapsed.elapsed();
@@ -180,6 +185,8 @@ void captureLoopConsumer::run()
         QThread::usleep(CAPTURE_WRITEFILE_SLEEP);
     }
 
+    port->closefile();
+    delete port;
 }
 
 

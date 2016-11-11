@@ -224,19 +224,6 @@ void alsa_begin_capture(capture_port_c **port)
     consumerCapture->port = port;
     consumerCapture->start();
 
-
-    /*  snd_async_handler_t *pcm_callback;
-    snd_async_add_pcm_handler(&pcm_callback,capture_handle,alsa_async_callback_capture,port);
-
-
-    for(int i = 0; i < 3 ; i ++)
-    {
-
-        alsa_read_capture(port);
-
-
-    }*/
-
 }
 
 void alsa_read_capture(capture_port_c **port)

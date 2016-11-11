@@ -10,7 +10,7 @@
 #include <QTextStream>
 #include "playback_loop_c.h"
 #include <qdebug.h>
-
+#include <qelapsedtimer.h>
 
 playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned long bufsize, const unsigned long trigger, const int channel):maxlength(maxlength),bufsize(bufsize),trigger(trigger),channel(channel)
 {
@@ -18,6 +18,10 @@ playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned l
     this->tail = 0;
     this->head = 0;
     this->connected_loops = 0;
+
+
+    consumer = new playbackPortConsumer;
+    consumer->controler = this;
 
     //qDebug()<<maxlength;
 
@@ -28,6 +32,7 @@ playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned l
     wait_for_data = false;
     data_received = 0;
 
+    consumer->start();
 
 
 
@@ -36,6 +41,7 @@ playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned l
 playback_port_c::~playback_port_c()
 {
 
+    consumer->quit();
     free(ringbuf);
     free(buf);
     free(buffile);
@@ -252,47 +258,43 @@ void playback_port_c::removeloop()
 
 }
 
-void playback_port_c::data_available(short *buf, int nread)
+
+void playbackPortConsumer::run()
+{
+    exec();
+}
+
+
+void playbackPortConsumer::data_available(short *buf, int nread)
 {
 
     //implement mix strategy here
+    controler->data_received++;
 
 
-
-
-    data_received++;
-
-
-
-
-
-
-    if(data_received == 1)//first loop
+    if(controler->data_received == 1)//first loop
     {
-        memset(buffile,0,nread*sizeof(short));
+        memset(controler->buffile,0,nread*sizeof(short));
         for(int i = 0;i<nread;i++)
         {
-            buffile[i]=buf[i]/connected_loops;
+            controler->buffile[i]=buf[i]/controler->connected_loops;
         }
     }
     else
     {
         for(int i = 0;i<nread;i++)
         {
-            buffile[i]+=buf[i]/connected_loops;
+           controler-> buffile[i]+=buf[i]/controler->connected_loops;
         }
     }
 
 
-
-
-
-    if(data_received >= this->connected_loops)
+    if(controler->data_received >= controler->connected_loops)
     {
-        data_received = 0;
+        controler->data_received = 0;
         //all data has been received, let's push it to the ringbuffer
-        pushN(buffile,nread);
-        wait_for_data = false;
+        controler->pushN(controler->buffile,nread);
+        controler->wait_for_data = false;
 
     }
 

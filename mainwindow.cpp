@@ -73,33 +73,6 @@ void MainWindow::topClick()
 {
 
 
-    return;
-
-    static int x = 0;
-    if(ui->radioClick->isChecked())
-    {
-        x++;
-        if(x>4)
-            x=1;
-
-
-        if((x==1) || (x == 3))
-        {
-
-
-
-        }
-
-        else
-
-        {
-
-
-        }
-
-
-    }
-
 }
 
 
@@ -135,7 +108,7 @@ void MainWindow::play()
 
 
         pCaptureLoop2->destroyLoop();
-        pCaptureLoop3->destroyLoop();
+       pCaptureLoop3->destroyLoop();
 
 
         pLoop0= new playback_loop_c("loop 1_1","rec0_1.wav",pLeft,LOOP_LENGTH);
@@ -155,11 +128,11 @@ void MainWindow::play()
         pCaptureLoop0->destroyLoop();
         pCaptureLoop1->destroyLoop();
 
-        pLoop2= new playback_loop_c("loop 2_1","rec0_1.wav",pLeft,LOOP_LENGTH);
-        pLoop3= new playback_loop_c("loop 2_2","rec1_1.wav",pRight,LOOP_LENGTH);
+        pLoop2= new playback_loop_c("loop 2_1","rec0_0.wav",pLeft,LOOP_LENGTH);
+        pLoop3= new playback_loop_c("loop 2_2","rec1_0.wav",pRight,LOOP_LENGTH);
 
-       pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
-        pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+       pCaptureLoop2 = new capture_loop_c("record 2","rec0_1.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+       pCaptureLoop3 = new capture_loop_c("record 3","rec1_1.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
 
 
     }
@@ -291,15 +264,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
    pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
     pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+   QThread::sleep(2);
+    pLoop0= new playback_loop_c("loop 1_1","rec0_0.wav",pLeft,10*LOOP_LENGTH);
+    pLoop1= new playback_loop_c("loop 1_2","rec1_0.wav",pRight,10*LOOP_LENGTH);
 
 
 
 
 
-    //   QThread::sleep(1);
-    // topStep();
+
+       // topStep();
 
 
+
+    return;
 
 
     stepTimer = new QTimer(this);

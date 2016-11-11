@@ -9,9 +9,26 @@
 
 
 class playback_loop_c;
+class playback_port_c;
+
+
+class playbackPortConsumer:public QThread
+{
+    Q_OBJECT
+
+    void run() Q_DECL_OVERRIDE;
+
+public:
+    playback_port_c* controler;
 
 
 
+
+public slots:
+    void data_available(short *buf,int nread);
+
+
+};
 
 
 
@@ -40,6 +57,8 @@ public:
     int data_received;//number of buf sent to the ringbuf by the loops connected to it.
     bool wait_for_data;
 
+    playbackPortConsumer *consumer;
+
 
     void removeallloops(void);
 
@@ -59,12 +78,9 @@ int connected_loops;//nbr of loops connected to this ringbuffer
 
     QMutex ring_lock;
 
-
 signals:
     void signal_trigger(int frames);
 
-private slots:
-    void data_available(short *buf,int nread);
 
 
 

@@ -36,9 +36,6 @@ capture_port_c::~capture_port_c()
     free(bufin);
 }
 
-
-
-
 void capture_port_c::pushN(unsigned long N)
 {
     short *pt ;
@@ -71,9 +68,6 @@ void capture_port_c::pushN(unsigned long N)
     this->head = nuHead;
     ring_lock.unlock();
 }
-
-
-
 
 void capture_port_c::destroyport()
 {
