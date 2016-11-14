@@ -302,7 +302,7 @@ void read_and_poll_loop(capture_port_c **port)
     static bool test = false;
 
 
-    if(test) {qDebug()<<"overlap";return;}
+    if(test) {qDebug()<<"overlap read capture";return;}
 
     test = true;
 

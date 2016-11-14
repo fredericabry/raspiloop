@@ -20,7 +20,7 @@
 #define PLAYBACK_READBUF_SLEEP 5000 //usec
 
 
-#define RINGBUFSIZE_PLAYBACK 10000 //size of the playback ringbuffer
+#define RINGBUFSIZE_PLAYBACK 6000 //size of the playback ringbuffer
 #define THRESHOLD RINGBUFSIZE_PLAYBACK/2 //interrupt when length(ringbuffer) < this value
 
 

@@ -25,7 +25,7 @@
 
 
 
-#define LOOP_LENGTH 1000
+#define LOOP_LENGTH 2000
 
 static playback_loop_c *pLoop0 ;
 static playback_loop_c *pLoop1 ;
@@ -107,12 +107,12 @@ void MainWindow::play()
 
 
 
+
+
+        pLoop0= new playback_loop_c("loop 1_1","rec0_1.wav",pLeft,0);
+        pLoop1= new playback_loop_c("loop 1_2","rec1_1.wav",pRight,0);
         pCaptureLoop2->destroyLoop();
-       pCaptureLoop3->destroyLoop();
-
-
-        pLoop0= new playback_loop_c("loop 1_1","rec0_1.wav",pLeft,LOOP_LENGTH);
-        pLoop1= new playback_loop_c("loop 1_2","rec1_1.wav",pRight,LOOP_LENGTH);
+        pCaptureLoop3->destroyLoop();
 
         pCaptureLoop0 = new capture_loop_c("record 0","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
         pCaptureLoop1 = new capture_loop_c("record 1","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
@@ -125,14 +125,14 @@ void MainWindow::play()
     else
     {
 
+
+        pLoop2= new playback_loop_c("loop 2_1","rec0_0.wav",pLeft,0);
+        pLoop3= new playback_loop_c("loop 2_2","rec1_0.wav",pRight,0);
         pCaptureLoop0->destroyLoop();
         pCaptureLoop1->destroyLoop();
 
-        pLoop2= new playback_loop_c("loop 2_1","rec0_0.wav",pLeft,LOOP_LENGTH);
-        pLoop3= new playback_loop_c("loop 2_2","rec1_0.wav",pRight,LOOP_LENGTH);
-
-       pCaptureLoop2 = new capture_loop_c("record 2","rec0_1.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
-       pCaptureLoop3 = new capture_loop_c("record 3","rec1_1.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop2 = new capture_loop_c("record 2","rec0_1.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop3 = new capture_loop_c("record 3","rec1_1.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
 
 
     }
@@ -232,12 +232,18 @@ MainWindow::MainWindow(QWidget *parent) :
     txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
 
+  /*  txt = "sudo chrt -f -p 99 "+QString::number(QCoreApplication::applicationPid());
+    system(txt.toStdString().c_str());
 
 
+    txt = "sudo renice -n -19 -p "+QString::number(QCoreApplication::applicationPid());
+    system(txt.toStdString().c_str());
+
+*/
 
 
-    alsa_start_playback("hw:1,0", 2, 44100);
-    alsa_start_capture("hw:1,0", 2, 44100);
+    alsa_start_playback("hw:1,0", 2,RATE);
+    alsa_start_capture("hw:1,0", 2, RATE);
 
 
 
@@ -260,25 +266,29 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
+/*
    pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
     pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
-   QThread::sleep(2);
-    pLoop0= new playback_loop_c("loop 1_1","rec0_0.wav",pLeft,10*LOOP_LENGTH);
-    pLoop1= new playback_loop_c("loop 1_2","rec1_0.wav",pRight,10*LOOP_LENGTH);
+    QThread::sleep(2);
+     pLoop0= new playback_loop_c("loop 1_1","rec0_0.wav",pLeft,0);
+
+     pLoop1= new playback_loop_c("loop 1_2","rec1_0.wav",pRight,0);
+*/
 
 
 
 
+  //  pLoop0= new playback_loop_c("loop 1_1","nantesd.wav",pLeft,0);
+
+  //  pLoop1= new playback_loop_c("loop 1_2","nantesg.wav",pRight,0);
+
+    // topStep();
 
 
-       // topStep();
 
 
-
-    return;
-
+    pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+     pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
 
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));

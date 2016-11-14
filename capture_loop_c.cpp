@@ -2,20 +2,20 @@
 #include "qdir.h"
 #include "QDebug"
 
-#define READ_OFFSET (signed long)3000
+#define READ_OFFSET (signed long)500
 
 capture_loop_c::capture_loop_c(const QString id,const QString filename,capture_port_c *pPort,const int rate, const unsigned long bufsize):id(id),filename(filename),pPort(pPort),rate(rate),bufsize(bufsize)
 {
 
     long x = (signed long)pPort->head - READ_OFFSET;
-    while(x < 0) x+=pPort->maxlength;
+    while(x < 0) x+=pPort->maxlength+1;
     tail = x;
-
 
     buffile = (short*)malloc(bufsize*sizeof(short));
     memset(buffile,0,bufsize*sizeof(short));
-
     this->openfile(filename);
+
+
 
     consumer = new captureLoopConsumer();
     consumer->port = this;
@@ -49,19 +49,19 @@ int capture_loop_c::pullN(unsigned long N)
 
     pPort->ring_lock.lock();
     unsigned long nuHead = this->pPort->head;
-    pPort->ring_lock.unlock();
+    //pPort->ring_lock.unlock();
 
     if(nuHead>=nuTail) length = nuHead-nuTail;
     else length = pPort->maxlength-nuTail + nuHead + 1;
 
-    if(length == 0) {return 0;}
+    if(length == 0) {pPort->ring_lock.unlock();return 0;}
 
 
     if(N > length)
         N = length;
 
 
-    if((nuHead < nuTail)&&(nuTail+N>this->pPort->maxlength))
+    if((nuHead < nuTail)&&(nuTail+N>this->pPort->maxlength+1))
     {
 
         //first let us copy the part at the end of the ringbuffer
@@ -85,8 +85,9 @@ int capture_loop_c::pullN(unsigned long N)
     }
 
 
-    this->tail = nuTail;
 
+    this->tail = nuTail;
+pPort->ring_lock.unlock();
     return N;
 }
 
@@ -116,7 +117,7 @@ void capture_loop_c::openfile(QString filename)
     const char * fn = filedir.toStdString().c_str();
 
     int cmpt = 0;
-    while ((soundfile = sf_open (filedir.toStdString().c_str(), SFM_RDWR, &sf_info)) == NULL) {
+    while ((soundfile = sf_open (filedir.toStdString().c_str(), SFM_WRITE, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
         fprintf (stderr, "cannot open sndfile \"%s\" for input (%s)\n",fn, errstr);
@@ -128,7 +129,7 @@ void capture_loop_c::openfile(QString filename)
         if(cmpt>100) exit(1);
     }
 
-    sf_command (soundfile, SFC_SET_UPDATE_HEADER_AUTO, NULL, SF_TRUE) ;
+
 
 }
 
@@ -161,13 +162,14 @@ void captureLoopConsumer::update(void)
 
     if(nread >0 )
     {
+
         telapsed.start();
         if ((err = sf_writef_short (port->soundfile, port->buffile,  nread) ) != nread)   qDebug()<< "cannot write sndfile"<<err;
 
         t1 = telapsed.elapsed();
-        if(t1 > tmax) tmax = t1;
+        if(t1 > tmax) {tmax = t1; qDebug()<<"new save delay max : "<<tmax<<" ms";}
 
-        if (t1 > 50) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms";
+        if (t1 > 2) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
 
     }
 

@@ -42,9 +42,9 @@ void capture_port_c::pushN(unsigned long N)
 
     ring_lock.lock();
     unsigned long nuHead = this->head;
-    ring_lock.unlock();
+  //  ring_lock.unlock();
 
-    if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct";  return;}
+    if(N > this->maxlength) {qDebug()<<"Failed to copy to capture ringbuf struct";  ring_lock.unlock();return;}
 
     if(N+nuHead <= this->maxlength)
     {
@@ -64,7 +64,9 @@ void capture_port_c::pushN(unsigned long N)
         nuHead = second;
     }
 
-    ring_lock.lock();
+
+
+   // ring_lock.lock();
     this->head = nuHead;
     ring_lock.unlock();
 }

@@ -14,7 +14,6 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
     //  qDebug()<<"Loop created "<<id;
 
 
-    SF_INFO sf_info;
 
     consumer = new playbackLoopConsumer;
     consumer->controler = this;
@@ -29,7 +28,39 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
 
-    //   qDebug()<<"created 1 "<<id;
+
+    frametoplay = (length*441)/10;
+    repeat = false;
+    if(frametoplay==0)
+        stop = false;
+    else if(frametoplay<0)
+    {
+        stop = false;
+        repeat = true;
+
+    }
+
+    else stop = true;
+
+    openFile();
+
+    pRing->addloop(this);
+
+
+
+
+    consumer->start();
+
+
+}
+
+
+
+
+void playback_loop_c::openFile()
+{
+    SF_INFO sf_info;
+
 
     QString filename2 = DIRECTORY+filename;
 
@@ -46,18 +77,6 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
     //   qDebug()<<"created 2 "<<id;
 
-    frametoplay = (length*441)/10;
-    repeat = false;
-    if(frametoplay==0)
-        stop = false;
-    else if(frametoplay<0)
-    {
-        stop = false;
-        repeat = true;
-
-    }
-
-    else stop = true;
 
     int short_mask = SF_FORMAT_PCM_16;
 
@@ -82,15 +101,13 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
         return;
     }
 
-    pRing->addloop(this);
-
-
-
-
-    consumer->start();
-
 
 }
+
+
+
+
+
 
 void playback_loop_c::destroyloop(bool opened)
 {
@@ -125,17 +142,28 @@ playback_loop_c::~playback_loop_c(void)
     free(buffile);
 }
 
+
+
+
+
 void playbackLoopConsumer::run()
 {
     exec();
 }
 
+QElapsedTimer t3;
+
 void playbackLoopConsumer::datarequest(int frames)
 {
-    int nread;
+    int nread,t1;
+    static int tmax = 0;
     //the associated playback port requests more data
 
     if(frames>NFILE_PLAYBACK) frames = NFILE_PLAYBACK;
+
+    t3.start();
+
+    sf_command (controler->soundfile, SFC_UPDATE_HEADER_NOW, NULL, 0) ; //update the file length, we might be writing on it in some other thread
 
 
 
@@ -150,6 +178,9 @@ void playbackLoopConsumer::datarequest(int frames)
     }
 
 
+    t1 = t3.elapsed();
+    if(t1 > tmax) tmax = t1;
+    if (t1 > 50) qDebug()<<"load delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
 
     if((controler->stop&&(controler->frametoplay<=0))||(nread <= 0))
     {
@@ -166,7 +197,8 @@ void playbackLoopConsumer::datarequest(int frames)
         emit send_data(controler->buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for dataaaq
 
 
-        qDebug()<<"fin";
+
+      qDebug()<<"fin"<<nread;
 
     }
 

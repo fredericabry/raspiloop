@@ -6,7 +6,10 @@
 #include <qfile.h>
 
 #define DIRECTORY "/home/pi/usb/"
+//#define DIRECTORY "/home/pi/usb1/"
 //#define DIRECTORY ""
+
+#define RATE 48000
 
 #define n2s QString::number
 

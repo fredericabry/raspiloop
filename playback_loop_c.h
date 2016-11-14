@@ -70,7 +70,7 @@ public:
 
     void destroyloop(bool opened);
     void test(QString a);
-
+    void openFile(void);
 
 
 
