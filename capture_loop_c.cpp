@@ -28,6 +28,8 @@ capture_loop_c::~capture_loop_c()
 {
     free(buffile);
 
+//    qDebug()<<"capture loop destroyed";
+
 }
 
 void capture_loop_c::destroyLoop()
@@ -87,7 +89,7 @@ int capture_loop_c::pullN(unsigned long N)
 
 
     this->tail = nuTail;
-pPort->ring_lock.unlock();
+    pPort->ring_lock.unlock();
     return N;
 }
 
@@ -110,7 +112,7 @@ void capture_loop_c::openfile(QString filename)
 
     r.remove(filename);//in case there is already a file named like that
 
-   // filedir = filename.remove(filename.length()-3,3) + "tmp";
+    // filedir = filename.remove(filename.length()-3,3) + "tmp";
     filedir = filename;
 
 
@@ -146,9 +148,9 @@ void capture_loop_c::closefile()
 
 
     QString old = filedir;
-   // filedir.replace(filedir.length()-3,3,"wav");
+    // filedir.replace(filedir.length()-3,3,"wav");
 
- //   if(!r.rename(old,filedir)) qDebug()<<"cannot rename file";
+    //   if(!r.rename(old,filedir)) qDebug()<<"cannot rename file";
 }
 
 void captureLoopConsumer::update(void)
@@ -169,7 +171,7 @@ void captureLoopConsumer::update(void)
         t1 = telapsed.elapsed();
         if(t1 > tmax) {tmax = t1; qDebug()<<"new save delay max : "<<tmax<<" ms";}
 
-        if (t1 > 2) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
+        // if (t1 > 2) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
 
     }
 
@@ -189,6 +191,8 @@ void captureLoopConsumer::run()
 
     port->closefile();
     delete port;
+ //   qDebug()<<"capture loop consumer destroyed";
+
 }
 
 

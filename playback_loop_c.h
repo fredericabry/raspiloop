@@ -30,6 +30,7 @@ public:
     playback_loop_c* controler;
 
 
+
 private slots:
     void datarequest(int frames);
 
@@ -71,6 +72,9 @@ public:
     void destroyloop(bool opened);
     void test(QString a);
     void openFile(void);
+
+public slots:
+    void consumerKilled();
 
 
 

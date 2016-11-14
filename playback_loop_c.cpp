@@ -23,7 +23,8 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
     if( !connect(consumer,SIGNAL(send_data(short*,int)), pRing->consumer, SLOT(data_available(short*, int))))
         qDebug()<<"connection failed";
 
-
+    if( !connect(consumer,SIGNAL(finished()), this, SLOT(consumerKilled())))
+        qDebug()<<"connection failed";
 
 
     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
@@ -104,7 +105,12 @@ void playback_loop_c::openFile()
 
 }
 
+void playback_loop_c::consumerKilled() //the consumer is closed, we can kill the loop thread properly
+{
 
+  //  qDebug()<<"playback loop consumer destroyed";
+    delete this;//let's kill the loop
+}
 
 
 
@@ -118,11 +124,6 @@ void playback_loop_c::destroyloop(bool opened)
     if( !disconnect(consumer,SIGNAL(send_data(short*,int)), pRing->consumer, SLOT(data_available(short*, int))))
         qDebug()<<"playback loop  disconnection failed 2";
 
-
-
-    consumer->quit();
-
-
     if (opened)
     {
         sf_close(soundfile);
@@ -130,16 +131,23 @@ void playback_loop_c::destroyloop(bool opened)
         this->pRing->removeloop();
     }
 
+    consumer->quit();
 
 
 
 
-    delete this;
+
+
+
+
+
 }
 
 playback_loop_c::~playback_loop_c(void)
 {
     free(buffile);
+
+ //qDebug()<<"playback loop destroyed";
 }
 
 
@@ -194,11 +202,11 @@ void playbackLoopConsumer::datarequest(int frames)
             controler->destroyloop(true);
         }
 
-        emit send_data(controler->buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for dataaaq
+        emit send_data(controler->buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
 
 
 
-      qDebug()<<"fin"<<nread;
+  //    qDebug()<<"fin"<<nread;
 
     }
 

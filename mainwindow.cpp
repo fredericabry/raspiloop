@@ -19,7 +19,7 @@
 #include "capture_loop_c.h"
 #include "capture_port_c.h"
 
-
+#include "QKeyEvent"
 #include "qdir.h"
 
 
@@ -109,13 +109,13 @@ void MainWindow::play()
 
 
 
-        pLoop0= new playback_loop_c("loop 1_1","rec0_1.wav",pLeft,0);
-        pLoop1= new playback_loop_c("loop 1_2","rec1_1.wav",pRight,0);
+        pLoop0= new playback_loop_c("loop 1_1","rec01.wav",pLeft,0);
+        pLoop1= new playback_loop_c("loop 1_2","rec11.wav",pRight,0);
         pCaptureLoop2->destroyLoop();
         pCaptureLoop3->destroyLoop();
 
-        pCaptureLoop0 = new capture_loop_c("record 0","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
-        pCaptureLoop1 = new capture_loop_c("record 1","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop0 = new capture_loop_c("record 0","rec00.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop1 = new capture_loop_c("record 1","rec10.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
 
 
 
@@ -126,13 +126,13 @@ void MainWindow::play()
     {
 
 
-        pLoop2= new playback_loop_c("loop 2_1","rec0_0.wav",pLeft,0);
-        pLoop3= new playback_loop_c("loop 2_2","rec1_0.wav",pRight,0);
+        pLoop2= new playback_loop_c("loop 2_1","rec00.wav",pLeft,0);
+        pLoop3= new playback_loop_c("loop 2_2","rec10.wav",pRight,0);
         pCaptureLoop0->destroyLoop();
         pCaptureLoop1->destroyLoop();
 
-        pCaptureLoop2 = new capture_loop_c("record 2","rec0_1.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
-        pCaptureLoop3 = new capture_loop_c("record 3","rec1_1.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop2 = new capture_loop_c("record 2","rec01.wav",pRec0,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
+        pCaptureLoop3 = new capture_loop_c("record 3","rec11.wav",pRec1,CAPTURE_LOOP_BUFSIZE,NFILE_CAPTURE);
 
 
     }
@@ -163,6 +163,50 @@ void MainWindow::topStep()
 
 
 }
+
+void MainWindow::keyPressEvent(QKeyEvent *e)
+{
+    switch(e->key())
+    {
+    //case Qt::Key_0:qDebug()<<0;break;
+    case Qt::Key_1:qDebug()<<1;
+        pCaptureLoop2 = new capture_loop_c("record 2","rec00.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+        pCaptureLoop3 = new capture_loop_c("record 3","rec10.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+        break;
+    case Qt::Key_2:qDebug()<<2;
+        pCaptureLoop2->destroyLoop();
+        pCaptureLoop3->destroyLoop();
+        break;
+    case Qt::Key_3:qDebug()<<3;
+        pLoop2= new playback_loop_c("loop 2_1","rec00.wav",pLeft,-1);
+        pLoop3= new playback_loop_c("loop 2_2","rec10.wav",pRight,-1);
+
+        break;
+    case Qt::Key_4:qDebug()<<4;
+        pLoop2->destroyloop(true);
+        pLoop3->destroyloop(true);
+        break;
+    case Qt::Key_5:qDebug()<<5;
+
+
+        break;
+    case Qt::Key_6:qDebug()<<6;break;
+    case Qt::Key_7:qDebug()<<7;break;
+    case Qt::Key_8:qDebug()<<8;break;
+    case Qt::Key_9:qDebug()<<9;break;
+    case Qt::Key_Enter:
+
+        exit(0);
+
+
+        break;
+    }
+
+
+}
+
+
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -232,7 +276,7 @@ MainWindow::MainWindow(QWidget *parent) :
     txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
 
-  /*  txt = "sudo chrt -f -p 99 "+QString::number(QCoreApplication::applicationPid());
+    /*  txt = "sudo chrt -f -p 99 "+QString::number(QCoreApplication::applicationPid());
     system(txt.toStdString().c_str());
 
 
@@ -266,7 +310,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-/*
+    /*
    pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
     pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
     QThread::sleep(2);
@@ -278,23 +322,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-  //  pLoop0= new playback_loop_c("loop 1_1","nantesd.wav",pLeft,0);
+    //  pLoop0= new playback_loop_c("loop 1_1","nantesd.wav",pLeft,0);
 
-  //  pLoop1= new playback_loop_c("loop 1_2","nantesg.wav",pRight,0);
+    //  pLoop1= new playback_loop_c("loop 1_2","nantesg.wav",pRight,0);
 
     // topStep();
 
 
 
-
-    pCaptureLoop2 = new capture_loop_c("record 2","rec0_0.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
-     pCaptureLoop3 = new capture_loop_c("record 3","rec1_0.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+    /*
+    pCaptureLoop2 = new capture_loop_c("record 2","rec00.wav",pRec0,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
+     pCaptureLoop3 = new capture_loop_c("record 3","rec10.wav",pRec1,CAPTURE_LOOP_BUFSIZE,10*NFILE_CAPTURE);
 
     stepTimer = new QTimer(this);
     connect(stepTimer,SIGNAL(timeout()), this, SLOT(topStep()));
     stepTimer->start(LOOP_LENGTH);
 
-
+*/
 
 
 

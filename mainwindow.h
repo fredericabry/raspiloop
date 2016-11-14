@@ -47,6 +47,9 @@ public:
     void connectToCard(void);
     ~MainWindow();
 
+    void keyPressEvent(QKeyEvent *e);
+
+
 private:
     Ui::MainWindow *ui;
 

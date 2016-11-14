@@ -22,6 +22,7 @@ class captureLoopConsumer:public QThread
     void run() Q_DECL_OVERRIDE;
 public:
     capture_loop_c* port;
+
     QElapsedTimer telapsed;
 
 public slots:
