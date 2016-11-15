@@ -4,7 +4,7 @@
 
 #define READ_OFFSET (signed long)500
 
-capture_loop_c::capture_loop_c(const QString id,const QString filename,capture_port_c *pPort,const int rate, const unsigned long bufsize):id(id),filename(filename),pPort(pPort),rate(rate),bufsize(bufsize)
+capture_loop_c::capture_loop_c(const QString id,const QString filename,capture_port_c *pPort,const int rate, const unsigned long bufsize, long length):id(id),filename(filename),pPort(pPort),rate(rate),bufsize(bufsize)
 {
 
     long x = (signed long)pPort->head - READ_OFFSET;
@@ -14,6 +14,17 @@ capture_loop_c::capture_loop_c(const QString id,const QString filename,capture_p
     buffile = (short*)malloc(bufsize*sizeof(short));
     memset(buffile,0,bufsize*sizeof(short));
     this->openfile(filename);
+
+    //length value in ms
+    if(length>0)
+    {
+    stop = true;
+    framesToPlay= (length*RATE)/1000;
+    }
+    else
+
+
+
 
 
 
@@ -182,6 +193,7 @@ void captureLoopConsumer::update(void)
 
 void captureLoopConsumer::run()
 {
+
     while(1)
     {
         if(!port->recording) break;

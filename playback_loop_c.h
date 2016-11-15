@@ -12,7 +12,8 @@
 #include "playback_port_c.h"
 #include "QThread"
 
-
+#define STATUS_IDLE 0
+#define STATUS_PLAY 1
 
 class playback_loop_c;
 
@@ -52,26 +53,31 @@ class playback_loop_c:public QObject
     Q_OBJECT
 
 public:
-    playback_loop_c(const QString id,const QString filename, playback_port_c *pRing, int length);
+    playback_loop_c(const QString id,const QString filename, playback_port_c *pPort, long length,playback_loop_c *pPrevLoop);
     ~playback_loop_c();
 
     const QString id;
     const QString filename;
-    playback_port_c *pRing;
+    playback_port_c *pPort;
+    int status;
 
     SNDFILE *soundfile;
     short *buffile;
 
 
-    int frametoplay;
+    long frametoplay;
     bool stop;
     bool repeat;
     playbackLoopConsumer *consumer;
 
+    playback_loop_c *pPrevLoop,*pNextLoop;
 
     void destroyloop(bool opened);
     void test(QString a);
     void openFile(void);
+
+    void play();
+    void pause();
 
 public slots:
     void consumerKilled();

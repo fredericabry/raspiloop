@@ -169,8 +169,6 @@ int playback_port_c::pullN(unsigned long N)
     if(length<trigger)
     {
         triggerempty();
-        /* if (length<THRESHOLD_WARNING)
-             qDebug()<<"almost full";*/
     }
 
 ring_lock.unlock();
@@ -193,19 +191,10 @@ void playback_port_c::triggerempty(void)
 
 
    wait_for_data = true;
-
    emit signal_trigger(this->freespace());
 
- /*
-   for(int i = 0;i<connected_loops;i++)
-   {
-    loop_c *loop = this->pLoops[i];
-
-    loop->datarequest(this->freespace());
 
 
-   }
-*/
 
 
 

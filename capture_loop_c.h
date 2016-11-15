@@ -38,7 +38,7 @@ class capture_loop_c:public QObject
 {
     Q_OBJECT
 public:
-    capture_loop_c(const QString id,const QString filename, capture_port_c *pPort, const int rate, const unsigned long bufsize);
+    capture_loop_c(const QString id, const QString filename, capture_port_c *pPort, const int rate, const unsigned long bufsize, long length);
     ~capture_loop_c();
     void destroyLoop(void);
     void openfile(QString filename);
@@ -57,7 +57,8 @@ public:
     bool recording;
     QString filedir;
 
-
+    bool stop;//true if a length is specified and therefore the recording has to self stop
+    long framesToPlay;//values left to be recorded
 
 
 

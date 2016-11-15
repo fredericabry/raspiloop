@@ -7,20 +7,22 @@
 
 
 
-playback_loop_c::playback_loop_c(const QString id, const QString filename, playback_port_c *pRing, int length):id(id),filename(filename),pRing(pRing)
+playback_loop_c::playback_loop_c(const QString id, const QString filename, playback_port_c *pPort, long length,playback_loop_c *pPrevLoop):id(id),filename(filename),pPort(pPort),pPrevLoop(pPrevLoop)
 {
 
 
-    //  qDebug()<<"Loop created "<<id;
+    //
+    pNextLoop = NULL;//last loop created.
 
 
+    status = STATUS_IDLE;//at first the loop is not playing.
 
     consumer = new playbackLoopConsumer;
     consumer->controler = this;
-        if(!connect(pRing,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
+       if(!connect(pPort,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
         qDebug()<<"connection failed";
 
-    if( !connect(consumer,SIGNAL(send_data(short*,int)), pRing->consumer, SLOT(data_available(short*, int))))
+    if( !connect(consumer,SIGNAL(send_data(short*,int)), pPort->consumer, SLOT(data_available(short*, int))))
         qDebug()<<"connection failed";
 
     if( !connect(consumer,SIGNAL(finished()), this, SLOT(consumerKilled())))
@@ -30,7 +32,7 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
 
 
-    frametoplay = (length*441)/10;
+    frametoplay = (length*RATE)/1000;
     repeat = false;
     if(frametoplay==0)
         stop = false;
@@ -45,7 +47,7 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
     openFile();
 
-    pRing->addloop(this);
+    pPort->addloop(this);
 
 
 
@@ -112,23 +114,38 @@ void playback_loop_c::consumerKilled() //the consumer is closed, we can kill the
     delete this;//let's kill the loop
 }
 
+void playback_loop_c::play()
+{
+
+    this->status = STATUS_PLAY;
+
+}
+
+
+void playback_loop_c::pause()
+{
+
+    this->status = STATUS_IDLE;
+
+}
+
 
 
 
 void playback_loop_c::destroyloop(bool opened)
 {
 
-    if(!disconnect(pRing,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
+    if(!disconnect(pPort,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
         qDebug()<<"playback loop disconnection failed 1";
 
-    if( !disconnect(consumer,SIGNAL(send_data(short*,int)), pRing->consumer, SLOT(data_available(short*, int))))
+    if( !disconnect(consumer,SIGNAL(send_data(short*,int)), pPort->consumer, SLOT(data_available(short*, int))))
         qDebug()<<"playback loop  disconnection failed 2";
 
     if (opened)
     {
         sf_close(soundfile);
 
-        this->pRing->removeloop();
+        this->pPort->removeloop();
     }
 
     consumer->quit();
@@ -156,7 +173,10 @@ playback_loop_c::~playback_loop_c(void)
 
 void playbackLoopConsumer::run()
 {
+
     exec();
+
+
 }
 
 QElapsedTimer t3;
@@ -165,7 +185,17 @@ void playbackLoopConsumer::datarequest(int frames)
 {
     int nread,t1;
     static int tmax = 0;
+
+
     //the associated playback port requests more data
+
+    if(controler->status == STATUS_IDLE)
+    {
+        //pausing, not sending any data
+        emit send_data(controler->buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
+        return;
+
+    }
 
     if(frames>NFILE_PLAYBACK) frames = NFILE_PLAYBACK;
 

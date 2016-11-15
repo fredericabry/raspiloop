@@ -388,6 +388,7 @@ void write_and_poll_loop(playback_port_c **port)
 
 void ConsumerPlayback::run()
 {
+
     while(playing)
     {
         write_and_poll_loop(port);

@@ -365,6 +365,8 @@ void ConsumerCapture::run()
 {
 
 
+
+
     while(recording)
     {
         read_and_poll_loop(port);
