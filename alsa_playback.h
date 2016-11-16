@@ -2,29 +2,15 @@
 #define ALSA_PLAYBACK_H
 
 #include <alsa/asoundlib.h>
-#include <sndfile.h>
-#include "mainwindow.h"
 #include "playback_port_c.h"
-#include "playback_loop_c.h"
-
-#include <sndfile.h>
-#include <alsa/asoundlib.h>
-#include <QMainWindow>
 #include <qthread.h>
-#include <qmutex.h>
+
 
 #define PLAYBACK_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
-
 #define NFILE_PLAYBACK PLAYBACK_CHANNEL_WIDTH*10 //file reading buffer size
-
 #define PLAYBACK_READBUF_SLEEP 5000 //usec
-
-
 #define RINGBUFSIZE_PLAYBACK 6000 //size of the playback ringbuffer
 #define THRESHOLD RINGBUFSIZE_PLAYBACK/2 //interrupt when length(ringbuffer) < this value
-
-
-
 #define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
 #define PLAYBACK_AVAIL_MIN                   7*PLAYBACK_HW_BUFFER_SIZE/10  //when the device buffer data is smaller than this limit, an interrupt is issued
 

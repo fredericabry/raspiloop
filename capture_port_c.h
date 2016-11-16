@@ -6,6 +6,7 @@
 #include <sndfile.h>
 #include <alsa/asoundlib.h>
 #include <QMainWindow>
+
 #include <qthread.h>
 #include <qmutex.h>
 #include "qtimer.h"
@@ -13,7 +14,7 @@
 #include "qelapsedtimer.h"
 
 
-
+//#include "interface.h"
 
 
 class capture_port_c : public QObject

@@ -2,6 +2,8 @@
 #include "qdir.h"
 #include "QDebug"
 
+
+
 #define READ_OFFSET (signed long)500
 
 capture_loop_c::capture_loop_c(const QString id,const QString filename,capture_port_c *pPort,const int rate, const unsigned long bufsize, long length):id(id),filename(filename),pPort(pPort),rate(rate),bufsize(bufsize)

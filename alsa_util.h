@@ -3,8 +3,7 @@
 
 
 #include <alsa/asoundlib.h>
-#include <sndfile.h>
-#include "mainwindow.h"
+#include "qstringlist.h"
 
 #define SOUND_FORMAT SND_PCM_FORMAT_S16_LE
 

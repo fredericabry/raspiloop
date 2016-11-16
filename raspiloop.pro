@@ -34,7 +34,8 @@ HEADERS  += mainwindow.h \
     capture_port_c.h \
     playback_loop_c.h \
     capture_loop_c.h \
-    interface.h
+    interface.h \
+    parameters.h
 
 FORMS    += mainwindow.ui
 

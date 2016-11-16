@@ -1,4 +1,6 @@
 #include "interface.h"
+#include "capture_loop_c.h"
+
 
 #define MAX_PLAY_LOOPS 5
 #define MAX_CAPTURE_LOOPS 5

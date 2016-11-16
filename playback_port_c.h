@@ -2,8 +2,6 @@
 #define PLAYBACK_PORT_C_H
 
 #include <sndfile.h>
-#include <alsa/asoundlib.h>
-#include <QMainWindow>
 #include <qthread.h>
 #include <qmutex.h>
 
@@ -20,9 +18,6 @@ class playbackPortConsumer:public QThread
 
 public:
     playback_port_c* controler;
-
-
-
 
 public slots:
     void data_available(short *buf,int nread);
@@ -41,7 +36,7 @@ public:
     playback_port_c(const unsigned long maxlength,const unsigned long bufsize, const unsigned long trigger, const int channel);
     ~playback_port_c();
 
-
+   // const interface_c interface;
     const unsigned long maxlength;
     const unsigned long bufsize;
     const unsigned long trigger;

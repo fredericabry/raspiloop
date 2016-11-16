@@ -11,6 +11,7 @@
 #include "playback_loop_c.h"
 #include <qdebug.h>
 #include <qelapsedtimer.h>
+//#include "interface.h"
 
 playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned long bufsize, const unsigned long trigger, const int channel):maxlength(maxlength),bufsize(bufsize),trigger(trigger),channel(channel)
 {

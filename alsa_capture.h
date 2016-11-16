@@ -4,12 +4,9 @@
 
 
 #include <alsa/asoundlib.h>
-#include <sndfile.h>
-#include "mainwindow.h"
 #include "capture_port_c.h"
-#include "qmutex.h"
 #include "qthread.h"
-#include <QMainWindow>
+
 
 
 #define CAPTURE_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
