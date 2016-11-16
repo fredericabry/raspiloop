@@ -2,13 +2,26 @@
 #include "playback_loop_c.h"
 #include "qdir.h"
 #include "QDebug"
+#include "interface.h"
 
 
 
 #define READ_OFFSET (signed long)500
 
-capture_loop_c::capture_loop_c(const QString id, const QString filename, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort):id(id),filename(filename),pPort(pPort)
+capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort):id(id),pPort(pPort)
 {
+
+
+    pPrevLoop = pPort->interface->findLastCaptureLoop();
+    pNextLoop = NULL;//last loop created.
+
+    filename = QString::number(id)+".wav";
+
+    if(pPort->interface->firstCaptureLoop == NULL)
+        pPort->interface->firstCaptureLoop = this;
+    else
+        pPrevLoop->pNextLoop = this;//let's add it at the end of the chain
+
 
 
     long x = (signed long)pPort->head - READ_OFFSET;
@@ -22,12 +35,12 @@ capture_loop_c::capture_loop_c(const QString id, const QString filename, capture
     //length value in ms
     if(length>0)
     {
-    stop = true;
-    framesToRead= (length*RATE)/1000;
+        stop = true;
+        framesToRead= (length*RATE)/1000;
     }
     else
     {
-    stop = false;
+        stop = false;
 
     }
 
@@ -41,10 +54,9 @@ capture_loop_c::capture_loop_c(const QString id, const QString filename, capture
     if(createPlayLoop)
     {
         //we need to create an associated playbackloop, which will be ready
-        new playback_loop_c(id,filename,pPlayPort,0);//by default play once
-
-
+        pPlayLoop = new playback_loop_c(id,pPlayPort,-1,false);//by default loop
     }
+    else pPlayLoop = NULL;
 
 
 }
@@ -53,12 +65,31 @@ capture_loop_c::~capture_loop_c()
 {
     free(buffile);
 
-//    qDebug()<<"capture loop destroyed";
+    //    qDebug()<<"capture loop destroyed";
 
 }
 
 void capture_loop_c::destroyLoop()
 {
+
+    //let's start the associated playback_loop :
+    if(pPlayLoop != NULL)
+        pPlayLoop->play();
+
+
+
+    //this loop needs to get out of the list:
+    if(pPrevLoop==NULL) pPort->interface->firstCaptureLoop = pNextLoop;//it was the first loop
+    else
+    {
+     pPrevLoop->pNextLoop = pNextLoop;
+    }
+
+    if(pNextLoop!=NULL) //there is a next loop
+    {
+    pNextLoop->pPrevLoop = pPrevLoop;
+    }
+
 
     recording = false;
 
@@ -217,7 +248,7 @@ void captureLoopConsumer::run()
 
     port->closefile();
     delete port;
- //   qDebug()<<"capture loop consumer destroyed";
+    //   qDebug()<<"capture loop consumer destroyed";
 
 }
 

@@ -1,8 +1,8 @@
 #include "playback_port_c.h"
+#include "playback_loop_c.h"
 #include <qdebug.h>
 #include "parameters.h"
 #include "interface.h"
-
 
 
 playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned long bufsize, const unsigned long trigger, const int channel,  interface_c *interface):maxlength(maxlength),bufsize(bufsize),trigger(trigger),channel(channel),interface(interface)
@@ -174,14 +174,14 @@ ring_lock.unlock();
 void playback_port_c::triggerempty(void)
 {
 
-   // data_received = 0;//reset the amount of data received
-    if(connected_loops == 0)
+
+    if(connected_loops != nu_connected_loops)
     {
-        connected_loops = nu_connected_loops;//maybe we need to update the connect loops count
-
-
-
+    connected_loops = nu_connected_loops;//maybe we need to update the connect loops count
+    emit consumer->update_loops(); //tell the added loops to get ready
     }
+
+
     if(connected_loops==0) {return;} //still zero ? return
 
 
@@ -209,20 +209,35 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
 
     if(nu_connected_loops <= 0) {qDebug()<<"err";return;}
 
-    if(interface->firstLoop == NULL)
+
+    //let's keep the playback loops list in order:
+    pLoop->pPrevLoop = interface->findLastPlaybackLoop();
+    pLoop->pNextLoop = NULL;//last loop created.
+
+    if(interface->firstPlayLoop == NULL)
     {
+
         //should be the first loop, let's check:
         if (nu_connected_loops != 1) qDebug()<<"bug loop count";
-        interface->firstLoop = pLoop;
-        pLoop->consumer->loopActive = true;//first loop : let's avoid the activation procedure
+        interface->firstPlayLoop = pLoop;
 
     }
     else
     {
-       interface->findLastPlaybackLoop()->pNextLoop = pLoop;//let's add it at the end of the chain
-
+       interface->findLastPlaybackLoop()->pNextLoop = pLoop;//let's add it at the end of the chain     
     }
 
+
+    if(nu_connected_loops == 1) pLoop->consumer->loopActive = true;//first loop : let's avoid the activation procedure
+
+    if(!connect(this,SIGNAL(signal_trigger(int)), pLoop->consumer, SLOT(datarequest(int))))
+     qDebug()<<"connection failed";
+
+    if(!connect(consumer,SIGNAL(update_loops()), pLoop->consumer, SLOT(activate())))
+     qDebug()<<"connection failed";
+
+ if( !connect(pLoop->consumer,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int))))
+     qDebug()<<"connection failed";
 
 
 
@@ -236,7 +251,8 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
     //this->connected_loops--;
     this->nu_connected_loops--;
 
-    if(pLoop->pPrevLoop==NULL) interface->firstLoop = pLoop->pNextLoop;//it was the first loop, so the chain is empty now
+
+    if(pLoop->pPrevLoop==NULL) interface->firstPlayLoop = pLoop->pNextLoop;//it was the first loop, so the chain is empty now
     else
     {
      pLoop->pPrevLoop->pNextLoop = pLoop->pNextLoop;
@@ -248,11 +264,23 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
     }
 
 
+
+    if(!disconnect(this,SIGNAL(signal_trigger(int)), pLoop->consumer, SLOT(datarequest(int))))
+        qDebug()<<"playback loop disconnection failed 1";
+    if( !disconnect(pLoop->consumer,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int))))
+        qDebug()<<"playback loop  disconnection failed 2";
+    if(!disconnect(consumer,SIGNAL(update_loops()), pLoop->consumer, SLOT(activate())))
+     qDebug()<<"connection failed";
+
+
+
+
 }
 
 
 void playbackPortConsumer::run()
 {
+    datalength=0;
     exec();
 }
 
@@ -262,16 +290,21 @@ void playbackPortConsumer::data_available(short *buf, int nread)
 
     //implement mix strategy here
 
-    //qDebug()<<"final"<<controler->connected_loops<<controler->data_received;
+
+
+    if(nread > datalength) datalength = nread; //keep the longest sample size
 
     controler->data_received++;
+
+  //qDebug()<<controler->channel<<controler->connected_loops<<controler->data_received;
 
     if(controler->connected_loops == 0) {qDebug()<<"bug";return;} //should not happen but let's not divide by 0
 
 
     if(controler->data_received == 1)//first loop
     {
-        memset(controler->buffile,0,nread*sizeof(short));
+
+        memset(controler->buffile,0,NFILE_PLAYBACK*sizeof(short));
         for(int i = 0;i<nread;i++)
         {
 
@@ -288,21 +321,24 @@ void playbackPortConsumer::data_available(short *buf, int nread)
     }
 
 
+
     if(controler->data_received >= controler->connected_loops)
     {
+
         controler->data_received = 0;
         //all data has been received, let's push it to the ringbuffer
-        controler->pushN(controler->buffile,nread);
+        controler->pushN(controler->buffile,datalength);
+        datalength=0;
         controler->wait_for_data = false;
 
 
         //update connected loop number (might have changed during the data collect process)
-        if(controler->connected_loops != controler->nu_connected_loops)
+       /* if(controler->connected_loops != controler->nu_connected_loops)
         {
-        emit update_loops();
-        controler->connected_loops = controler->nu_connected_loops;
-      //  qDebug()<<"update";
-        }
+       emit update_loops();
+       controler->connected_loops = controler->nu_connected_loops;
+
+        }*/
     }
 
 

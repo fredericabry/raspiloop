@@ -33,11 +33,11 @@ class playback_loop_c:public QObject
     Q_OBJECT
 
 public:
-    playback_loop_c(const QString id,const QString filename, playback_port_c *pPort, long length);
+    playback_loop_c(const int id, playback_port_c *pPort, long length, bool autoplay);
     ~playback_loop_c();
 
-    const QString id;
-    const QString filename;
+    const int id;
+    QString filename;
     playback_port_c *pPort;
     int status;
 
@@ -55,6 +55,7 @@ public:
     void destroyloop(bool opened);
     void test(QString a);
     void openFile(void);
+    void moveToPort(playback_port_c *pNuPort);
 
     void play();
     void pause();

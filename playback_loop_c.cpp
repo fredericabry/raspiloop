@@ -5,30 +5,25 @@
 #include "interface.h"
 
 
-playback_loop_c::playback_loop_c(const QString id, const QString filename, playback_port_c *pPort, long length):id(id),filename(filename),pPort(pPort)
+playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bool autoplay):id(id),pPort(pPort)
 {
 
 
 
-
+    filename = QString::number(id)+".wav";
 
     pPrevLoop = pPort->interface->findLastPlaybackLoop();
     pNextLoop = NULL;//last loop created.
 
+    if(autoplay) status = STATUS_PLAY;
+    else
     status = STATUS_IDLE;//at first the loop is not playing.
 
     consumer = new playbackLoopConsumer;
     consumer->controler = this;
     consumer->loopActive = false;
 
-       if(!connect(pPort,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
-        qDebug()<<"connection failed";
 
-       if(!connect(pPort->consumer,SIGNAL(update_loops()), consumer, SLOT(activate())))
-        qDebug()<<"connection failed";
-
-    if( !connect(consumer,SIGNAL(send_data(short*,int)), pPort->consumer, SLOT(data_available(short*, int))))
-        qDebug()<<"connection failed";
 
     if( !connect(consumer,SIGNAL(finished()), this, SLOT(consumerKilled())))
         qDebug()<<"connection failed";
@@ -66,6 +61,8 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
 
     consumer->start();
+
+
 
 
 }
@@ -123,7 +120,7 @@ void playback_loop_c::openFile()
 void playback_loop_c::consumerKilled() //the consumer is closed, we can kill the loop thread properly
 {
 
-  //  qDebug()<<"playback loop consumer destroyed";
+
     delete this;//let's kill the loop
 }
 
@@ -142,18 +139,20 @@ void playback_loop_c::pause()
 
 }
 
+void playback_loop_c::moveToPort(playback_port_c *pNuPort)
+{
 
+ if(!pNuPort) {qDebug()<<"invalid port";return;}
+ pPort->removeloop(this);
+ pPort = pNuPort;
+ pPort->addloop(this);
+
+}
 
 
 void playback_loop_c::destroyloop(bool opened)
 {
 
-
-    if(!disconnect(pPort,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
-        qDebug()<<"playback loop disconnection failed 1";
-
-    if( !disconnect(consumer,SIGNAL(send_data(short*,int)), pPort->consumer, SLOT(data_available(short*, int))))
-        qDebug()<<"playback loop  disconnection failed 2";
 
     if (opened)
     {
@@ -164,13 +163,6 @@ void playback_loop_c::destroyloop(bool opened)
     }
 
     consumer->quit();
-
-
-
-
-
-
-
 
 
 }
@@ -198,6 +190,8 @@ QElapsedTimer t3;
 
 void playbackLoopConsumer::datarequest(int frames)
 {
+
+
     int nread,t1;
     static int tmax = 0;
 
@@ -220,6 +214,7 @@ void playbackLoopConsumer::datarequest(int frames)
     {
         //pausing, not sending any data
         emit send_data(controler->buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
+
         return;
 
     }

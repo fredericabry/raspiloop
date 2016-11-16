@@ -19,7 +19,7 @@ class playbackPortConsumer:public QThread
 
 public:
     playback_port_c* controler;
-
+    int datalength;
 public slots:
     void data_available(short *buf,int nread);
 
