@@ -12,7 +12,7 @@
 
 
 class capture_loop_c;
-
+class playback_port_c;
 
 
 class captureLoopConsumer:public QThread
@@ -36,7 +36,7 @@ class capture_loop_c:public QObject
 {
     Q_OBJECT
 public:
-    capture_loop_c(const QString id, const QString filename, capture_port_c *pPort, const int rate, const unsigned long bufsize, long length);
+    capture_loop_c(const QString id, const QString filename, capture_port_c *pPort, long length,bool createPlayLoop,playback_port_c *pPlayPort);
     ~capture_loop_c();
     void destroyLoop(void);
     void openfile(QString filename);
@@ -46,8 +46,8 @@ public:
     const QString id;
     const QString filename;
     capture_port_c *pPort;
-    const int rate;
-    const unsigned long bufsize;
+
+
     SNDFILE *soundfile;//file handler
     short *buffile; //buffer used for file writting
     unsigned long tail;//last value read in the associated ringbuffer
@@ -56,7 +56,7 @@ public:
     QString filedir;
 
     bool stop;//true if a length is specified and therefore the recording has to self stop
-    long framesToPlay;//values left to be recorded
+    long framesToRead;//values left to be recorded
 
 
 

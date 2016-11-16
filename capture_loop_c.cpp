@@ -1,4 +1,5 @@
 #include "capture_loop_c.h"
+#include "playback_loop_c.h"
 #include "qdir.h"
 #include "QDebug"
 
@@ -6,34 +7,45 @@
 
 #define READ_OFFSET (signed long)500
 
-capture_loop_c::capture_loop_c(const QString id,const QString filename,capture_port_c *pPort,const int rate, const unsigned long bufsize, long length):id(id),filename(filename),pPort(pPort),rate(rate),bufsize(bufsize)
+capture_loop_c::capture_loop_c(const QString id, const QString filename, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort):id(id),filename(filename),pPort(pPort)
 {
+
 
     long x = (signed long)pPort->head - READ_OFFSET;
     while(x < 0) x+=pPort->maxlength+1;
     tail = x;
 
-    buffile = (short*)malloc(bufsize*sizeof(short));
-    memset(buffile,0,bufsize*sizeof(short));
+    buffile = (short*)malloc(CAPTURE_LOOP_BUFSIZE*sizeof(short));
+    memset(buffile,0,CAPTURE_LOOP_BUFSIZE*sizeof(short));
     this->openfile(filename);
 
     //length value in ms
     if(length>0)
     {
     stop = true;
-    framesToPlay= (length*RATE)/1000;
+    framesToRead= (length*RATE)/1000;
     }
     else
+    {
+    stop = false;
 
-
-
-
+    }
 
 
     consumer = new captureLoopConsumer();
     consumer->port = this;
     recording = true;
     consumer->start();
+
+
+    if(createPlayLoop)
+    {
+        //we need to create an associated playbackloop, which will be ready
+        new playback_loop_c(id,filename,pPlayPort,0);//by default play once
+
+
+    }
+
 
 }
 
@@ -112,7 +124,7 @@ void capture_loop_c::openfile(QString filename)
     SF_INFO sf_info;
     int short_mask;
 
-    sf_info.samplerate = rate;
+    sf_info.samplerate = RATE;
     sf_info.channels = 1;
 
     short_mask = SF_FORMAT_PCM_16;

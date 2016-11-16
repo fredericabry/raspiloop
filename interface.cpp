@@ -25,6 +25,8 @@ capture_port_c *pRec0, *pRec1 ;
 
 
 capture_port_c *pActiveRecPort;
+capture_loop_c *pActiveRecLoop;
+
 playback_port_c *pActivePlayPort;
 playback_loop_c *pActivePlay;
 
@@ -54,6 +56,7 @@ int interface_c::getPlayLoopCount()
     if(pLoop == NULL) return 0;
     else
     {
+        i=1;
         while(pLoop->pNextLoop!=NULL) {pLoop=pLoop->pNextLoop;i++;}
     }
 
@@ -68,7 +71,7 @@ int interface_c::getPlayLoopCount()
 
 interface_c::interface_c(MainWindow *parent):parent(parent)
 {
-firstLoop = NULL;//no loop at this point
+    firstLoop = NULL;//no loop at this point
 
 }
 
@@ -90,11 +93,14 @@ void interface_c::run()
 
     pActiveRecPort = NULL;
 
-
+    isRecording = false;
 
 
     exec();
 }
+
+
+
 
 void interface_c::keyInput(QKeyEvent *e)
 {
@@ -112,7 +118,18 @@ void interface_c::keyInput(QKeyEvent *e)
             return;
         }
         //let's do some recording
+        if(!isRecording)
+        {
+            isRecording = true;
+            pActiveRecLoop = new capture_loop_c("1","1.wav",pActiveRecPort,0,true,pLeft);
 
+        }
+        else
+        {
+            isRecording = false;
+            pActiveRecLoop->destroyLoop();
+
+        }
 
         break;
     case Qt::Key_3:

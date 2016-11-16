@@ -22,6 +22,8 @@ public:
     playback_loop_c* firstLoop; //first of the playback loop list
     playback_loop_c* findLastPlaybackLoop(void);
     void Afficher(QString txt);
+    bool isRecording;
+
 private slots:
     void keyInput(QKeyEvent *e);
 
