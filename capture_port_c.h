@@ -3,18 +3,15 @@
 
 
 
-#include <sndfile.h>
-#include <alsa/asoundlib.h>
 #include <QMainWindow>
-
-#include <qthread.h>
 #include <qmutex.h>
-#include "qtimer.h"
-#include "qrunnable.h"
-#include "qelapsedtimer.h"
 
 
-//#include "interface.h"
+
+class interface_c;
+
+
+
 
 
 class capture_port_c : public QObject
@@ -22,7 +19,7 @@ class capture_port_c : public QObject
     Q_OBJECT
 
 public:
-    capture_port_c(const unsigned long maxlength,const unsigned long bufsize,const int rate,const int id);
+    capture_port_c(const unsigned long maxlength,const unsigned long bufsize,const int rate,const int id,interface_c *interface);
     ~capture_port_c();
 
 
@@ -30,6 +27,8 @@ public:
     const unsigned long bufsize;
     int const rate;
     int const id;
+    interface_c *interface;
+
 
     short *ringbuf;//large buffer for circular storage
     short *bufin;//small buffer for transfert to the ringbuffer

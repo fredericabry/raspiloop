@@ -1,25 +1,11 @@
 #include "capture_port_c.h"
-#include "ui_mainwindow.h"
-#include "alsa_util.h"
-#include "alsa_capture.h"
-#include <stdbool.h>
-#include <sndfile.h>
-#include "capture_port_c.h"
-#include <QMainWindow>
-#include <QFile>
-#include <QTextStream>
-
-#include "qdir.h"
-#include "qlockfile.h"
-
-#include <qdebug.h>
-#include <qelapsedtimer.h>
-#include "qthreadpool.h"
+#include "qdebug.h"
+#include "interface.h"
 
 
 
 
-capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int id):maxlength(maxlength),bufsize(bufsize),rate(rate),id(id)
+capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int id, interface_c *interface):maxlength(maxlength),bufsize(bufsize),rate(rate),id(id),interface(interface)
 {
     ring_lock.lock();
     this->head = 0;
@@ -28,6 +14,8 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
     bufin = (short*)malloc((bufsize)*sizeof(short));
     memset(bufin,0,bufsize*sizeof(short));
     ring_lock.unlock();
+
+    interface->Afficher("capture port created");
 }
 
 capture_port_c::~capture_port_c()

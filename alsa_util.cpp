@@ -1,26 +1,5 @@
-#include "mainwindow.h"
-//#include "ui_mainwindow.h"
 #include "alsa_util.h"
-#include <stdbool.h>
-
-
-#include <QFile>
-#include <QTextStream>
-#include <qtimer.h>
-#include <qdebug.h>
-
-SNDFILE *sf_record;
-short *buf_record;
-snd_pcm_uframes_t frames_record,bufsize_record;
-MainWindow *parent_record;
-int nbr_chan_record ;
-int rate_record;
-long frame_count_record;
-
-
-#define FORM_FILE SND_PCM_FORMAT_S16_LE
-
-
+#include "qdebug.h"
 
 
 

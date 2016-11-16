@@ -1,18 +1,7 @@
-#include "ui_mainwindow.h"
-#include "alsa_util.h"
 #include "alsa_playback.h"
-#include <stdbool.h>
-
-#include "playback_port_c.h"
-
-#include <QFile>
-#include <QTextStream>
-
 #include <qdebug.h>
-
-#include "poll.h"
-
 #include "qthread.h"
+#include "parameters.h"
 
 
 short **playback_buf;
@@ -31,11 +20,10 @@ int playback_rate;
 int playback_channels;
 
 
-
 playback_port_c** main_buf_playback;
 
 
-void alsa_start_playback(QString device, int channels, int rate)
+void alsa_start_playback(QString device, int channels, int rate, interface_c *interface)
 {
 
 
@@ -43,7 +31,7 @@ void alsa_start_playback(QString device, int channels, int rate)
     if (!alsa_open_device_playback(device)) return;
 
 
-    alsa_init_playback(channels,rate);
+    alsa_init_playback(channels,rate,interface);
 
 
     alsa_set_hw_parameters_playback();
@@ -81,7 +69,7 @@ bool alsa_open_device_playback(QString device)
 
 }
 
-void alsa_init_playback(int channels,int rate)
+void alsa_init_playback(int channels,int rate,interface_c *interface)
 {
 
     playback_channels = channels;
@@ -102,7 +90,7 @@ void alsa_init_playback(int channels,int rate)
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,playback_frames*2,THRESHOLD,i);
+        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,playback_frames*2,THRESHOLD,i,interface);
         playback_buf[i] = main_buf_playback[i]->buf;
     }
 
@@ -188,13 +176,6 @@ void alsa_set_hw_parameters_playback(void)
     snd_pcm_hw_params_free (hw_params);
 
 }
-
-
-
-
-
-
-
 
 
 void alsa_set_sw_parameters_playback(void)
@@ -290,8 +271,6 @@ void alsa_write_playback(playback_port_c **port)
     }
 
 }
-
-
 
 
 void alsa_conf(void)

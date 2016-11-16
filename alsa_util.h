@@ -5,7 +5,7 @@
 #include <alsa/asoundlib.h>
 #include "qstringlist.h"
 
-#define SOUND_FORMAT SND_PCM_FORMAT_S16_LE
+
 
 #include <qmutex.h>
 static QMutex filelock;

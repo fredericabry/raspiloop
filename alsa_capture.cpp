@@ -1,19 +1,5 @@
-#include "ui_mainwindow.h"
-#include "alsa_util.h"
 #include "alsa_capture.h"
-#include <stdbool.h>
-
-#include "capture_port_c.h"
-
-#include <QFile>
-#include <QTextStream>
-
 #include <qdebug.h>
-
-
-
-#include "poll.h"
-
 
 snd_pcm_t *capture_handle;
 int capture_rate, capture_channels;
@@ -26,13 +12,13 @@ ConsumerCapture *consumerCapture;
 
 
 
-void alsa_start_capture(QString device, int channels, int rate)
+void alsa_start_capture(QString device, int channels, int rate,interface_c *interface)
 {
 
     if (!alsa_open_device_capture(device)) return;
 
 
-    alsa_init_capture(channels,rate);
+    alsa_init_capture(channels,rate,interface);
     alsa_set_hw_parameters_capture();
     alsa_set_sw_parameters_capture();
 
@@ -69,7 +55,7 @@ bool alsa_open_device_capture(QString device)
 
 }
 
-void alsa_init_capture(int channels,int rate)
+void alsa_init_capture(int channels,int rate,interface_c *interface)
 {
 
     capture_channels = channels;
@@ -87,7 +73,7 @@ void alsa_init_capture(int channels,int rate)
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames/**capture_channels*/,rate,i);
+        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames/**capture_channels*/,rate,i,interface);
         capture_buf[i] = main_buf_capture[i]->bufin;
     }
 

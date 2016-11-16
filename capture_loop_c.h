@@ -1,14 +1,14 @@
 #ifndef CAPTURE_LOOP_C_H
 #define CAPTURE_LOOP_C_H
 
-
+#include <QMainWindow>
 #include <sndfile.h>
-#include <alsa/asoundlib.h>
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "alsa_util.h"
-#include "alsa_capture.h"
+#include "parameters.h"
+#include "qstring.h"
+#include "qthread.h"
+#include "qelapsedtimer.h"
 #include "capture_port_c.h"
+
 
 
 class capture_loop_c;
@@ -30,8 +30,6 @@ public slots:
 
 
 };
-
-
 
 
 class capture_loop_c:public QObject

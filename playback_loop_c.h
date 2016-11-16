@@ -3,7 +3,6 @@
 
 
 #include <sndfile.h>
-#include <stdbool.h>
 #include "playback_port_c.h"
 #include "QThread"
 
@@ -11,10 +10,6 @@
 #define STATUS_PLAY 1
 
 class playback_loop_c;
-
-
-
-
 
 class playbackLoopConsumer:public QThread
 {
@@ -24,31 +19,21 @@ class playbackLoopConsumer:public QThread
 
 public:
     playback_loop_c* controler;
-
-
-
+    bool loopActive;
 private slots:
     void datarequest(int frames);
+    void activate(void);
 
 signals:
     void send_data(short *buf,int nread);
 };
-
-
-
-
-
-
-
-
-
 
 class playback_loop_c:public QObject
 {
     Q_OBJECT
 
 public:
-    playback_loop_c(const QString id,const QString filename, playback_port_c *pPort, long length,playback_loop_c *pPrevLoop);
+    playback_loop_c(const QString id,const QString filename, playback_port_c *pPort, long length);
     ~playback_loop_c();
 
     const QString id;

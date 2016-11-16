@@ -1,20 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-#include <stdbool.h>
-
-
-#include <QFile>
-#include <QTextStream>
-
 #include <qdebug.h>
 #include <qtimer.h>
 #include <qelapsedtimer.h>
 
-
+#include "alsa_capture.h"
+#include "alsa_playback.h"
+#include "alsa_util.h"
 
 #include "QKeyEvent"
-#include "qdir.h"
 #include "interface.h"
 
 

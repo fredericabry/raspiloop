@@ -1,25 +1,30 @@
 #include "playback_loop_c.h"
 #include <qdebug.h>
-#include "mainwindow.h"
-
 #include "QElapsedTimer"
+#include "parameters.h"
+#include "interface.h"
 
 
-
-
-playback_loop_c::playback_loop_c(const QString id, const QString filename, playback_port_c *pPort, long length,playback_loop_c *pPrevLoop):id(id),filename(filename),pPort(pPort),pPrevLoop(pPrevLoop)
+playback_loop_c::playback_loop_c(const QString id, const QString filename, playback_port_c *pPort, long length):id(id),filename(filename),pPort(pPort)
 {
 
 
-    //
-    pNextLoop = NULL;//last loop created.
 
+
+
+    pPrevLoop = pPort->interface->findLastPlaybackLoop();
+    pNextLoop = NULL;//last loop created.
 
     status = STATUS_IDLE;//at first the loop is not playing.
 
     consumer = new playbackLoopConsumer;
     consumer->controler = this;
+    consumer->loopActive = false;
+
        if(!connect(pPort,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
+        qDebug()<<"connection failed";
+
+       if(!connect(pPort->consumer,SIGNAL(update_loops()), consumer, SLOT(activate())))
         qDebug()<<"connection failed";
 
     if( !connect(consumer,SIGNAL(send_data(short*,int)), pPort->consumer, SLOT(data_available(short*, int))))
@@ -33,6 +38,9 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
 
     frametoplay = (length*RATE)/1000;
+
+
+
     repeat = false;
     if(frametoplay==0)
         stop = false;
@@ -43,8 +51,13 @@ playback_loop_c::playback_loop_c(const QString id, const QString filename, playb
 
     }
 
-    else stop = true;
+    else
+    {
+        stop = true;
 
+
+
+    }
     openFile();
 
     pPort->addloop(this);
@@ -135,6 +148,7 @@ void playback_loop_c::pause()
 void playback_loop_c::destroyloop(bool opened)
 {
 
+
     if(!disconnect(pPort,SIGNAL(signal_trigger(int)), consumer, SLOT(datarequest(int))))
         qDebug()<<"playback loop disconnection failed 1";
 
@@ -145,7 +159,8 @@ void playback_loop_c::destroyloop(bool opened)
     {
         sf_close(soundfile);
 
-        this->pPort->removeloop();
+        this->pPort->removeloop(this);
+
     }
 
     consumer->quit();
@@ -186,6 +201,18 @@ void playbackLoopConsumer::datarequest(int frames)
     int nread,t1;
     static int tmax = 0;
 
+    //first request only activate the loop to avoid synchronization issues
+    if(!loopActive) {
+        //qDebug()<<"not yet";
+        //qDebug()<<this->controler->pPort->connected_loops;
+        //qDebug()<<this->controler->pPort->nu_connected_loops;
+
+                     return;}
+
+   // qDebug()<<"received"<<this->controler->pPort->connected_loops;
+
+
+  //  qDebug()<<"received"<<controler->pPort->connected_loops;
 
     //the associated playback port requests more data
 
@@ -229,7 +256,10 @@ void playbackLoopConsumer::datarequest(int frames)
         }
         else
         {
+
             controler->destroyloop(true);
+            //qDebug()<<"stop";
+
         }
 
         emit send_data(controler->buffile,0);//we still need to answer to the data request or the playback port get stuck waiting for data
@@ -246,4 +276,7 @@ void playbackLoopConsumer::datarequest(int frames)
 }
 
 
-
+void playbackLoopConsumer::activate()
+{
+    loopActive = true;
+}

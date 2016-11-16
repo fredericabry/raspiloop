@@ -1,6 +1,8 @@
 #include "interface.h"
 #include "capture_loop_c.h"
-
+#include "alsa_capture.h"
+#include "alsa_playback.h"
+#include "qdebug.h"
 
 #define MAX_PLAY_LOOPS 5
 #define MAX_CAPTURE_LOOPS 5
@@ -12,7 +14,7 @@ int playLoopNumber;
 
 
 
-
+playback_loop_c  *pPlayLoop0;
 
 
 capture_loop_c *pCaptureLoop1;
@@ -29,29 +31,30 @@ playback_loop_c *pActivePlay;
 
 
 
-playback_loop_c* findLastPlaybackLoop(playback_loop_c *pStartPoint) //return a pointer to the last playloop
+playback_loop_c* interface_c::findLastPlaybackLoop(void) //return a pointer to the last playloop
 {
+    playback_loop_c *pLoop = firstLoop;
+    if(firstLoop == NULL)
+    {
+        return NULL;
+    }
 
-    while(pStartPoint->pNextLoop != NULL)
-        pStartPoint = pStartPoint->pNextLoop;
+    while(pLoop->pNextLoop != NULL)
+        pLoop = pLoop->pNextLoop;
 
-    return pStartPoint;
+    return pLoop;
 
 }
-
-
-int loopNumber(playback_loop_c *pStartPoint)
+int interface_c::getPlayLoopCount()
 {
     int i = 0;
-    playback_loop_c *p = pStartPoint;
+    playback_loop_c *pLoop = firstLoop;
 
 
-    if(pStartPoint == NULL) return 0;
+    if(pLoop == NULL) return 0;
     else
     {
-        while(p->pPrevLoop!=NULL) {p=p->pPrevLoop;i++;}
-        p = pStartPoint;
-        while(p->pNextLoop!=NULL) {p=p->pNextLoop;i++;}
+        while(pLoop->pNextLoop!=NULL) {pLoop=pLoop->pNextLoop;i++;}
     }
 
     return i;
@@ -60,34 +63,20 @@ int loopNumber(playback_loop_c *pStartPoint)
 }
 
 
-playback_loop_c* createNewPlayLoop()
-{
-playback_loop_c* Last = findLastPlaybackLoop(pActivePlay);
-
-if(Last == NULL)
-{
-    qDebug()<<"no loop so far";
-    pActivePlay = new playback_loop_c("1","play1.wav",pActivePlayPort,-1,NULL);//first loop
-}
-
-int n = loopNumber(pActivePlay);
-
-
-}
 
 
 
 interface_c::interface_c(MainWindow *parent):parent(parent)
 {
-
+firstLoop = NULL;//no loop at this point
 
 }
 
 void interface_c::run()
 {
 
-    alsa_start_playback("hw:1,0", 2,RATE);
-    alsa_start_capture("hw:1,0", 2, RATE);
+    alsa_start_playback("hw:1,0", 2,RATE,this);
+    alsa_start_capture("hw:1,0", 2, RATE,this);
 
 
 
@@ -135,7 +124,8 @@ void interface_c::keyInput(QKeyEvent *e)
 
         break;
     case Qt::Key_4:qDebug()<<4;
-
+        pPlayLoop0= new playback_loop_c("loop 2_1","nantesg.wav",pLeft,5000);
+        pPlayLoop0->play();
         break;
     case Qt::Key_5:qDebug()<<5;
 
@@ -144,7 +134,7 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_6:qDebug()<<6;break;
     case Qt::Key_7:qDebug()<<7;break;
     case Qt::Key_8:qDebug()<<8;break;
-    case Qt::Key_9:qDebug()<<9;break;
+    case Qt::Key_9:qDebug()<<getPlayLoopCount(); break;
     case Qt::Key_Enter:
 
         parent->close();
@@ -156,3 +146,8 @@ void interface_c::keyInput(QKeyEvent *e)
 
 }
 
+void interface_c::Afficher(QString txt)
+{
+    qDebug()<<txt;
+
+}

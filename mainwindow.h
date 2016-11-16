@@ -2,27 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <alsa/asoundlib.h>
-#include <qfile.h>
-#include "alsa_util.h"
-#include "alsa_playback.h"
-#include "alsa_capture.h"
-/*
 
 
 
-#include "playback_port_c.h"
-#include "playback_loop_c.h"
-#include "capture_loop_c.h"
-#include "capture_port_c.h"
-*/
 
-
-//#define DIRECTORY "/home/pi/usb/"
-//#define DIRECTORY "/home/pi/usb1/"
-#define DIRECTORY ""
-
-#define RATE 48000
 
 #define n2s QString::number
 
@@ -47,7 +30,7 @@ public:
     QStringList OutputCardLongNames;
     QString InputCardName;
     QString OutputCardName;
-    QFile fdebug;
+
 
     QTimer *clickTimer;
     QTimer *stepTimer;
