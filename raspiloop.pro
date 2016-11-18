@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     capture_port_c.cpp \
     playback_loop_c.cpp \
     capture_loop_c.cpp \
-    interface.cpp
+    interface.cpp \
+    click_c.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
@@ -35,7 +36,8 @@ HEADERS  += mainwindow.h \
     playback_loop_c.h \
     capture_loop_c.h \
     interface.h \
-    parameters.h
+    parameters.h \
+    click_c.h
 
 FORMS    += mainwindow.ui
 

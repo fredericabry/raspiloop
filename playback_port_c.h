@@ -22,7 +22,7 @@ public:
     int datalength;
 public slots:
     void data_available(short *buf,int nread);
-
+    void update(void);
 signals:
     void update_loops(void);//signal all loop that they are now autorized to feed data
 
@@ -36,18 +36,18 @@ class playback_port_c : public QObject
     Q_OBJECT
 
 public:
-    playback_port_c(const unsigned long maxlength,const unsigned long bufsize, const unsigned long trigger, const int channel, interface_c *interface);
+    playback_port_c(const unsigned long maxlength, const unsigned long bufsize, const int channel, interface_c *interface);
     ~playback_port_c();
 
    // const interface_c interface;
     const unsigned long maxlength;
     const unsigned long bufsize;
-    const unsigned long trigger;
+
     int const channel;
     interface_c *interface;
     short *ringbuf;//big buffer for circular storage
     short *buf;//small buffer for transfert
-    short *buffile;//small buffer used to read files;
+    short *bufmix;//small buffer used to read files;
 
     unsigned long head;
     unsigned long tail;
@@ -59,7 +59,7 @@ public:
 
 
     void removeallloops(void);
-
+    int getDataReady(unsigned long N);
     int push(short data);
     int pull(short *data);
     void fill(int channel);
@@ -78,7 +78,8 @@ public:
     QMutex ring_lock;
 
 signals:
-    void signal_trigger(int frames);
+    void signal_trigger(unsigned long frames);
+
 
 
 

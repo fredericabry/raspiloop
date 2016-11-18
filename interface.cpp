@@ -4,22 +4,9 @@
 #include "alsa_capture.h"
 #include "alsa_playback.h"
 #include "qdebug.h"
-
-#define MAX_PLAY_LOOPS 5
-#define MAX_CAPTURE_LOOPS 5
-
-playback_loop_c *pPlayLoopList[MAX_PLAY_LOOPS];
-capture_loop_c *pCaptureLoopList[MAX_PLAY_LOOPS];
-
-int playLoopNumber;
+#include "click_c.h"
 
 
-
-playback_loop_c  *pPlayLoop0;
-
-
-capture_loop_c *pCaptureLoop1;
-capture_loop_c *pCaptureLoop0;
 
 playback_port_c *pLeft,*pRight;
 capture_port_c *pRec0, *pRec1 ;
@@ -31,7 +18,7 @@ capture_loop_c *pActiveRecLoop;
 playback_port_c *pActivePlayPort;
 playback_loop_c *pActivePlayLoop;
 
-
+click_c *pClick;
 
 
 
@@ -109,7 +96,7 @@ interface_c::interface_c(MainWindow *parent):parent(parent)
 
 int interface_c::generateNewId()
 {
-    int id = 0;
+    int id = 1; //id = 0 is reserved for the click
     playback_loop_c *pPlayLoop = firstPlayLoop;
     capture_loop_c *pCaptureLoop = firstCaptureLoop;
     if(pPlayLoop != NULL)
@@ -141,7 +128,7 @@ void interface_c::removeAllPlaybackLoops(void)
 {
     while(firstPlayLoop != NULL)
     {
-        firstPlayLoop->destroyloop(true);
+        firstPlayLoop->destroy();
 
     }
     pActivePlayLoop = NULL;
@@ -162,19 +149,20 @@ void interface_c::init(void)
     isRecording = false;
 
 
+ pClick = new click_c(60,pLeft,STATUS_PLAY);
+
+
+
 }
 
 void interface_c::run()
 {
     init();
+
+
+
     exec();
 }
-
-
-
-
-
-
 
 void interface_c::keyInput(QKeyEvent *e)
 {
@@ -285,8 +273,20 @@ void interface_c::keyInput(QKeyEvent *e)
             qDebug()<<"no playloop active";
 
         break;
-    case Qt::Key_8:qDebug()<<"Active capture loops count:"<<getCaptureLoopsCount();break;
-    case Qt::Key_9:qDebug()<<"Active playback loops count:"<<getPlayLoopsCount(); break;
+    case Qt::Key_8:
+        if(pActivePlayLoop)
+        {
+            if(pActivePlayLoop->status == STATUS_IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
+            else if(pActivePlayLoop->status == STATUS_PLAY) {pActivePlayLoop->pause();pActivePlayLoop->rewind();qDebug()<<"loop"<<pActivePlayLoop->id<<"stopped";}
+
+        }
+        else
+            qDebug()<<"no playloop active";
+
+        break;
+    case Qt::Key_9:qDebug()<<"Active playback loops count:"<<getPlayLoopsCount();
+        qDebug()<<"Active capture loops count:"<<getCaptureLoopsCount();
+        break;
     case Qt::Key_Enter:
 
         parent->close();
@@ -296,6 +296,8 @@ void interface_c::keyInput(QKeyEvent *e)
 
 
     case Qt::Key_Minus:this->removeAllPlaybackLoops();qDebug()<<"All playback loops deleted"; break;
+
+    case Qt::Key_Slash:  new playback_loop_c(0,pLeft,0,true);//once, autoplaybreak;
     }
 
 

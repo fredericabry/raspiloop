@@ -18,6 +18,11 @@
 
 
 
+
+
+
+
+
 interface_c *mainInterface;
 
 
@@ -175,6 +180,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mainInterface = new interface_c(this);
     mainInterface->start();
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
+
 
 
 }

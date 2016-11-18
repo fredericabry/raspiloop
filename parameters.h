@@ -27,12 +27,12 @@
 #define PLAYBACK_CHANNEL_WIDTH 256 //number of elements in a a frame for ONE channel
 #define NFILE_PLAYBACK PLAYBACK_CHANNEL_WIDTH*10 //file reading buffer size
 #define PLAYBACK_READBUF_SLEEP 5000 //usec
-#define RINGBUFSIZE_PLAYBACK 6000 //size of the playback ringbuffer
-#define THRESHOLD RINGBUFSIZE_PLAYBACK/2 //interrupt when length(ringbuffer) < this value
+#define RINGBUFSIZE_PLAYBACK 2000 //size of the playback ringbuffer
+
 #define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
 #define PLAYBACK_AVAIL_MIN                   7*PLAYBACK_HW_BUFFER_SIZE/10  //when the device buffer data is smaller than this limit, an interrupt is issued
-
-
+#define PLAYBACK_BUFSIZE    3*PLAYBACK_CHANNEL_WIDTH
+#define CAPTURE_READFILE_SLEEP (unsigned long)4000 //us
 
 
 
@@ -42,3 +42,7 @@
 
 
 #define SOUND_FORMAT SND_PCM_FORMAT_S16_LE
+
+
+#define STATUS_IDLE 0
+#define STATUS_PLAY 1

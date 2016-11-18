@@ -5,9 +5,8 @@
 #include <sndfile.h>
 #include "playback_port_c.h"
 #include "QThread"
+#include "qmutex.h"
 
-#define STATUS_IDLE 0
-#define STATUS_PLAY 1
 
 class playback_loop_c;
 
@@ -19,14 +18,17 @@ class playbackLoopConsumer:public QThread
 
 public:
     playback_loop_c* controler;
-    bool loopActive;
-private slots:
-    void datarequest(int frames);
-    void activate(void);
-
-signals:
-    void send_data(short *buf,int nread);
+    bool update_lock ;
+    bool active;//consumer active as long as this is true
+    void update(void);
+    void stop(void);
+protected:
+    void destroyloop(void);
 };
+
+
+
+
 
 class playback_loop_c:public QObject
 {
@@ -40,28 +42,49 @@ public:
     QString filename;
     playback_port_c *pPort;
     int status;
-
+    bool loopConnected;//loop has been connected to a port
+    bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
-    short *buffile;
 
 
+    short *ringbuf;//big buffer for circular storage
+    short *buf;//small buffer for transfert
+    short *buffile;//small buffer used to read files;
+
+    unsigned long tail,head;
+    unsigned long maxlength;
+    unsigned long bufsize;//size of "buf" used for transfert
+    bool isFileOpened;
     long frametoplay;
     bool stop;
     bool repeat;
     playbackLoopConsumer *consumer;
 
     playback_loop_c *pPrevLoop,*pNextLoop;
+    QMutex playloop_mutex;
 
-    void destroyloop(bool opened);
     void test(QString a);
     void openFile(void);
     void moveToPort(playback_port_c *pNuPort);
-
+    void rewind(void);
     void play();
     void pause();
 
-public slots:
-    void consumerKilled();
+
+
+    unsigned long length();
+    unsigned long freespace();
+    void pushN(short *buf_in, unsigned long N);
+    int pullN(unsigned long N);
+    void destroy(void);
+
+
+private slots:
+    void datarequest(unsigned long frames);
+    void activate(void);
+signals:
+    void send_data(short *buf,int nread);
+
 
 
 
