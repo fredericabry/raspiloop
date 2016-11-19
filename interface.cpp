@@ -149,7 +149,7 @@ void interface_c::init(void)
     isRecording = false;
 
 
- pClick = new click_c(60,pLeft,STATUS_PLAY);
+ pClick = new click_c(140,pLeft,STATUS_IDLE);
 
 
 
@@ -297,7 +297,11 @@ void interface_c::keyInput(QKeyEvent *e)
 
     case Qt::Key_Minus:this->removeAllPlaybackLoops();qDebug()<<"All playback loops deleted"; break;
 
-    case Qt::Key_Slash:  new playback_loop_c(0,pLeft,0,true);//once, autoplaybreak;
+    case Qt::Key_Slash:
+        if(pClick->status == STATUS_IDLE) pClick->status = STATUS_PLAY;
+        else pClick->status = STATUS_IDLE;
+
+        break;
     }
 
 

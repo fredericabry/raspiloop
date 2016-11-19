@@ -114,7 +114,7 @@ int playback_port_c::pullN(unsigned long N)
 {
 
     ring_lock.lock();
-    static bool fg_empty = false;
+
 
 
 
@@ -165,7 +165,12 @@ int playback_port_c::pullN(unsigned long N)
     {
         //not enough elements let's fill in with zeros
 
-        if(!fg_empty) {fg_empty = true;/*qDebug()<<channel<<"zeros";*/fg_empty=true;}
+        if(!fg_empty)
+        {
+
+            //qDebug()<<channel<<"zeros";
+            fg_empty=true;
+        }
 
 
         memset(this->buf+N/*sizeof(short)*/,0,N0*sizeof(short));

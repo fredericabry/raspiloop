@@ -37,7 +37,7 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bo
     buf = (short*)malloc(bufsize*sizeof(short));
     memset(buf,0,bufsize*sizeof(short));
     tail =0;
-    head = 1999;
+    head = 0;
 
     frametoplay = (length*RATE)/1000;
 
@@ -331,7 +331,8 @@ void playback_loop_c::datarequest(unsigned long frames)
     nread = pullN(frames);
 
 
-  //  qDebug()<<nread;
+
+   // qDebug()<<frames<<nread;
 
 
     if (nread != frames) qDebug()<<"error pulling from ringbuf";

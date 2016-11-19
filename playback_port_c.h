@@ -56,7 +56,7 @@ public:
     bool wait_for_data;
 
     playbackPortConsumer *consumer;
-
+    bool fg_empty ;
 
     void removeallloops(void);
     int getDataReady(unsigned long N);
