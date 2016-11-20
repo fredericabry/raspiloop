@@ -61,11 +61,11 @@ unsigned long playback_port_c::freespace()
 void playback_port_c::pushN(short *buf_in, unsigned long N)
 {
     short *pt ;
-ring_lock.lock();
+    ring_lock.lock();
 
 
 
-    if(N > this->freespace())  { qDebug()<<"playback ringbuf full"<<N;ring_lock.unlock();return;}
+    if(N > this->freespace())  {qDebug()<<"playback ringbuf full"<<N;ring_lock.unlock();return;}
 
     if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct";ring_lock.unlock(); return;}
 
@@ -100,7 +100,7 @@ ring_lock.lock();
         memcpy(pt,buf_in,N*sizeof(short));
         this->head += N;
     }
-ring_lock.unlock();
+    ring_lock.unlock();
 
 }
 
@@ -182,38 +182,12 @@ int playback_port_c::pullN(unsigned long N)
     //triggerempty();
 
 
-ring_lock.unlock();
+    ring_lock.unlock();
 
     return N+N0;
 }
 
-void playback_port_c::triggerempty(void)
-{
 
-    if(connected_loops != nu_connected_loops)
-    {
-    connected_loops = nu_connected_loops;//maybe we need to update the connect loops count
-    emit consumer->update_loops(); //tell the added loops to get ready
-    }
-
-
-    if(connected_loops==0) {return;} //still zero ? return
-
-
-   if(wait_for_data)
-   {
-
-       return;
-   }
-
-
-   wait_for_data = true;
-   //qDebug()<<"emit"<<connected_loops;
-   emit signal_trigger(this->freespace());
-
-
-
-}
 
 void playback_port_c::addloop(playback_loop_c *pLoop)
 {
@@ -221,27 +195,61 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
     //this->connected_loops++;
     this->nu_connected_loops++;
 
-    this->wait_for_data = false; //fix this ?
+
+    // qDebug()<<nu_connected_loops<<pLoop->id;
+
+
+
 
     if(nu_connected_loops <= 0) {qDebug()<<"err";return;}
 
-    if(!connect(this,SIGNAL(signal_trigger(unsigned long)), pLoop, SLOT(datarequest(unsigned long))))
-     qDebug()<<"connection failed";
+    if(!connect(this,SIGNAL(signal_trigger(unsigned long)), pLoop, SLOT(datarequest(unsigned long)),Qt::UniqueConnection))
+        qDebug()<<"connection failed";
 
-    if(!connect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate())))
-     qDebug()<<"connection failed";
+    if(!connect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate()),Qt::UniqueConnection))
+        qDebug()<<"connection failed";
 
- if( !connect(pLoop,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int))))
-     qDebug()<<"connection failed";
-
-
- if(nu_connected_loops == 1) pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
+    if( !connect(pLoop,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int)),Qt::UniqueConnection))
+        qDebug()<<"connection failed";
 
 
+    if(nu_connected_loops == 1) pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
 
 
-    if(pLoop->id == 0) //this is the click, we don't keep it in the loops list
-    return;
+
+
+
+
+    if(!pLoop->isClick) //if this is the click, we don't keep it in the loops list
+    {
+        if(interface->firstPlayLoop == NULL) interface->firstPlayLoop = pLoop;
+
+        else if(interface->findLastPlaybackLoop() != NULL)
+        {
+            pLoop->pPrevLoop = interface->findLastPlaybackLoop();
+            pLoop->pPrevLoop->pNextLoop = pLoop;//let's add it at the end of the chain
+
+        }
+        else qDebug()<<"playback loop list bug";
+
+
+        pLoop->pNextLoop = NULL;//last loop created.
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+/*
+    if(pLoop->isClick) //this is the click, we don't keep it in the loops list
+        return;
 
     //let's keep the playback loops list in order:
     pLoop->pPrevLoop = interface->findLastPlaybackLoop();
@@ -257,10 +265,10 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
     }
     else
     {
-       interface->findLastPlaybackLoop()->pNextLoop = pLoop;//let's add it at the end of the chain     
+        interface->findLastPlaybackLoop()->pNextLoop = pLoop;//let's add it at the end of the chain
     }
 
-
+*/
 
 
 
@@ -278,23 +286,23 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
     if( !disconnect(pLoop,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int))))
         qDebug()<<"playback loop  disconnection failed 2";
     if(!disconnect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate())))
-     qDebug()<<"connection failed";
+        qDebug()<<"connection failed";
 
 
-    if(pLoop->id == 0) //this is the click, we don't keep it in the loops list
-    return;
+    if(pLoop->isClick) //this is the click, we don't keep it in the loops list
+        return;
 
 
 
-    if(pLoop->pPrevLoop==NULL) interface->firstPlayLoop = pLoop->pNextLoop;//it was the first loop, so the chain is empty now
+    if(pLoop->pPrevLoop==NULL) interface->firstPlayLoop = pLoop->pNextLoop;//it was the first loop
     else
     {
-     pLoop->pPrevLoop->pNextLoop = pLoop->pNextLoop;
+        pLoop->pPrevLoop->pNextLoop = pLoop->pNextLoop;
     }
 
     if(pLoop->pNextLoop!=NULL) //there is a next loop
     {
-    pLoop->pNextLoop->pPrevLoop = pLoop->pPrevLoop;
+        pLoop->pNextLoop->pPrevLoop = pLoop->pPrevLoop;
     }
 
 
@@ -316,6 +324,45 @@ void playbackPortConsumer::run()
 }
 
 
+
+
+void playback_port_c::triggerempty(void)
+{
+
+    unsigned long frames = this->freespace();
+
+
+    if(wait_for_data)
+    {
+        //qDebug()<<"waiting";
+        return;
+    }
+
+
+
+    if(connected_loops != nu_connected_loops)
+    {
+        connected_loops = nu_connected_loops;//maybe we need to update the connect loops count
+        emit consumer->update_loops(); //tell the added loops to get ready
+    }
+
+
+    if(connected_loops==0) {return;} //still zero ? return
+
+
+
+
+    wait_for_data = true;
+    // qDebug()<<"emit"<<frames;
+    emit signal_trigger(frames);
+
+
+
+}
+
+
+
+
 void playbackPortConsumer::data_available(short *buf, int nread)
 {
 
@@ -327,9 +374,16 @@ void playbackPortConsumer::data_available(short *buf, int nread)
 
     controler->data_received++;
 
-  //qDebug()<<controler->channel<<controler->connected_loops<<controler->data_received;
+    // qDebug()<<"received"<<controler->data_received<<nread;
 
-    if(controler->connected_loops == 0) {qDebug()<<"bug no loop connected";return;} //should not happen but let's not divide by 0
+    if(controler->connected_loops == 0) {
+        qDebug()<<"bug no loop connected";
+        controler->wait_for_data = false;
+        datalength = 0;
+        return;
+    } //should not happen but let's not divide by 0
+
+
 
 
 
@@ -353,13 +407,16 @@ void playbackPortConsumer::data_available(short *buf, int nread)
         for(int i = 0;i<nread;i++)
         {
 
-           controler-> bufmix[i]+=buf[i]/controler->connected_loops;
+            controler-> bufmix[i]+=buf[i]/controler->connected_loops;
         }
     }
 
 
     if(controler->data_received >= controler->connected_loops)
     {
+        if(controler->data_received > controler->connected_loops) qDebug()<<"bug data received";
+
+
 
         controler->data_received = 0;
         //all data has been received, let's push it to the ringbuffer
@@ -368,15 +425,7 @@ void playbackPortConsumer::data_available(short *buf, int nread)
         controler->wait_for_data = false;
 
 
-        //update connected loop number (might have changed during the data collect process)
-       /* if(controler->connected_loops != controler->nu_connected_loops)
-        {
-       emit update_loops();
-       controler->connected_loops = controler->nu_connected_loops;
-
-        }*/
     }
-
 
 
 
@@ -384,7 +433,7 @@ void playbackPortConsumer::data_available(short *buf, int nread)
 
 void playbackPortConsumer::update()
 {
-  controler->triggerempty();
+    controler->triggerempty();
 
 }
 

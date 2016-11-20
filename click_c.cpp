@@ -14,8 +14,10 @@ click_c::click_c(int tempo, playback_port_c *pPort, int status):tempo(tempo),pPo
 
     long deltams = 60000/tempo; //time in ms between ticks
 
-    connect(&timer,SIGNAL(timeout()),this,SLOT(tick()));
+    QObject::connect(&timer,SIGNAL(timeout()),this,SLOT(tick()));
     timer.start(deltams);
+
+    beat = 1;
 
 
 
@@ -29,11 +31,74 @@ click_c::click_c(int tempo, playback_port_c *pPort, int status):tempo(tempo),pPo
 
 void click_c::tick(void)
 {
+
+
+    if(beat == 1)
+    {
+        if(status == STATUS_PLAY)
+        new playback_loop_c(0,pPort,0,true);//once, autoplay
+        emit firstBeat();
+    }
+    else
+    {
+        if(status == STATUS_PLAY)
+        new playback_loop_c(1,pPort,0,true);//once, autoplay
+
+    }
     //qDebug()<<t1->elapsed();
 
     //qDebug()<<"\ntick";
-    if(status == STATUS_PLAY)
-        new playback_loop_c(0,pPort,0,true);//once, autoplay
+
     //t1->start();
+    beat ++;
+
+    if(beat>4) beat = 1;
+
 }
 
+
+
+
+bool click_c::isActive(void)
+{
+
+    if(status == STATUS_PLAY) return true;
+    else return false;
+
+}
+
+
+void click_c::setTempo(int temp)
+{
+    if(temp < 20) return;
+    if(temp > 200) return;
+
+    tempo = temp;
+    long deltams = 60000/tempo; //time in ms between ticks
+    timer.setInterval(deltams);
+
+    qDebug()<<"new tempo:"<<tempo;
+
+}
+
+int click_c::getTempo()
+{
+    return tempo;
+}
+
+void click_c::stopstart(void)
+{
+
+    if(status == STATUS_PLAY)
+    {
+        status = STATUS_IDLE;
+        beat = 1;
+
+    }
+    else
+    {
+        status = STATUS_PLAY;
+
+    }
+
+}

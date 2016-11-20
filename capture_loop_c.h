@@ -14,6 +14,7 @@
 class capture_loop_c;
 class playback_port_c;
 class playback_loop_c;
+class click_c;
 
 class captureLoopConsumer:public QThread
 {

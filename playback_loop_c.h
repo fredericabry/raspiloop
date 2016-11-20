@@ -58,6 +58,7 @@ public:
     long frametoplay;
     bool stop;
     bool repeat;
+    bool isClick;//is it used for the click ?
     playbackLoopConsumer *consumer;
 
     playback_loop_c *pPrevLoop,*pNextLoop;

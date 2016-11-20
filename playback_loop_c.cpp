@@ -7,13 +7,18 @@
 
 playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bool autoplay):id(id),pPort(pPort)
 {
-    consumer = NULL;
-
-    filename = QString::number(id)+".wav";
-
     pPrevLoop = pNextLoop = NULL;
 
 
+    if((id == 0) || (id==1)) isClick = true;
+    else isClick = false;
+
+
+
+
+
+    consumer = NULL;
+    filename = QString::number(id)+".wav";
 
     if(autoplay) status = STATUS_PLAY;
     else status = STATUS_IDLE;//at first the loop is not playing.
@@ -39,6 +44,7 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bo
     tail =0;
     head = 0;
 
+
     frametoplay = (length*RATE)/1000;
 
 
@@ -58,7 +64,6 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bo
         stop = true;
         repeat = false;
     }
-
 
     pPort->addloop(this);
 
@@ -119,6 +124,9 @@ void playback_loop_c::openFile()
 
 
 }
+
+
+
 
 void playback_loop_c::destroy()
 {
@@ -307,7 +315,7 @@ void playback_loop_c::datarequest(unsigned long frames)
         return;
 
     if(frames > bufsize)
-    frames = bufsize;
+        frames = bufsize;
 
 
     //the associated playback port requests more data
@@ -321,7 +329,7 @@ void playback_loop_c::datarequest(unsigned long frames)
 
     }
 
-    int ringbuflength = length();
+    unsigned long ringbuflength = length();
 
     if(frames > ringbuflength) frames = ringbuflength; //limit data transfert to what is available in the ringbuffer
 
@@ -332,7 +340,7 @@ void playback_loop_c::datarequest(unsigned long frames)
 
 
 
-   // qDebug()<<frames<<nread;
+    // qDebug()<<frames<<nread;
 
 
     if (nread != frames) qDebug()<<"error pulling from ringbuf";
@@ -348,7 +356,7 @@ void playback_loop_c::datarequest(unsigned long frames)
 
     emit send_data(buf,nread);
 
-
+    // qDebug()<<id<<nread;
 
 
 
@@ -392,7 +400,7 @@ QElapsedTimer t3;
 
 void playbackLoopConsumer::update() //constantly fill the ringbuffer with data from the opened file
 {
-   // qDebug()<<"upd";
+    // qDebug()<<"upd";
     update_lock = true;
     int nread,nrequest,t1;
     static int tmax = 0;
@@ -418,8 +426,8 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
 
 
-     if((controler->stop&&(controler->frametoplay<=0))
-             ||((nread <= 0)&&(nrequest!=0)))
+    if((controler->stop&&(controler->frametoplay<=0))
+            ||((nread <= 0)&&(nrequest!=0)))
     {
 
         if(controler->repeat)
@@ -429,9 +437,9 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
         }
         else
         {
-           // qDebug()<<"stop";
-          controler->loopReadyToStop = true;
-          // controler->destroyloop(true);
+            // qDebug()<<"stop";
+            controler->loopReadyToStop = true;
+            // controler->destroyloop(true);
             //qDebug()<<"stop";
 
         }

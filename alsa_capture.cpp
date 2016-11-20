@@ -279,7 +279,8 @@ int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
         }
     }
 
-    qDebug()<<"buuug";
+
+    qDebug()<<"bug wait for poll IN";
 }
 
 void read_and_poll_loop(capture_port_c **port)

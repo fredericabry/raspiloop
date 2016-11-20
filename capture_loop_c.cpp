@@ -3,13 +3,15 @@
 #include "qdir.h"
 #include "QDebug"
 #include "interface.h"
-
-
+#include "events.h"
+#include "click_c.h"
 
 #define READ_OFFSET (signed long)500
 
 capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort):id(id),pPort(pPort)
 {
+
+    pPlayLoop = NULL;
 
 
     pPrevLoop = pPort->interface->findLastCaptureLoop();
@@ -54,7 +56,15 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     if(createPlayLoop)
     {
         //we need to create an associated playbackloop, which will be ready
-        pPlayLoop = new playback_loop_c(id,pPlayPort,-1,false);//by default loop
+       // pPlayLoop = new playback_loop_c(id,pPlayPort,-1,false);//by default loop
+        playData params;
+        params.autoplay = false;
+        params.id = this->id;
+        params.length = -1;
+        params.pPlayPort = pPlayPort;
+        new interfaceEvent_c(pPort->interface->pClick,SIGNAL(firstBeat()),pPort->interface->findLastEvent(),EVENT_PLAY,(void*)&params,pPort->interface);
+
+
     }
     else pPlayLoop = NULL;
 
@@ -73,21 +83,24 @@ void capture_loop_c::destroyLoop()
 {
 
     //let's start the associated playback_loop :
+    pPlayLoop = pPort->interface->findPlayLoopById(id);
     if(pPlayLoop != NULL)
+      {
         pPlayLoop->play();
 
+    }
 
 
     //this loop needs to get out of the list:
     if(pPrevLoop==NULL) pPort->interface->firstCaptureLoop = pNextLoop;//it was the first loop
     else
     {
-     pPrevLoop->pNextLoop = pNextLoop;
+        pPrevLoop->pNextLoop = pNextLoop;
     }
 
     if(pNextLoop!=NULL) //there is a next loop
     {
-    pNextLoop->pPrevLoop = pPrevLoop;
+        pNextLoop->pPrevLoop = pPrevLoop;
     }
 
 
@@ -199,14 +212,6 @@ void capture_loop_c::closefile()
 
         // exit (1);
     }
-
-    QDir r;
-
-
-    QString old = filedir;
-    // filedir.replace(filedir.length()-3,3,"wav");
-
-    //   if(!r.rename(old,filedir)) qDebug()<<"cannot rename file";
 }
 
 void captureLoopConsumer::update(void)
@@ -215,7 +220,10 @@ void captureLoopConsumer::update(void)
     static int tmax = 0;
     int nread,err;
 
-    nread = port->pullN(NFILE_CAPTURE);
+    if((port->stop)&&(port->framesToRead<NFILE_CAPTURE))
+        nread = port->pullN(port->framesToRead);//just what we still have to read
+    else
+        nread = port->pullN(NFILE_CAPTURE);
 
 
     if(nread >0 )
@@ -228,6 +236,19 @@ void captureLoopConsumer::update(void)
         if(t1 > tmax) {tmax = t1; qDebug()<<"new save delay max : "<<tmax<<" ms";}
 
         // if (t1 > 2) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
+
+    }
+
+    if(port->stop)
+    {
+
+        port->framesToRead -= nread;
+
+        if(port->framesToRead <= 0)//time to stop
+        {
+            port->destroyLoop();
+
+        }
 
     }
 

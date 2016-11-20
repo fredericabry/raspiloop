@@ -6,6 +6,8 @@
 #include "qdebug.h"
 #include "click_c.h"
 
+#include "events.h"
+
 
 
 playback_port_c *pLeft,*pRight;
@@ -18,7 +20,7 @@ capture_loop_c *pActiveRecLoop;
 playback_port_c *pActivePlayPort;
 playback_loop_c *pActivePlayLoop;
 
-click_c *pClick;
+
 
 
 
@@ -91,12 +93,13 @@ interface_c::interface_c(MainWindow *parent):parent(parent)
 {
     firstPlayLoop = NULL;//no playback loop at this point
     firstCaptureLoop = NULL;//no capture loop at this point
+    firstEvent = NULL;//no event at this point
 
 }
 
 int interface_c::generateNewId()
 {
-    int id = 1; //id = 0 is reserved for the click
+    int id = 2; //id = 0 and id =1 are reserved for the click
     playback_loop_c *pPlayLoop = firstPlayLoop;
     capture_loop_c *pCaptureLoop = firstCaptureLoop;
     if(pPlayLoop != NULL)
@@ -124,15 +127,84 @@ int interface_c::generateNewId()
 
 }
 
-void interface_c::removeAllPlaybackLoops(void)
+
+playback_loop_c* interface_c::findPlayLoopById(int id)
 {
-    while(firstPlayLoop != NULL)
+
+
+    playback_loop_c *pLoop = firstPlayLoop;
+    while(pLoop != NULL)
     {
-        firstPlayLoop->destroy();
+        qDebug()<<pLoop->id<<id;
+
+        if(pLoop->id == id) {qDebug()<<"ok";return pLoop;}
+        pLoop = pLoop->pNextLoop;
 
     }
-    pActivePlayLoop = NULL;
+    qDebug()<<"pas ok";
+return NULL;
 }
+
+
+
+void interface_c::showPlayLoops()
+{
+    playback_loop_c *pLoop = firstPlayLoop;
+    while(pLoop != NULL)
+    {
+        qDebug()<<"loop" <<pLoop->id;
+        if(pLoop->pPrevLoop)qDebug()<<"prev"<<pLoop->pPrevLoop->id;
+        if(pLoop->pNextLoop)qDebug()<<"next"<<pLoop->pNextLoop->id;
+
+        qDebug()<<"\n";
+        pLoop = pLoop->pNextLoop;
+
+    }
+
+
+}
+
+
+
+
+
+void interface_c::removeAllPlaybackLoops(void)
+{
+
+    playback_loop_c *pLoop = firstPlayLoop;
+    playback_loop_c *pLoop2 = NULL;
+    while(pLoop != NULL)
+    {
+
+        pLoop2 = pLoop->pNextLoop;
+        pLoop->destroy();
+        pLoop = pLoop2;
+    }
+    pActivePlayLoop = NULL;
+
+}
+
+
+interfaceEvent_c* interface_c::findLastEvent(void) //return a pointer to the last event in the list
+{
+    interfaceEvent_c* pEvent = firstEvent;
+
+    if(pEvent == NULL)
+    {
+        return NULL;
+    }
+
+    while(pEvent->pNextEvent != NULL)
+        pEvent = pEvent->pNextEvent;
+
+    return pEvent;
+
+}
+
+
+
+
+
 
 
 void interface_c::init(void)
@@ -149,7 +221,20 @@ void interface_c::init(void)
     isRecording = false;
 
 
- pClick = new click_c(140,pLeft,STATUS_IDLE);
+
+
+
+    pClick = new click_c(120,pLeft,STATUS_IDLE);
+    connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
+
+
+
+
+
+
+
+
+
 
 
 
@@ -166,7 +251,7 @@ void interface_c::run()
 
 void interface_c::keyInput(QKeyEvent *e)
 {
-    // qDebug()<<e->key();
+    //  qDebug()<<e->key();
     switch(e->key())
     {
 
@@ -199,12 +284,14 @@ void interface_c::keyInput(QKeyEvent *e)
             return;
         }
         //let's do some recording
-        if(!isRecording)
+        /* if(!isRecording)
         {
             qDebug()<<"recording...";
             isRecording = true;
             int id = generateNewId();//get some not used id
             pActiveRecLoop = new capture_loop_c(id,pActiveRecPort,0,true,pActivePlayPort);
+
+
 
         }
         else
@@ -213,7 +300,22 @@ void interface_c::keyInput(QKeyEvent *e)
             isRecording = false;
             pActiveRecLoop->destroyLoop();
 
-        }
+        }*/
+
+
+        captureData params;
+        params.createPlayLoop = true;
+        params.length=4000;
+        params.pPlayPort=pActivePlayPort;
+        params.pPort=pActiveRecPort;
+
+
+
+       new interfaceEvent_c(pClick,SIGNAL(firstBeat()),findLastEvent(),EVENT_CAPTURE,(void*)&params,this);
+
+
+     //   new playback_loop_c(9,pActivePlayPort,-1,true);
+     //   new playback_loop_c(8,pActivePlayPort,-1,true);
 
         break;
     case Qt::Key_3:
@@ -221,19 +323,19 @@ void interface_c::keyInput(QKeyEvent *e)
         qDebug()<<"Input"<<pActiveRecPort->id<<"selected";
         break;
     case Qt::Key_4:
-        if(!pActivePlayLoop) pActivePlayLoop = this->firstPlayLoop;
+        if(!pActivePlayLoop){ pActivePlayLoop = this->firstPlayLoop;}
 
         if(pActivePlayLoop)
         {
-            if(pActivePlayLoop->pPrevLoop) pActivePlayLoop = pActivePlayLoop->pPrevLoop;
-            else pActivePlayLoop = findLastPlaybackLoop();
+            if(pActivePlayLoop->pPrevLoop) {pActivePlayLoop = pActivePlayLoop->pPrevLoop;}
+            else {pActivePlayLoop = findLastPlaybackLoop();}
         }
 
         if(pActivePlayLoop) qDebug()<<"play loop #"<<pActivePlayLoop->id<<"selected";
         else qDebug()<<"no play loop available";
 
 
-        break;
+        break;//
     case Qt::Key_5:
         if(pActivePlayLoop)
         {
@@ -295,11 +397,17 @@ void interface_c::keyInput(QKeyEvent *e)
         break;
 
 
-    case Qt::Key_Minus:this->removeAllPlaybackLoops();qDebug()<<"All playback loops deleted"; break;
+    case Qt::Key_Minus:emit setTempo(pClick->getTempo()-10);break;
+    case Qt::Key_Asterisk:emit setTempo(pClick->getTempo()+10);break;
+
+    case Qt::Key_Plus:showPlayLoops();break;
+
+    case Qt::Key_Backspace:this->removeAllPlaybackLoops();qDebug()<<"All playback loops deleted"; break;
+
+
 
     case Qt::Key_Slash:
-        if(pClick->status == STATUS_IDLE) pClick->status = STATUS_PLAY;
-        else pClick->status = STATUS_IDLE;
+        pClick->stopstart();
 
         break;
     }
