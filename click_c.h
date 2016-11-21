@@ -3,7 +3,7 @@
 #include <QMainWindow>
 #include "qtimer.h"
 #include "qelapsedtimer.h"
-
+#include "playback_loop_c.h"
 
 class playback_port_c;
 class playback_loop_c;
@@ -15,7 +15,7 @@ private:
         int tempo;
 
 public:
-    click_c(int tempo, playback_port_c *pPort,int status);
+    click_c(int tempo, playback_port_c *pPort,status_t status);
 
     playback_port_c *pPort;
     int status;

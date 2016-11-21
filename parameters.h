@@ -44,5 +44,4 @@
 #define SOUND_FORMAT SND_PCM_FORMAT_S16_LE
 
 
-#define STATUS_IDLE 0
-#define STATUS_PLAY 1
+

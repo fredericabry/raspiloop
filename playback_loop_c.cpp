@@ -3,9 +3,10 @@
 #include "QElapsedTimer"
 #include "parameters.h"
 #include "interface.h"
+#include "click_c.h"
+#include "events.h"
 
-
-playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bool autoplay):id(id),pPort(pPort)
+playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,syncoptions syncMode,status_t status):id(id),pPort(pPort),syncMode(syncMode),status(status)
 {
     pPrevLoop = pNextLoop = NULL;
 
@@ -13,15 +14,11 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bo
     if((id == 0) || (id==1)) isClick = true;
     else isClick = false;
 
-
-
-
-
     consumer = NULL;
     filename = QString::number(id)+".wav";
 
-    if(autoplay) status = STATUS_PLAY;
-    else status = STATUS_IDLE;//at first the loop is not playing.
+
+    connect(this,SIGNAL(makeInterfaceEvent(const QObject*,const char*,int,void*,bool,playback_loop_c*)),pPort->interface,SLOT(createInterfaceEvent(const QObject*,const char*,int,void*,bool,playback_loop_c*)));
 
 
     consumer = new playbackLoopConsumer;
@@ -29,9 +26,6 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bo
     consumer->active = true;
     loopConnected = false;
     loopReadyToStop = false;
-
-
-
 
     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
     memset(buffile,0,sizeof(short)*NFILE_PLAYBACK);
@@ -45,33 +39,23 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,bo
     head = 0;
 
 
-    frametoplay = (length*RATE)/1000;
 
-
-    if(frametoplay==0)
+    if(syncMode == CLICKSYNC)
     {
-        stop = false;
-        repeat = false;
-    }
-    else if(frametoplay<0)
-    {
-        stop = false;
-        repeat = true;
-
-    }
-    else
-    {
-        stop = true;
-        repeat = false;
+        restartplayData_s restartplayData;
+        restartplayData.id = id;
+        restartplayData.skipevent = 0;
+        restartplayData.status = PLAY;
+        emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)&restartplayData,true,this);//this event will rewind the loop at each
     }
 
+
+
+
+    updateFrameToPlay(length);
+    framescount = 0;
     pPort->addloop(this);
-
-
-
     consumer->start();
-
-
 
 }
 
@@ -132,9 +116,12 @@ void playback_loop_c::destroy()
 {
 
 
-    if(!consumer) {qDebug()<<"bug";return;}
+    if(!consumer) {qDebug()<<"no consumer bug";return;}
 
     consumer->stop(); //consumer is going to stop and then destroy the loop
+
+
+    if(pPort->interface->isEventValid(pEvent)) pEvent->destroy();
 
 }
 
@@ -197,7 +184,9 @@ int playback_loop_c::pullN(unsigned long N)
 
     unsigned long length = this->length();
 
-    if((length == 0)&&(loopReadyToStop)) consumer->stop(); //file is empty, ringbuffer is empty, we can start destroying the loop
+    if((length == 0)&&(loopReadyToStop)) {consumer->stop();playloop_mutex.unlock();return 0;} //file is empty, ringbuffer is empty, we can start destroying the loop
+
+
 
 
     if(N > length) {
@@ -256,14 +245,14 @@ unsigned long playback_loop_c::freespace()
 void playback_loop_c::play()
 {
 
-    this->status = STATUS_PLAY;
+    this->status = PLAY;
 
 }
 
 void playback_loop_c::pause()
 {
 
-    this->status = STATUS_IDLE;
+    this->status = IDLE;
 
 }
 
@@ -277,8 +266,61 @@ void playback_loop_c::moveToPort(playback_port_c *pNuPort)
 
 }
 
+void playback_loop_c::updateFrameToPlay(long length)
+{
+
+    if(syncMode == NOSYNC)
+    {
+        framestoplay = (length*RATE)/1000;
+
+        if(framestoplay==0)
+        {
+            stop = false;
+            repeat = false;
+        }
+        else if(framestoplay<0)
+        {
+            stop = false;
+            repeat = true;
+
+        }
+        else
+        {
+            stop = true;
+            repeat = false;
+        }
+    }
+    else if(syncMode == CLICKSYNC)
+    {
 
 
+
+
+
+
+        //length is provided in bars in this case, repeating is managed by events in the interface
+        stop = (length>0);
+        repeat = false;
+        framestoplay = RATE*60*4*length/pPort->interface->pClick->getTempo();
+        barstoplay = length;
+        //qDebug()<<"length: "<<barstoplay<<"bars";
+
+
+        if(pPort->interface->isEventValid(pEvent))
+        {
+            restartplayData_s *params;
+            params = (restartplayData_s*)pEvent->data;
+            if(barstoplay>1)
+            {
+                params->skipevent=barstoplay-1;
+                (*(restartplayData_s*)pEvent->data) = (*params);
+            }
+        }
+        else qDebug()<<"invalid event";
+
+    }
+
+}
 
 
 
@@ -286,20 +328,20 @@ void playback_loop_c::moveToPort(playback_port_c *pNuPort)
 playback_loop_c::~playback_loop_c(void)
 {
     free(buffile);
-
     free(ringbuf);
-
     free(buf);
-
-
-
+//    qDebug()<<"playback loop destroyed";
 }
 
 void playback_loop_c::rewind(void)
 {
     sf_seek(soundfile,0,SFM_READ);
-}
+    framescount = 0;
 
+
+
+
+}
 
 
 
@@ -320,11 +362,11 @@ void playback_loop_c::datarequest(unsigned long frames)
 
     //the associated playback port requests more data
 
-    if(status == STATUS_IDLE)
+    if(status == IDLE)
     {
 
         //pausing, not sending any data
-        emit send_data(buf,0);//we still need to answer to the data request or the playback port get stuck waiting for data
+        emit send_data(buf,0);//we still need to answer to the data request otherwise the playback port gets stuck waiting for data
         return;
 
     }
@@ -334,32 +376,16 @@ void playback_loop_c::datarequest(unsigned long frames)
     if(frames > ringbuflength) frames = ringbuflength; //limit data transfert to what is available in the ringbuffer
 
 
-
-
     nread = pullN(frames);
-
-
-
-    // qDebug()<<frames<<nread;
 
 
     if (nread != frames) qDebug()<<"error pulling from ringbuf";
 
+    if(this->stop)   this->framescount += nread;
 
-
-    if(this->stop)
-    {
-
-
-        this->frametoplay -= nread;
-    }
+    if(status == SILENT) memset(buf,0,nread*sizeof(short));
 
     emit send_data(buf,nread);
-
-    // qDebug()<<id<<nread;
-
-
-
 
 
 }
@@ -381,13 +407,9 @@ void playbackLoopConsumer::run()
 
         if(!active) break;
         if(update_lock) {return;}
-
-
         update();
         QThread::usleep(CAPTURE_READFILE_SLEEP);
-
     }
-
 
     destroyloop();
 
@@ -400,6 +422,9 @@ QElapsedTimer t3;
 
 void playbackLoopConsumer::update() //constantly fill the ringbuffer with data from the opened file
 {
+
+    if(controler->loopReadyToStop) return;//we don't need more data
+
     // qDebug()<<"upd";
     update_lock = true;
     int nread,nrequest,t1;
@@ -407,6 +432,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
 
     sf_command (controler->soundfile, SFC_UPDATE_HEADER_NOW, NULL, 0) ; //update the file length, we might be writing on it in some other thread
+
 
 
     nrequest =controler->freespace();
@@ -424,29 +450,53 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     }
 
 
+    //qDebug()<<controler->stop<<controler->framestoplay;
 
+    if(controler->syncMode == CLICKSYNC)
+    {
+        if((controler->stop)&&(controler->framestoplay<=controler->framescount))
+        {
 
-    if((controler->stop&&(controler->frametoplay<=0))
-            ||((nread <= 0)&&(nrequest!=0)))
+            if(controler->status != IDLE)
+            {
+
+                controler->status = IDLE;//pausing
+                //qDebug()<<"pause";
+            }
+
+            // controler->loopReadyToStop = true;
+        }
+    }
+    else if(controler->syncMode == NOSYNC)
     {
 
-        if(controler->repeat)
+        if((controler->stop&&(controler->framestoplay<=controler->framescount))
+                ||((nread <= 0)&&(nrequest!=0)))
         {
-            sf_seek(controler->soundfile,0,SFM_READ);
+
+            if(controler->repeat)
+            {
+                sf_seek(controler->soundfile,0,SFM_READ);
+
+            }
+            else
+            {
+
+                controler->loopReadyToStop = true;
+
+
+            }
+
+
 
         }
-        else
-        {
-            // qDebug()<<"stop";
-            controler->loopReadyToStop = true;
-            // controler->destroyloop(true);
-            //qDebug()<<"stop";
-
-        }
-
 
 
     }
+
+
+
+
 
 
 

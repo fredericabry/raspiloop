@@ -6,6 +6,11 @@
 #include "playback_port_c.h"
 #include "QThread"
 #include "qmutex.h"
+#include "interface.h"
+
+
+
+
 
 
 class playback_loop_c;
@@ -35,13 +40,19 @@ class playback_loop_c:public QObject
     Q_OBJECT
 
 public:
-    playback_loop_c(const int id, playback_port_c *pPort, long length, bool autoplay);
+    playback_loop_c(const int id, playback_port_c *pPort, long length, syncoptions syncMode, status_t status);
     ~playback_loop_c();
 
     const int id;
-    QString filename;
+
     playback_port_c *pPort;
-    int status;
+
+    unsigned long length();
+    syncoptions syncMode;
+    status_t status;
+
+
+     QString filename;
     bool loopConnected;//loop has been connected to a port
     bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
@@ -55,11 +66,19 @@ public:
     unsigned long maxlength;
     unsigned long bufsize;//size of "buf" used for transfert
     bool isFileOpened;
-    long frametoplay;
+
+
+    long framestoplay;
+    long framescount;
+
+
+    int barstoplay;
     bool stop;
     bool repeat;
     bool isClick;//is it used for the click ?
     playbackLoopConsumer *consumer;
+
+    interfaceEvent_c *pEvent;
 
     playback_loop_c *pPrevLoop,*pNextLoop;
     QMutex playloop_mutex;
@@ -68,12 +87,15 @@ public:
     void openFile(void);
     void moveToPort(playback_port_c *pNuPort);
     void rewind(void);
+    bool isRewindRegistered;
+    void registerRewind(void);//create the event to rewind the loop at the next appropriate moment
     void play();
     void pause();
+    void updateFrameToPlay(long length);
 
 
 
-    unsigned long length();
+
     unsigned long freespace();
     void pushN(short *buf_in, unsigned long N);
     int pullN(unsigned long N);
@@ -85,6 +107,7 @@ private slots:
     void activate(void);
 signals:
     void send_data(short *buf,int nread);
+    void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,playback_loop_c *pLoop);
 
 
 

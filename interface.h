@@ -3,8 +3,9 @@
 
 #include "mainwindow.h"
 #include "qthread.h"
-
 #include "QKeyEvent"
+
+
 
 class playback_loop_c;
 class capture_loop_c;
@@ -13,10 +14,15 @@ class playback_port_c;
 class interfaceEvent_c;
 class click_c;
 
+enum status_t {IDLE,//not playing : paused
+                  PLAY,//Normal behavior
+                  SILENT};//playing muted
 
 
 
-
+enum syncoptions {NOSYNC,//no synchronization, loop are played as they are recorder
+                  CLICKSYNC,//synchronization to a pre defined click
+                  AUTOCLICK};//click is defined by the first recorded loop
 
 
 
@@ -43,6 +49,10 @@ public:
 
     interfaceEvent_c *firstEvent;//first event registered, begining of the events list
     interfaceEvent_c* findLastEvent(void);//return a pointer to the last event registered
+    bool isEventValid(interfaceEvent_c* pEvent);
+    int getEventsCount();
+
+
     void showPlayLoops();
     click_c *pClick;
 
@@ -50,10 +60,15 @@ public:
     void Afficher(QString txt);
     bool isRecording;
 
+    syncoptions synchroMode;//specifies the click synchronisation mode;
+
 private slots:
     void keyInput(QKeyEvent *e);
+    void createInterfaceEvent(const QObject * sender, const char * signal, int eventType, void *param, bool repeat, playback_loop_c *pLoop);
+
 signals:
     void setTempo(int);
+
 
 
 };

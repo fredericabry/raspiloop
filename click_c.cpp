@@ -5,7 +5,7 @@
 #include "parameters.h"
 
 
-click_c::click_c(int tempo, playback_port_c *pPort, int status):tempo(tempo),pPort(pPort),status(status)
+click_c::click_c(int tempo, playback_port_c *pPort, status_t status):tempo(tempo),pPort(pPort),status(status)
 
 {
     if(tempo<=0) {qDebug()<<"invalid tempo";delete this;return;}
@@ -35,14 +35,18 @@ void click_c::tick(void)
 
     if(beat == 1)
     {
-        if(status == STATUS_PLAY)
-        new playback_loop_c(0,pPort,0,true);//once, autoplay
         emit firstBeat();
+
+
+        if(status == PLAY)
+        new playback_loop_c(0,pPort,0,NOSYNC,PLAY);//once, autoplay
+
+
     }
     else
     {
-        if(status == STATUS_PLAY)
-        new playback_loop_c(1,pPort,0,true);//once, autoplay
+        if(status == PLAY)
+        new playback_loop_c(1,pPort,0,NOSYNC,PLAY);//once, autoplay
 
     }
     //qDebug()<<t1->elapsed();
@@ -62,7 +66,7 @@ void click_c::tick(void)
 bool click_c::isActive(void)
 {
 
-    if(status == STATUS_PLAY) return true;
+    if(status == PLAY) return true;
     else return false;
 
 }
@@ -89,15 +93,15 @@ int click_c::getTempo()
 void click_c::stopstart(void)
 {
 
-    if(status == STATUS_PLAY)
+    if(status == PLAY)
     {
-        status = STATUS_IDLE;
+        status = IDLE;
         beat = 1;
 
     }
     else
     {
-        status = STATUS_PLAY;
+        status = PLAY;
 
     }
 

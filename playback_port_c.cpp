@@ -246,32 +246,6 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
 
 
 
-
-/*
-    if(pLoop->isClick) //this is the click, we don't keep it in the loops list
-        return;
-
-    //let's keep the playback loops list in order:
-    pLoop->pPrevLoop = interface->findLastPlaybackLoop();
-    pLoop->pNextLoop = NULL;//last loop created.
-
-    if(interface->firstPlayLoop == NULL)
-    {
-
-        //should be the first loop, let's check:
-        if (nu_connected_loops != 1) qDebug()<<"bug loop count";
-        interface->firstPlayLoop = pLoop;
-
-    }
-    else
-    {
-        interface->findLastPlaybackLoop()->pNextLoop = pLoop;//let's add it at the end of the chain
-    }
-
-*/
-
-
-
 }
 
 void playback_port_c::removeloop(playback_loop_c *pLoop)

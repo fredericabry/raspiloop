@@ -25,14 +25,8 @@ playback_port_c** main_buf_playback;
 
 void alsa_start_playback(QString device, int channels, int rate, interface_c *interface)
 {
-
-
-
     if (!alsa_open_device_playback(device)) return;
-
-
     alsa_init_playback(channels,rate,interface);
-
 
     alsa_set_hw_parameters_playback();
     alsa_set_sw_parameters_playback();

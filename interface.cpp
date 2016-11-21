@@ -1,8 +1,9 @@
-#include "interface.h"
+
 #include "capture_loop_c.h"
 #include "playback_loop_c.h"
 #include "alsa_capture.h"
 #include "alsa_playback.h"
+#include "interface.h"
 #include "qdebug.h"
 #include "click_c.h"
 
@@ -38,6 +39,7 @@ playback_loop_c* interface_c::findLastPlaybackLoop(void) //return a pointer to t
     return pLoop;
 
 }
+
 int interface_c::getPlayLoopsCount()
 {
     int i = 0;
@@ -127,23 +129,41 @@ int interface_c::generateNewId()
 
 }
 
-
 playback_loop_c* interface_c::findPlayLoopById(int id)
 {
-
-
     playback_loop_c *pLoop = firstPlayLoop;
     while(pLoop != NULL)
     {
-        qDebug()<<pLoop->id<<id;
-
-        if(pLoop->id == id) {qDebug()<<"ok";return pLoop;}
+        if(pLoop->id == id) {return pLoop;}
         pLoop = pLoop->pNextLoop;
-
     }
-    qDebug()<<"pas ok";
-return NULL;
+    return NULL;
 }
+
+
+
+int interface_c::getEventsCount()
+{
+    int i = 0;
+    interfaceEvent_c *pEvent = firstEvent;
+
+
+    if(pEvent == NULL) return 0;
+    else
+    {
+        i=1;
+        while(pEvent->pNextEvent!=NULL) {pEvent=pEvent->pNextEvent;i++;}
+    }
+
+    return i;
+
+
+}
+
+
+
+
+
 
 
 
@@ -202,6 +222,37 @@ interfaceEvent_c* interface_c::findLastEvent(void) //return a pointer to the las
 }
 
 
+bool interface_c::isEventValid(interfaceEvent_c* pEvent)
+{
+    interfaceEvent_c* pEvent2 = firstEvent;
+
+    if(pEvent2 == NULL)
+        return false;
+
+    if(pEvent == NULL)
+        return false;
+
+    if(pEvent2==pEvent) return true;
+
+    while(pEvent2->pNextEvent != NULL)
+    {
+        pEvent2 = pEvent2->pNextEvent;
+        if(pEvent2==pEvent) return true;
+    }
+
+
+return false;
+}
+
+
+
+void interface_c::createInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,playback_loop_c *pLoop)
+{
+    pLoop->pEvent = new interfaceEvent_c(sender,signal,findLastEvent(),eventType,param,this,repeat);
+}
+
+
+
 
 
 
@@ -218,23 +269,13 @@ void interface_c::init(void)
     pRec0 = alsa_capture_port_by_num(0);
     pRec1 = alsa_capture_port_by_num(1);
     pActiveRecPort = NULL;
+    synchroMode = CLICKSYNC;
+
     isRecording = false;
 
 
-
-
-
-    pClick = new click_c(120,pLeft,STATUS_IDLE);
+    pClick = new click_c(120,pLeft,IDLE);
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
-
-
-
-
-
-
-
-
-
 
 
 
@@ -243,8 +284,6 @@ void interface_c::init(void)
 void interface_c::run()
 {
     init();
-
-
 
     exec();
 }
@@ -302,20 +341,28 @@ void interface_c::keyInput(QKeyEvent *e)
 
         }*/
 
+        if(!isRecording)
+        {
+            isRecording = true; //we plan to record next first beat
+            captureData_s params;
+            params.createPlayLoop = true;
+            params.length=-1;
+            params.pPlayPort=pActivePlayPort;
+            params.pPort=pActiveRecPort;
+            new interfaceEvent_c(pClick,SIGNAL(firstBeat()),findLastEvent(),EVENT_CAPTURE,(void*)&params,this,false);
+        }
+        else
+        {
 
-        captureData params;
-        params.createPlayLoop = true;
-        params.length=4000;
-        params.pPlayPort=pActivePlayPort;
-        params.pPort=pActiveRecPort;
+            pActiveRecLoop = findLastCaptureLoop();
+            if(pActiveRecLoop) {isRecording = false;pActiveRecLoop->destroyLoop();}
 
 
 
-       new interfaceEvent_c(pClick,SIGNAL(firstBeat()),findLastEvent(),EVENT_CAPTURE,(void*)&params,this);
+        }
 
-
-     //   new playback_loop_c(9,pActivePlayPort,-1,true);
-     //   new playback_loop_c(8,pActivePlayPort,-1,true);
+        //   new playback_loop_c(9,pActivePlayPort,-1,true);
+        //   new playback_loop_c(8,pActivePlayPort,-1,true);
 
         break;
     case Qt::Key_3:
@@ -339,8 +386,8 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_5:
         if(pActivePlayLoop)
         {
-            if(pActivePlayLoop->status == STATUS_IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
-            else if(pActivePlayLoop->status == STATUS_PLAY) {pActivePlayLoop->pause();qDebug()<<"loop"<<pActivePlayLoop->id<<"paused";}
+            if(pActivePlayLoop->status == IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
+            else if(pActivePlayLoop->status == PLAY) {pActivePlayLoop->pause();qDebug()<<"loop"<<pActivePlayLoop->id<<"paused";}
 
         }
         else
@@ -378,8 +425,8 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_8:
         if(pActivePlayLoop)
         {
-            if(pActivePlayLoop->status == STATUS_IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
-            else if(pActivePlayLoop->status == STATUS_PLAY) {pActivePlayLoop->pause();pActivePlayLoop->rewind();qDebug()<<"loop"<<pActivePlayLoop->id<<"stopped";}
+            if(pActivePlayLoop->status == IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
+            else if(pActivePlayLoop->status == PLAY) {pActivePlayLoop->pause();pActivePlayLoop->rewind();qDebug()<<"loop"<<pActivePlayLoop->id<<"stopped";}
 
         }
         else
@@ -388,6 +435,7 @@ void interface_c::keyInput(QKeyEvent *e)
         break;
     case Qt::Key_9:qDebug()<<"Active playback loops count:"<<getPlayLoopsCount();
         qDebug()<<"Active capture loops count:"<<getCaptureLoopsCount();
+        qDebug()<<"Active events count:"<<getEventsCount();
         break;
     case Qt::Key_Enter:
 

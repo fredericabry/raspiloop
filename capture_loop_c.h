@@ -15,6 +15,7 @@ class capture_loop_c;
 class playback_port_c;
 class playback_loop_c;
 class click_c;
+class interfaceEvent_c;
 
 class captureLoopConsumer:public QThread
 {
@@ -22,7 +23,7 @@ class captureLoopConsumer:public QThread
 
     void run() Q_DECL_OVERRIDE;
 public:
-    capture_loop_c* port;
+    capture_loop_c* controler;
 
     QElapsedTimer telapsed;
 
@@ -44,6 +45,12 @@ public:
     void closefile(void);
     int pullN(unsigned long N);
     unsigned long length(void);
+
+    interfaceEvent_c *pEvent;
+
+    unsigned long framesCount; //number of frames recorded so far
+    unsigned int beatsCount;//number of beats recorderd, deduced from framesCount
+
     const int id;
     QString filename;
     capture_port_c *pPort;
