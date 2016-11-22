@@ -6,9 +6,8 @@
 #include "events.h"
 #include "click_c.h"
 
-#define READ_OFFSET (signed long)500
 
-capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort):id(id),pPort(pPort)
+capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort, double delta):id(id),pPort(pPort)
 {
 
     pPlayLoop = NULL;
@@ -26,9 +25,23 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
 
 
-    long x = (signed long)pPort->head - READ_OFFSET;
+
+
+    long offset = delta*RATE; //number of elements recorded before we need to copy
+    //qDebug()<<"delta"<<delta<<"offset:"<<offset;
+    //tail = pPort->head ;
+    if(offset > RATE) {qDebug()<<"too late"; offset = RATE;}
+
+    long x = (signed long)pPort->head - offset;
     while(x < 0) x+=pPort->maxlength+1;
-    tail = x;
+    tail = (long)x;
+
+
+
+
+
+
+
 
     buffile = (short*)malloc(CAPTURE_LOOP_BUFSIZE*sizeof(short));
     memset(buffile,0,CAPTURE_LOOP_BUFSIZE*sizeof(short));
@@ -48,6 +61,11 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
     framesCount = beatsCount = 0;
 
+
+
+
+
+
     consumer = new captureLoopConsumer();
     consumer->controler = this;
     recording = true;
@@ -60,6 +78,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
         if(pPort->interface->synchroMode == NOSYNC)
         {
+
             pPlayLoop = new playback_loop_c(id,pPlayPort,-1,NOSYNC,PLAY);//by default loop
         }
         else if(pPort->interface->synchroMode == CLICKSYNC)
@@ -72,12 +91,8 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
             params.skipevent = 0;//we don't skip any call
             params.syncMode = CLICKSYNC;
             params.pPlayPort = pPlayPort;
+            params.pPlayLoop = &pPlayLoop;
             pEvent = new interfaceEvent_c(pPort->interface->pClick,SIGNAL(firstBeat()),pPort->interface->findLastEvent(),EVENT_CREATE_PLAY,(void*)&params,pPort->interface,false);
-
-
-
-
-
         }
 
 
@@ -104,8 +119,6 @@ void capture_loop_c::destroyLoop()
     if(pPort->interface->synchroMode == CLICKSYNC)
     {
 
-         pPlayLoop = pPort->interface->findPlayLoopById(id);
-
         //we need to compute the length of the loop in beats,
         double beatsCountf = (double)pPort->interface->pClick->getTempo()*framesCount/(RATE*60);
         long beatsCount = (long)beatsCountf;
@@ -119,8 +132,8 @@ void capture_loop_c::destroyLoop()
 
         nbars = nbeats/4;
 
-        qDebug()<<beatsCountf<<"beats";
-        qDebug()<<"length: "<<nbars<<"bars";
+        qDebug()<<beatsCountf<<"beats"<<"length: "<<nbars<<"bars";
+        //qDebug()<<"length: "<<nbars<<"bars";
 
 
         if(pPlayLoop != NULL)

@@ -53,6 +53,9 @@ public:
     int getEventsCount();
 
 
+
+    void startRecord(playback_port_c *pPlayPort, capture_port_c *pCapturePort);
+
     void showPlayLoops();
     click_c *pClick;
 

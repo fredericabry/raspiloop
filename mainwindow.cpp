@@ -125,10 +125,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->brefresh,SIGNAL(pressed()),this,SLOT(cardchoicerefresh()));
     connect(ui->bconnect,SIGNAL(pressed()),this,SLOT(chooseCard()));
     connect(ui->bclear,SIGNAL(pressed()),this,SLOT(consoleclear()));
-    connect(ui->bPlay,SIGNAL(pressed()),this,SLOT(play()));
-    connect(ui->bRecord,SIGNAL(pressed()),this,SLOT(record()));
-
-    connect(ui->b_shutdown,SIGNAL(pressed()),this,SLOT(shutdown()));
 
 
     Afficher("Démarrage\n");
@@ -136,7 +132,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     cardchoicerefresh();
 
-    connect(ui->tempoBox,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
+
 
     hw_info data;
     data = get_device_info("hw:1,0");

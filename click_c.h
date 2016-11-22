@@ -19,8 +19,8 @@ public:
 
     playback_port_c *pPort;
     int status;
-
-
+    double getBeat(void);//time elapsed since the begining of bar in beats
+    double getTime(void);//time elapsed since the begining of bar in s;
     QTimer timer;
     playback_loop_c *pDing;
     QElapsedTimer *t1;

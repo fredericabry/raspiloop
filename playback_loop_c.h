@@ -52,7 +52,7 @@ public:
     status_t status;
 
 
-     QString filename;
+    QString filename;
     bool loopConnected;//loop has been connected to a port
     bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
@@ -75,6 +75,7 @@ public:
     int barstoplay;
     bool stop;
     bool repeat;
+    bool isOutOfSample;
     bool isClick;//is it used for the click ?
     playbackLoopConsumer *consumer;
 

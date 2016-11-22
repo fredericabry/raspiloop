@@ -20,7 +20,7 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,in
     if(interface->firstEvent == NULL) interface->firstEvent = this;
     else
     {
-    pPrevEvent->pNextEvent = this;
+        pPrevEvent->pNextEvent = this;
     }
 
 
@@ -31,7 +31,7 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,in
         captureData_s *captureData;
         captureData= new captureData_s;
         *captureData= (*(captureData_s*)param);
-         data = (void*)captureData;
+        data = (void*)captureData;
         break;
 
     case EVENT_CREATE_PLAY:
@@ -72,7 +72,7 @@ void interfaceEvent_c::updateParameters(void *param)
         captureData_s *captureData;
         captureData= new captureData_s;
         *captureData= (*(captureData_s*)param);
-         data = (void*)captureData;
+        data = (void*)captureData;
         break;
 
     case EVENT_CREATE_PLAY:
@@ -107,7 +107,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
         captureData_s *params;
         params = (captureData_s*)data;
-        new capture_loop_c(interface->generateNewId(),params->pPort,params->length,params->createPlayLoop,params->pPlayPort);
+        new capture_loop_c(interface->generateNewId(),params->pPort,params->length,params->createPlayLoop,params->pPlayPort,0);
         killEvent = true;
         break;
 
@@ -124,15 +124,15 @@ void interfaceEvent_c::eventProcess() //launch the actual event
         }
         else
         {
-            new playback_loop_c(params2->id,params2->pPlayPort,params2->length,params2->syncMode,params2->status);
-          //  qDebug()<<"create loop";
+            (*params2->pPlayLoop) = new playback_loop_c(params2->id,params2->pPlayPort,params2->length,params2->syncMode,params2->status);
+            //  qDebug()<<"create loop";
             killEvent = true;
 
         }
         break;
 
     case EVENT_PLAY_RESTART://signal to rewind and play a loop
-         //qDebug()<<"restart";
+        //qDebug()<<"restart";
 
 
         restartplayData_s *params3;
@@ -142,7 +142,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
         {
             count++;
             killEvent = false;
-           // qDebug()<<"skip"<<count<<"/"<<params3->skipevent;
+            // qDebug()<<"skip"<<count<<"/"<<params3->skipevent;
 
         }
         else
@@ -154,7 +154,8 @@ void interfaceEvent_c::eventProcess() //launch the actual event
                 //qDebug()<<"process"<<pLoop->status;;
                 pLoop ->rewind();
 
-                pLoop->status = params3->status;
+              //  qDebug()<<"status"<<pLoop->status << params3->status;
+              //  pLoop->status = params3->status;
             }
 
 
@@ -175,7 +176,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
     if((killEvent)&&(!repeat))
     {
-destroy();
+        destroy();
     }
 }
 

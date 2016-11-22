@@ -45,7 +45,7 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,sy
         restartplayData_s restartplayData;
         restartplayData.id = id;
         restartplayData.skipevent = 0;
-        restartplayData.status = PLAY;
+        restartplayData.status = SILENT;
         emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)&restartplayData,true,this);//this event will rewind the loop at each
     }
 
@@ -53,7 +53,9 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,sy
 
 
     updateFrameToPlay(length);
+
     framescount = 0;
+    isOutOfSample = false;
     pPort->addloop(this);
     consumer->start();
 
@@ -245,6 +247,7 @@ unsigned long playback_loop_c::freespace()
 void playback_loop_c::play()
 {
 
+
     this->status = PLAY;
 
 }
@@ -318,6 +321,9 @@ void playback_loop_c::updateFrameToPlay(long length)
         }
         else qDebug()<<"invalid event";
 
+
+
+
     }
 
 }
@@ -337,6 +343,8 @@ void playback_loop_c::rewind(void)
 {
     sf_seek(soundfile,0,SFM_READ);
     framescount = 0;
+    isOutOfSample = false;
+    //qDebug()<<"rewind";
 
 
 
@@ -362,7 +370,8 @@ void playback_loop_c::datarequest(unsigned long frames)
 
     //the associated playback port requests more data
 
-    if(status == IDLE)
+    if((status == IDLE)||
+            (isOutOfSample))//we chose to stop or the interface is in clicksync mode and the play loop awaits rewind
     {
 
         //pausing, not sending any data
@@ -400,7 +409,7 @@ void playbackLoopConsumer::run()
 {
     update_lock = false;
     controler->openFile();
-
+    controler->rewind();
 
     while(1)
     {
@@ -457,11 +466,11 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
         if((controler->stop)&&(controler->framestoplay<=controler->framescount))
         {
 
-            if(controler->status != IDLE)
+            if(!controler->isOutOfSample)
             {
 
-                controler->status = IDLE;//pausing
-                //qDebug()<<"pause";
+                controler->isOutOfSample = true;//pausing because we are out of samples
+
             }
 
             // controler->loopReadyToStop = true;

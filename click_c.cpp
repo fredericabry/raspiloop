@@ -10,7 +10,7 @@ click_c::click_c(int tempo, playback_port_c *pPort, status_t status):tempo(tempo
 {
     if(tempo<=0) {qDebug()<<"invalid tempo";delete this;return;}
     t1 = new QElapsedTimer;
-    t1->start();
+
 
     long deltams = 60000/tempo; //time in ms between ticks
 
@@ -26,13 +26,32 @@ click_c::click_c(int tempo, playback_port_c *pPort, status_t status):tempo(tempo
 }
 
 
+double click_c::getBeat(void)
+{
+double t = ((double)t1->elapsed())/1000;//time elapsed since the tick in seconds
+
+if(t<=0) {qDebug()<<"bug elapsed beat"; return beat;}
+
+
+return (double)beat-1+t*tempo/60; //value in [0,4[
+}
+
+double click_c::getTime(void)
+{
+double t = ((double)t1->elapsed())/1000;//time elapsed since the tick in seconds
+
+return t +(double)(beat-1)*60/tempo;
+
+
+}
 
 
 
 void click_c::tick(void)
 {
-
-
+       t1->start();
+    beat ++;
+     if(beat>4) beat = 1;
     if(beat == 1)
     {
         emit firstBeat();
@@ -42,21 +61,26 @@ void click_c::tick(void)
         new playback_loop_c(0,pPort,0,NOSYNC,PLAY);//once, autoplay
 
 
+       // qDebug()<<"first beat";
+
     }
     else
     {
         if(status == PLAY)
         new playback_loop_c(1,pPort,0,NOSYNC,PLAY);//once, autoplay
 
+
     }
+
+   //if(beat == 3) qDebug()<<"third beat";
     //qDebug()<<t1->elapsed();
 
     //qDebug()<<"\ntick";
 
     //t1->start();
-    beat ++;
 
-    if(beat>4) beat = 1;
+
+
 
 }
 

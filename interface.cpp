@@ -241,7 +241,7 @@ bool interface_c::isEventValid(interfaceEvent_c* pEvent)
     }
 
 
-return false;
+    return false;
 }
 
 
@@ -252,8 +252,34 @@ void interface_c::createInterfaceEvent(const QObject * sender,const char * signa
 }
 
 
+void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCapturePort)
+{
+
+    if(synchroMode == CLICKSYNC)
+    {
 
 
+        if(pClick->getBeat()<1) //capture was launched too late, we are not going to wait till the next bar...
+        {
+
+
+
+            new capture_loop_c(generateNewId(),pCapturePort,-1,true,pPlayPort,pClick->getTime());
+
+        }
+
+        else
+        {
+            captureData_s params;
+            params.createPlayLoop = true;
+            params.length=-1;
+            params.pPlayPort=pPlayPort;
+            params.pPort=pCapturePort;
+            new interfaceEvent_c(pClick,SIGNAL(firstBeat()),findLastEvent(),EVENT_CAPTURE,(void*)&params,this,false);
+        }
+    }
+
+}
 
 
 
@@ -343,17 +369,15 @@ void interface_c::keyInput(QKeyEvent *e)
 
         if(!isRecording)
         {
+
+
             isRecording = true; //we plan to record next first beat
-            captureData_s params;
-            params.createPlayLoop = true;
-            params.length=-1;
-            params.pPlayPort=pActivePlayPort;
-            params.pPort=pActiveRecPort;
-            new interfaceEvent_c(pClick,SIGNAL(firstBeat()),findLastEvent(),EVENT_CAPTURE,(void*)&params,this,false);
+
+            startRecord(pActivePlayPort,pActiveRecPort);
         }
         else
         {
-
+            //qDebug()<<"beat:"<<pClick->getBeat();
             pActiveRecLoop = findLastCaptureLoop();
             if(pActiveRecLoop) {isRecording = false;pActiveRecLoop->destroyLoop();}
 
