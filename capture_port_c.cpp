@@ -60,9 +60,12 @@ void capture_port_c::pushN(unsigned long N)
     ring_lock.unlock();
 }
 
+
+
 void capture_port_c::destroyport()
 {
-    delete this;
+    //delete this;
+    this->deleteLater();
 }
 
 

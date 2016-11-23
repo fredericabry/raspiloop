@@ -11,47 +11,41 @@
 
 
 
-interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,interfaceEvent_c *pPrevEvent, int eventType, void *param, interface_c *interface,bool repeat):sender(sender),signal(signal),pPrevEvent(pPrevEvent),eventType(eventType),interface(interface),repeat(repeat)
+interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,const int eventType, void *param, interface_c *interface,bool repeat):sender(sender),signal(signal),eventType(eventType),interface(interface),repeat(repeat)
 {
+
+
+    addToList();
 
     count = 0;
 
-    pNextEvent = NULL;
-    if(interface->firstEvent == NULL) interface->firstEvent = this;
-    else
-    {
-        pPrevEvent->pNextEvent = this;
-    }
+
 
 
 
     switch(eventType)
     {
     case EVENT_CAPTURE:
-        captureData_s *captureData;
         captureData= new captureData_s;
         *captureData= (*(captureData_s*)param);
-        data = (void*)captureData;
         break;
 
     case EVENT_CREATE_PLAY:
-        playData_s *playData;
         playData = new playData_s;
         *playData = *((playData_s*)param);
-        data = (void*)playData;
         break;
 
     case EVENT_PLAY_RESTART:
-        restartplayData_s *restartplayData;
         restartplayData = new(restartplayData_s);
         *restartplayData = *((restartplayData_s*)param);
-        data = (void*)restartplayData;
         break;
 
     default:
         return;break;
     }
 
+
+    delete param;
 
     if(!connect(sender,signal,this,SLOT(eventProcess()))) qDebug()<<"event connection failure";
 
@@ -60,8 +54,40 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,in
 
 }
 
+void interfaceEvent_c::addToList(void)
+{
 
 
+
+    pNextEvent = NULL;//last event created
+    pPrevEvent = interface->findLastEvent();
+
+
+    if(interface->firstEvent == NULL) {interface->firstEvent = this;}
+    else if(pPrevEvent)
+    {
+        pPrevEvent->pNextEvent = this;
+    }
+    else qDebug()<<"bug event list add";
+
+
+
+
+}
+
+void interfaceEvent_c::removeFromList(void)
+{
+
+
+    if(interface->firstEvent == this) interface->firstEvent = pNextEvent;//it was the first event, let's update this info
+
+
+    if(pPrevEvent) pPrevEvent->pNextEvent = pNextEvent; //if it was not the first event
+    if(pNextEvent) pNextEvent->pPrevEvent=pPrevEvent; //it was not the last event
+
+
+
+}
 
 void interfaceEvent_c::updateParameters(void *param)
 {
@@ -69,76 +95,58 @@ void interfaceEvent_c::updateParameters(void *param)
     switch(eventType)
     {
     case EVENT_CAPTURE:
-        captureData_s *captureData;
-        captureData= new captureData_s;
+        qDebug()<<"capt";
         *captureData= (*(captureData_s*)param);
-        data = (void*)captureData;
         break;
 
     case EVENT_CREATE_PLAY:
-        playData_s *playData;
-        playData = new playData_s;
+        qDebug()<<"play";
         *playData = *((playData_s*)param);
-        data = (void*)playData;
         break;
 
     case EVENT_PLAY_RESTART:
-        restartplayData_s *restartplayData;
-        restartplayData = new(restartplayData_s);
+        qDebug()<<"rewind";
         *restartplayData = *((restartplayData_s*)param);
-        data = (void*)restartplayData;
         break;
     }
 
 }
 
-
-
-
-
 void interfaceEvent_c::eventProcess() //launch the actual event
 {
 
+    //qDebug()<<"process"<<eventType;
     bool killEvent = false;
 
     switch(eventType)
     {
     case EVENT_CAPTURE:
 
-        captureData_s *params;
-        params = (captureData_s*)data;
-        new capture_loop_c(interface->generateNewId(),params->pPort,params->length,params->createPlayLoop,params->pPlayPort,0);
+        *(captureData->pCaptureLoop) = new capture_loop_c(interface->generateNewId(),captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPort,0);
         killEvent = true;
+
         break;
 
     case EVENT_CREATE_PLAY:
 
-        playData_s *params2;
-        params2 = (playData_s*)data;
-        if(params2->skipevent>0)
-        {
-            params2->skipevent--;
-            *((playData_s*)data) = *(params2);
-            killEvent = false;
 
+        if(playData->skipevent>0)
+        {
+            playData->skipevent--;
+            killEvent = false;
         }
         else
         {
-            (*params2->pPlayLoop) = new playback_loop_c(params2->id,params2->pPlayPort,params2->length,params2->syncMode,params2->status);
-            //  qDebug()<<"create loop";
-            killEvent = true;
+            *(playData->pPlayLoop) = new playback_loop_c(playData->id,playData->pPlayPort,playData->length,playData->syncMode,playData->status);
 
+            killEvent = true;
         }
+
         break;
 
     case EVENT_PLAY_RESTART://signal to rewind and play a loop
         //qDebug()<<"restart";
-
-
-        restartplayData_s *params3;
-        params3 = (restartplayData_s*)data;
-
-        if(count<params3->skipevent)
+        if(count<restartplayData->skipevent)
         {
             count++;
             killEvent = false;
@@ -147,15 +155,15 @@ void interfaceEvent_c::eventProcess() //launch the actual event
         }
         else
         {
-            playback_loop_c *pLoop;
-            pLoop = interface->findPlayLoopById(params3->id);
-            if(pLoop)
+
+
+            if(restartplayData->pLoop)
             {
                 //qDebug()<<"process"<<pLoop->status;;
-                pLoop ->rewind();
+                restartplayData->pLoop ->rewind();
 
-              //  qDebug()<<"status"<<pLoop->status << params3->status;
-              //  pLoop->status = params3->status;
+                //  qDebug()<<"status"<<pLoop->status << params3->status;
+                //  pLoop->status = params3->status;
             }
 
 
@@ -178,35 +186,34 @@ void interfaceEvent_c::eventProcess() //launch the actual event
     {
         destroy();
     }
+
+
 }
 
 interfaceEvent_c::~interfaceEvent_c()
 {
-    //   qDebug()<<"event killed";
+    //qDebug()<<"event killed";
 
 }
-
-
 
 void interfaceEvent_c::destroy(void)
 {
 
     //event has been performed, let's remove it from the list
 
-    if(pPrevEvent == NULL) interface->firstEvent = pNextEvent;//it was the first event, let's update this info
-
-    if(pNextEvent == NULL) //it was the last event
-    {
-        if(pPrevEvent != NULL) pPrevEvent->pNextEvent = NULL; //if it was not the first event
-    }
-    else
-    {
-        pNextEvent->pPrevEvent=pPrevEvent;
-        if(pPrevEvent != NULL) pPrevEvent->pNextEvent = pNextEvent;
-    }
-
+    removeFromList();
     //we can destroy this class
-    delete this;
+
+    if(!disconnect(sender,signal,this,SLOT(eventProcess()))) qDebug()<<"event disconnection failure";
+    //    delete this;
+    this->deleteLater();
+
+
 
 }
 
+void interfaceEvent_c::test()
+{
+    qDebug()<<"event ok, type:"<<eventType;
+
+}

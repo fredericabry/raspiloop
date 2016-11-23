@@ -93,7 +93,8 @@ public:
     void play();
     void pause();
     void updateFrameToPlay(long length);
-
+    void addToList(void);
+    void removeFromList(void);
 
 
 
@@ -108,7 +109,7 @@ private slots:
     void activate(void);
 signals:
     void send_data(short *buf,int nread);
-    void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,playback_loop_c *pLoop);
+    void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c** pEvent);
 
 
 

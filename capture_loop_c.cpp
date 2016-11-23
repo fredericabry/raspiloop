@@ -10,22 +10,15 @@
 capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort, double delta):id(id),pPort(pPort)
 {
 
-    pPlayLoop = NULL;
-
-
-    pPrevLoop = pPort->interface->findLastCaptureLoop();
-    pNextLoop = NULL;//last loop created.
+    qDebug()<<"capture loop"<<id;
 
     filename = QString::number(id)+".wav";
 
-    if(pPort->interface->firstCaptureLoop == NULL)
-        pPort->interface->firstCaptureLoop = this;
-    else
-        pPrevLoop->pNextLoop = this;//let's add it at the end of the chain
+    //pPort->interface->listMutex.lock();
+    addToList();
+    //pPort->interface->listMutex.unlock();
 
-
-
-
+    connect(this,SIGNAL(makeInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)),pPort->interface,SLOT(createInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)));
 
     long offset = delta*RATE; //number of elements recorded before we need to copy
     //qDebug()<<"delta"<<delta<<"offset:"<<offset;
@@ -35,11 +28,6 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     long x = (signed long)pPort->head - offset;
     while(x < 0) x+=pPort->maxlength+1;
     tail = (long)x;
-
-
-
-
-
 
 
 
@@ -62,15 +50,13 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     framesCount = beatsCount = 0;
 
 
-
-
-
-
     consumer = new captureLoopConsumer();
     consumer->controler = this;
     recording = true;
     consumer->start();
 
+
+    pPlayLoop = NULL;
 
     if(createPlayLoop)
     {
@@ -79,21 +65,28 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
         if(pPort->interface->synchroMode == NOSYNC)
         {
 
-            pPlayLoop = new playback_loop_c(id,pPlayPort,-1,NOSYNC,PLAY);//by default loop
+            pPlayLoop = new playback_loop_c(id,pPlayPort,-1,NOSYNC,IDLE);//by default loop
         }
         else if(pPort->interface->synchroMode == CLICKSYNC)
         {
 
-            playData_s params;
-            params.status = SILENT;
-            params.id = this->id;
-            params.length = 1;//first, we assume it's 1 bar long, it will be updated at the end of the capture.
-            params.skipevent = 0;//we don't skip any call
-            params.syncMode = CLICKSYNC;
-            params.pPlayPort = pPlayPort;
-            params.pPlayLoop = &pPlayLoop;
-            pEvent = new interfaceEvent_c(pPort->interface->pClick,SIGNAL(firstBeat()),pPort->interface->findLastEvent(),EVENT_CREATE_PLAY,(void*)&params,pPort->interface,false);
+            playData_s *param;
+            param = new playData_s;
+            param->id = id;
+            param->length = 1;//one bar
+            param->pPlayLoop = &pPlayLoop;
+            param->pPlayPort = pPlayPort;
+            param->skipevent = 0;
+            param->status = SILENT;
+            param->syncMode = CLICKSYNC;
+
+            emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,&pEvent);
+
+
+
         }
+
+
 
 
     }
@@ -110,13 +103,57 @@ capture_loop_c::~capture_loop_c()
 
 }
 
+void capture_loop_c::addToList(void)
+{
+
+
+    pNextLoop = NULL;//last event created
+    pPrevLoop = pPort->interface->findLastCaptureLoop();
+
+    if(pPort->interface->firstCaptureLoop == NULL) pPort->interface->firstCaptureLoop = this;
+    else if(pPrevLoop)
+    {
+        pPrevLoop->pNextLoop = this;
+    }
+
+}
+
+void capture_loop_c::removeFromList(void)
+{
+
+
+    if(pPrevLoop == NULL) pPort->interface->firstCaptureLoop = pNextLoop;//it was the first loop, let's update this info
+
+    if(pPrevLoop) pPrevLoop->pNextLoop = pNextLoop; //if it was not the first loop
+    if(pNextLoop) pNextLoop->pPrevLoop = pPrevLoop; //it was not the last loop
+
+
+
+
+}
+
+
 void capture_loop_c::destroyLoop()
 {
 
     //let's start the associated playback_loop :
 
 
-    if(pPort->interface->synchroMode == CLICKSYNC)
+
+
+    //qDebug()<<beatsCountf<<"beats"<<"length: "<<nbars<<"bars";
+    //qDebug()<<"length: "<<nbars<<"bars";*/
+
+
+
+    if(pPort->interface->synchroMode == NOSYNC)
+    {
+
+        if(pPlayLoop != NULL)
+            pPlayLoop->play();//start
+
+    }
+    else if(pPort->interface->synchroMode == CLICKSYNC)
     {
 
         //we need to compute the length of the loop in beats,
@@ -127,57 +164,39 @@ void capture_loop_c::destroyLoop()
 
         while(nbeats<beatsCount) nbeats+=4;
         nbeats-=4;
+
         if(beatsCount-nbeats >= 2) //recording was stopped up to 2 beats too early, let us make the recording one bar longer
             nbeats+=4;
 
         nbars = nbeats/4;
 
-        qDebug()<<beatsCountf<<"beats"<<"length: "<<nbars<<"bars";
-        //qDebug()<<"length: "<<nbars<<"bars";
+        if(nbars==0) nbars = 1;//length was smaller than 1 bar, let's not ignore what has been recorded
+
 
 
         if(pPlayLoop != NULL)
-
         {
 
-            pPlayLoop->updateFrameToPlay(nbars);//update the bar lengths
-            pPlayLoop->status = PLAY;
+            //pPlayLoop->updateFrameToPlay(nbars);
+            pPlayLoop->stop = true;
 
-           // pPlayLoop->registerRewind();
         }
         else
         {
-            //the playloop has not been started ye, we need to change the status value of the event
-           ((playData_s*)pEvent->data)->status = PLAY;
-
-
+            qDebug()<<"play loop not created yet";
         }
-    }
 
-    else if(pPort->interface->synchroMode == NOSYNC)
-    {
-        if(pPlayLoop != NULL)
-            pPlayLoop->play();//start
 
     }
-
 
     //this loop needs to get out of the list:
-    if(pPrevLoop==NULL) pPort->interface->firstCaptureLoop = pNextLoop;//it was the first loop
-    else
-    {
-        pPrevLoop->pNextLoop = pNextLoop;
-    }
-
-    if(pNextLoop!=NULL) //there is a next loop
-    {
-        pNextLoop->pPrevLoop = pPrevLoop;
-    }
-
+    //pPort->interface->listMutex.lock();
+    removeFromList();
+    //pPort->interface->listMutex.unlock();
 
     recording = false;
 
-
+    qDebug()<<"delete capture loop"<<id;
 }
 
 int capture_loop_c::pullN(unsigned long N)
@@ -341,7 +360,8 @@ void captureLoopConsumer::run()
     }
 
     controler->closefile();
-    delete controler;
+    //delete controler;
+    controler->deleteLater();
     //   qDebug()<<"capture loop consumer destroyed";
 
 }

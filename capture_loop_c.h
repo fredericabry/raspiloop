@@ -45,6 +45,8 @@ public:
     void closefile(void);
     int pullN(unsigned long N);
     unsigned long length(void);
+    void removeFromList(void);
+    void addToList(void);
 
     interfaceEvent_c *pEvent;
 
@@ -62,6 +64,7 @@ public:
 
     playback_loop_c *pPlayLoop;//the associated playloop used to play the capture loop if createPlayLoop is true
 
+
     SNDFILE *soundfile;//file handler
     short *buffile; //buffer used for file writting
     unsigned long tail;//last value read in the associated ringbuffer
@@ -72,6 +75,8 @@ public:
     bool stop;//true if a length is specified and therefore the recording has to self stop
     long framesToRead;//values left to be recorded
 
+signals:
+    void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c** pEvent);
 
 
 };

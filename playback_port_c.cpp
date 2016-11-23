@@ -216,10 +216,11 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
     if(nu_connected_loops == 1) pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
 
 
+    //interface->listMutex.lock();
 
-
-
-
+    pLoop->addToList();
+    //interface->listMutex.unlock();
+    /*
     if(!pLoop->isClick) //if this is the click, we don't keep it in the loops list
     {
         if(interface->firstPlayLoop == NULL) interface->firstPlayLoop = pLoop;
@@ -237,7 +238,7 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
 
 
 
-    }
+    }*/
 
 
 
@@ -268,7 +269,7 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
 
 
 
-    if(pLoop->pPrevLoop==NULL) interface->firstPlayLoop = pLoop->pNextLoop;//it was the first loop
+    /*  if(pLoop->pPrevLoop==NULL) interface->firstPlayLoop = pLoop->pNextLoop;//it was the first loop
     else
     {
         pLoop->pPrevLoop->pNextLoop = pLoop->pNextLoop;
@@ -279,10 +280,10 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
         pLoop->pNextLoop->pPrevLoop = pLoop->pPrevLoop;
     }
 
-
-
-
-
+*/
+    //interface->listMutex.lock();
+    pLoop->removeFromList();
+    //interface->listMutex.unlock();
 
 
 }

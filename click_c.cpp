@@ -30,7 +30,7 @@ double click_c::getBeat(void)
 {
 double t = ((double)t1->elapsed())/1000;//time elapsed since the tick in seconds
 
-if(t<=0) {qDebug()<<"bug elapsed beat"; return beat;}
+if(t<0) {qDebug()<<"bug elapsed beat"<<beat; return beat;}
 
 
 return (double)beat-1+t*tempo/60; //value in [0,4[

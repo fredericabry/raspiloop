@@ -8,7 +8,13 @@
 
 playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,syncoptions syncMode,status_t status):id(id),pPort(pPort),syncMode(syncMode),status(status)
 {
+
+    if(!isClick)
+    qDebug()<<"play loop"<<id;
+
+
     pPrevLoop = pNextLoop = NULL;
+
 
 
     if((id == 0) || (id==1)) isClick = true;
@@ -18,7 +24,7 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,sy
     filename = QString::number(id)+".wav";
 
 
-    connect(this,SIGNAL(makeInterfaceEvent(const QObject*,const char*,int,void*,bool,playback_loop_c*)),pPort->interface,SLOT(createInterfaceEvent(const QObject*,const char*,int,void*,bool,playback_loop_c*)));
+    connect(this,SIGNAL(makeInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)),pPort->interface,SLOT(createInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)));
 
 
     consumer = new playbackLoopConsumer;
@@ -40,27 +46,34 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,sy
 
 
 
+    updateFrameToPlay(length);
+
     if(syncMode == CLICKSYNC)
     {
-        restartplayData_s restartplayData;
-        restartplayData.id = id;
-        restartplayData.skipevent = 0;
-        restartplayData.status = SILENT;
-        emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)&restartplayData,true,this);//this event will rewind the loop at each
+
+    restartplayData_s *restartplayData = new restartplayData_s;
+
+    restartplayData->id = id;
+    restartplayData->pLoop = this;
+    restartplayData->skipevent=0;
+    restartplayData->status=PLAY;
+   // makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent); //TODO
+
+
     }
 
 
-
-
-    updateFrameToPlay(length);
 
     framescount = 0;
     isOutOfSample = false;
     pPort->addloop(this);
     consumer->start();
 
-}
 
+
+
+
+}
 
 void playback_loop_c::openFile()
 {
@@ -108,11 +121,12 @@ void playback_loop_c::openFile()
         return;
     }
 
+    /* if(id>1)
+      qDebug()<<framestoplay<<sf_info.frames;*/
+
+
 
 }
-
-
-
 
 void playback_loop_c::destroy()
 {
@@ -123,7 +137,9 @@ void playback_loop_c::destroy()
     consumer->stop(); //consumer is going to stop and then destroy the loop
 
 
-    if(pPort->interface->isEventValid(pEvent)) pEvent->destroy();
+    // if(pPort->interface->isEventValid(pEvent)) pEvent->destroy();
+
+
 
 }
 
@@ -225,7 +241,6 @@ int playback_loop_c::pullN(unsigned long N)
     return N;
 }
 
-
 unsigned long playback_loop_c::length()
 {
     if(this->head>=this->tail) return this->head-this->tail;
@@ -240,42 +255,35 @@ unsigned long playback_loop_c::freespace()
 
 }
 
-
-
-
-
 void playback_loop_c::play()
 {
-
-
     this->status = PLAY;
-
 }
 
 void playback_loop_c::pause()
 {
-
     this->status = IDLE;
-
 }
 
 void playback_loop_c::moveToPort(playback_port_c *pNuPort)
 {
-
     if(!pNuPort) {qDebug()<<"invalid port";return;}
     pPort->removeloop(this);
     pPort = pNuPort;
     pPort->addloop(this);
-
 }
 
 void playback_loop_c::updateFrameToPlay(long length)
 {
 
+
+
+
+
     if(syncMode == NOSYNC)
     {
-        framestoplay = (length*RATE)/1000;
 
+        framestoplay = (length*RATE)/1000;
         if(framestoplay==0)
         {
             stop = false;
@@ -292,51 +300,32 @@ void playback_loop_c::updateFrameToPlay(long length)
             stop = true;
             repeat = false;
         }
+
+
     }
     else if(syncMode == CLICKSYNC)
     {
-
-
-
-
-
-
-        //length is provided in bars in this case, repeating is managed by events in the interface
-        stop = (length>0);
-        repeat = false;
-        framestoplay = RATE*60*4*length/pPort->interface->pClick->getTempo();
-        barstoplay = length;
-        //qDebug()<<"length: "<<barstoplay<<"bars";
-
-
-        if(pPort->interface->isEventValid(pEvent))
-        {
-            restartplayData_s *params;
-            params = (restartplayData_s*)pEvent->data;
-            if(barstoplay>1)
-            {
-                params->skipevent=barstoplay-1;
-                (*(restartplayData_s*)pEvent->data) = (*params);
-            }
-        }
-        else qDebug()<<"invalid event";
-
+        //length is give in bars
+        stop = false;
+        framestoplay = length*4*RATE*60/pPort->interface->pClick->getTempo();
+        qDebug()<<framestoplay;
 
 
 
     }
 
+
+
+
 }
-
-
-
 
 playback_loop_c::~playback_loop_c(void)
 {
+
     free(buffile);
     free(ringbuf);
     free(buf);
-//    qDebug()<<"playback loop destroyed";
+    //  qDebug()<<"playback loop destroyed";
 }
 
 void playback_loop_c::rewind(void)
@@ -344,16 +333,8 @@ void playback_loop_c::rewind(void)
     sf_seek(soundfile,0,SFM_READ);
     framescount = 0;
     isOutOfSample = false;
-    //qDebug()<<"rewind";
-
-
-
 
 }
-
-
-
-
 
 void playback_loop_c::datarequest(unsigned long frames)
 {
@@ -375,7 +356,9 @@ void playback_loop_c::datarequest(unsigned long frames)
     {
 
         //pausing, not sending any data
+
         emit send_data(buf,0);//we still need to answer to the data request otherwise the playback port gets stuck waiting for data
+
         return;
 
     }
@@ -388,9 +371,9 @@ void playback_loop_c::datarequest(unsigned long frames)
     nread = pullN(frames);
 
 
-    if (nread != frames) qDebug()<<"error pulling from ringbuf";
+    if (nread != (signed long)frames) qDebug()<<"error pulling from ringbuf";
 
-    if(this->stop)   this->framescount += nread;
+    this->framescount += nread;
 
     if(status == SILENT) memset(buf,0,nread*sizeof(short));
 
@@ -404,11 +387,53 @@ void playback_loop_c::activate()
     loopConnected = true;
 }
 
+void playback_loop_c::addToList(void)
+{
+    if(isClick) return;//this is the click, we don't keep it in the loops list
+
+
+
+    pNextLoop = NULL;//last loop created
+    pPrevLoop = pPort->interface->findLastPlaybackLoop();
+
+    if(pPort->interface->firstPlayLoop == NULL) pPort->interface->firstPlayLoop = this;
+    else if(pPrevLoop)
+    {
+
+        pPrevLoop->pNextLoop = this;
+    }
+
+
+
+}
+
+void playback_loop_c::removeFromList(void)
+{
+    if(isClick) return;//this is the click, we don't keep it in the loops list
+
+
+
+    if(pPrevLoop == NULL) pPort->interface->firstPlayLoop = pNextLoop;//it was the first loop, let's update this info
+
+    if(pPrevLoop) pPrevLoop->pNextLoop = pNextLoop; //if it was not the first loop
+    if(pNextLoop) pNextLoop->pPrevLoop = pPrevLoop; //it was not the last loop
+
+
+
+
+}
+
+
+
+
+
+//CONSUMER
 
 void playbackLoopConsumer::run()
 {
     update_lock = false;
     controler->openFile();
+
     controler->rewind();
 
     while(1)
@@ -425,9 +450,7 @@ void playbackLoopConsumer::run()
 
 }
 
-
 QElapsedTimer t3;
-
 
 void playbackLoopConsumer::update() //constantly fill the ringbuffer with data from the opened file
 {
@@ -445,7 +468,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
 
     nrequest =controler->freespace();
-    //qDebug()<<nrequest;
+
     if(nrequest > NFILE_PLAYBACK) nrequest = NFILE_PLAYBACK;
 
     t3.start();
@@ -461,30 +484,17 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
     //qDebug()<<controler->stop<<controler->framestoplay;
 
-    if(controler->syncMode == CLICKSYNC)
-    {
-        if((controler->stop)&&(controler->framestoplay<=controler->framescount))
-        {
-
-            if(!controler->isOutOfSample)
-            {
-
-                controler->isOutOfSample = true;//pausing because we are out of samples
-
-            }
-
-            // controler->loopReadyToStop = true;
-        }
-    }
-    else if(controler->syncMode == NOSYNC)
+    if(controler->syncMode == NOSYNC)
     {
 
         if((controler->stop&&(controler->framestoplay<=controler->framescount))
                 ||((nread <= 0)&&(nrequest!=0)))
         {
 
+
             if(controler->repeat)
             {
+
                 sf_seek(controler->soundfile,0,SFM_READ);
 
             }
@@ -502,10 +512,25 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
 
     }
+    else if(controler->syncMode == CLICKSYNC)
+    {
+
+        if(      ( (controler->framestoplay<=controler->framescount) ||((nread <= 0)&&(nrequest!=0)) ))
+
+        {
+
+            if(!controler->stop)controler->isOutOfSample = true;//we are not stopping yet so we just need to freeze data transfert
+            else  controler->loopReadyToStop = true;
 
 
 
 
+
+        }
+
+
+
+    }
 
 
 
@@ -514,6 +539,8 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     if(t1 > tmax) tmax = t1;
     if (t1 > 50) qDebug()<<"load delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
     update_lock = false;
+
+
 }
 
 void playbackLoopConsumer::stop(void)
@@ -536,7 +563,14 @@ void playbackLoopConsumer::destroyloop()
 
     }
 
-    delete controler;
+
+    //controler->removeFromList();
+
+    //delete controler;
+    if(!controler->isClick)
+    qDebug()<<"destroy play loop"<<controler->id;
+    controler->deleteLater();
+
 
 
 }

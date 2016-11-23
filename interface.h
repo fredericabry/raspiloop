@@ -4,7 +4,7 @@
 #include "mainwindow.h"
 #include "qthread.h"
 #include "QKeyEvent"
-
+#include "qmutex.h"
 
 
 class playback_loop_c;
@@ -51,10 +51,10 @@ public:
     interfaceEvent_c* findLastEvent(void);//return a pointer to the last event registered
     bool isEventValid(interfaceEvent_c* pEvent);
     int getEventsCount();
+    void removeAllEvents();
 
 
-
-    void startRecord(playback_port_c *pPlayPort, capture_port_c *pCapturePort);
+    void startRecord(playback_port_c *pPlayPort, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
 
     void showPlayLoops();
     click_c *pClick;
@@ -64,10 +64,14 @@ public:
     bool isRecording;
 
     syncoptions synchroMode;//specifies the click synchronisation mode;
+    QMutex eventMutex;
+    QMutex listMutex;
 
+public slots:
+    void Test(void);
 private slots:
     void keyInput(QKeyEvent *e);
-    void createInterfaceEvent(const QObject * sender, const char * signal, int eventType, void *param, bool repeat, playback_loop_c *pLoop);
+    void createInterfaceEvent(const QObject * sender, const char * signal, int eventType, void *param, bool repeat, interfaceEvent_c **pEvent);
 
 signals:
     void setTempo(int);

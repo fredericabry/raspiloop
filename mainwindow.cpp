@@ -89,21 +89,7 @@ void MainWindow::shutdown()
 
 }
 
-void MainWindow::topStep()
-{
-    static int step =0;
 
-
-    step++;
-
-    if(step%10==0) qDebug()<<"loop "<<step;
-
-
-
-    play();
-
-
-}
 
 
 
@@ -176,6 +162,12 @@ MainWindow::MainWindow(QWidget *parent) :
     mainInterface = new interface_c(this);
     mainInterface->start();
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
+
+
+    /*tester = new QTimer;
+    connect(tester,SIGNAL(timeout()),mainInterface,SLOT(Test()));
+    tester->start(5000);*/
+
 
 
 
