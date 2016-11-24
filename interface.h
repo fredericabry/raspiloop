@@ -5,6 +5,7 @@
 #include "qthread.h"
 #include "QKeyEvent"
 #include "qmutex.h"
+#include "qelapsedtimer.h"
 
 
 class playback_loop_c;
@@ -46,6 +47,9 @@ public:
     capture_loop_c* firstCaptureLoop;//first of the capture loops list
     capture_loop_c* findLastCaptureLoop(void);
     int getCaptureLoopsCount();
+    bool isCaptureLoopValid(capture_loop_c * pCapture);//is capture loop in the list ?
+    int getCaptureStatus(capture_loop_c **pCaptureLoop);//retur the stauts of a record loop pointer
+
 
     interfaceEvent_c *firstEvent;//first event registered, begining of the events list
     interfaceEvent_c* findLastEvent(void);//return a pointer to the last event registered
@@ -64,8 +68,13 @@ public:
     bool isRecording;
 
     syncoptions synchroMode;//specifies the click synchronisation mode;
-    QMutex eventMutex;
-    QMutex listMutex;
+    QMutex captureListMutex;
+    QMutex playbackListMutex;
+    QMutex eventListMutex;
+
+
+    QElapsedTimer telapsed;
+
 
 public slots:
     void Test(void);

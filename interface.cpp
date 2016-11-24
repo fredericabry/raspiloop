@@ -10,6 +10,9 @@
 #include "events.h"
 
 
+#define KEY_WAIT 200 //ms
+
+
 
 playback_port_c *pLeft,*pRight;
 capture_port_c *pRec0, *pRec1 ;
@@ -26,10 +29,15 @@ interfaceEvent_c *pActiveEvent;
 
 playback_loop_c* interface_c::findLastPlaybackLoop(void) //return a pointer to the last playloop
 {
+
+
+
     playback_loop_c *pLoop = firstPlayLoop;
     if(firstPlayLoop == NULL)
     {
+
         return NULL;
+
     }
 
     while(pLoop->pNextLoop != NULL)
@@ -37,6 +45,7 @@ playback_loop_c* interface_c::findLastPlaybackLoop(void) //return a pointer to t
         pLoop = pLoop->pNextLoop;
 
     }
+
 
     return pLoop;
 
@@ -45,34 +54,46 @@ playback_loop_c* interface_c::findLastPlaybackLoop(void) //return a pointer to t
 int interface_c::getPlayLoopsCount()
 {
     int i = 0;
+    playbackListMutex.lock();
     playback_loop_c *pLoop = firstPlayLoop;
 
 
-    if(pLoop == NULL) return 0;
+    if(pLoop == NULL) {playbackListMutex.unlock();return 0;}
     else
     {
         i=1;
         while(pLoop->pNextLoop!=NULL) {pLoop=pLoop->pNextLoop;i++;}
     }
-
+    playbackListMutex.unlock();
     return i;
 
 
 }
 
+
+
 capture_loop_c* interface_c::findLastCaptureLoop(void) //return a pointer to the last playloop
 {
+    //no mutex here, used inside a mutex
+
+
     capture_loop_c *pLoop = firstCaptureLoop;
+
     if(firstCaptureLoop == NULL)
     {
         return NULL;
     }
 
+    if(pLoop == NULL) qDebug()<<"BUG FINDLAST CAPTURE";
     while(pLoop->pNextLoop != NULL)
     {
+
+
+        if(!pLoop) qDebug()<<"BUG FINDLAST CAPTURE";
         pLoop = pLoop->pNextLoop;
 
     }
+
 
     return pLoop;
 
@@ -81,20 +102,23 @@ capture_loop_c* interface_c::findLastCaptureLoop(void) //return a pointer to the
 int interface_c::getCaptureLoopsCount()
 {
     int i = 0;
+    captureListMutex.lock();
     capture_loop_c *pLoop = firstCaptureLoop;
 
 
-    if(pLoop == NULL) return 0;
+    if(pLoop == NULL) {captureListMutex.unlock();return 0;}
     else
     {
         i=1;
         while(pLoop->pNextLoop!=NULL) {pLoop=pLoop->pNextLoop;i++;}
     }
 
+    captureListMutex.unlock();
     return i;
 
 
 }
+
 
 interface_c::interface_c(MainWindow *parent):parent(parent)
 {
@@ -107,8 +131,10 @@ interface_c::interface_c(MainWindow *parent):parent(parent)
 int interface_c::generateNewId()
 {
     int id = 2; //id = 0 and id =1 are reserved for the click
+
+
+    playbackListMutex.lock();
     playback_loop_c *pPlayLoop = firstPlayLoop;
-    capture_loop_c *pCaptureLoop = firstCaptureLoop;
     if(pPlayLoop != NULL)
     {
         if(pPlayLoop->id >= id) id = pPlayLoop->id+1;
@@ -118,7 +144,9 @@ int interface_c::generateNewId()
             if(pPlayLoop->id >= id) id = pPlayLoop->id+1;
         }
     }
-
+    playbackListMutex.unlock();
+    captureListMutex.lock();
+    capture_loop_c *pCaptureLoop = firstCaptureLoop;
     if(pCaptureLoop != NULL)
     {
         if(pCaptureLoop->id >= id) id = pCaptureLoop->id+1;
@@ -128,7 +156,7 @@ int interface_c::generateNewId()
             if(pCaptureLoop->id >= id) id = pCaptureLoop->id+1;
         }
     }
-
+    captureListMutex.unlock();
 
     return id;
 
@@ -136,29 +164,34 @@ int interface_c::generateNewId()
 
 playback_loop_c* interface_c::findPlayLoopById(int id)
 {
+    playbackListMutex.lock();
     playback_loop_c *pLoop = firstPlayLoop;
     while(pLoop != NULL)
     {
-        if(pLoop->id == id) {return pLoop;}
+        if(pLoop->id == id) {playbackListMutex.unlock();return pLoop;}
         pLoop = pLoop->pNextLoop;
     }
+    playbackListMutex.unlock();
     return NULL;
 }
 
 
 int interface_c::getEventsCount()
 {
+    eventListMutex.lock();
+
     int i = 0;
     interfaceEvent_c *pEvent = firstEvent;
 
 
-    if(pEvent == NULL) return 0;
+    if(pEvent == NULL) {eventListMutex.unlock();return 0;}
     else
     {
         i=1;
         while(pEvent->pNextEvent!=NULL) {pEvent=pEvent->pNextEvent;i++;}
     }
 
+    eventListMutex.unlock();
     return i;
 
 
@@ -202,10 +235,12 @@ void interface_c::removeAllPlaybackLoops(void)
 
 interfaceEvent_c* interface_c::findLastEvent(void) //return a pointer to the last event in the list
 {
+
     interfaceEvent_c* pEvent = firstEvent;
 
     if(pEvent == NULL)
     {
+
         return NULL;
     }
 
@@ -213,30 +248,31 @@ interfaceEvent_c* interface_c::findLastEvent(void) //return a pointer to the las
     {
         pEvent = pEvent->pNextEvent;
     }
+
     return pEvent;
 
 }
 
 bool interface_c::isEventValid(interfaceEvent_c* pEvent)
 {
-
+    eventListMutex.lock();
     interfaceEvent_c* pEvent2 = firstEvent;
 
     if(pEvent2 == NULL)
     {
-
+        eventListMutex.unlock();
         return false;
     }
 
     if(pEvent == NULL)
     {
-
+        eventListMutex.unlock();
         return false;
     }
 
     if(pEvent2==pEvent)
     {
-
+        eventListMutex.unlock();
         return true;
     }
 
@@ -244,12 +280,49 @@ bool interface_c::isEventValid(interfaceEvent_c* pEvent)
     while(pEvent2->pNextEvent != NULL)
     {
         pEvent2 = pEvent2->pNextEvent;
-        if(pEvent2==pEvent) {eventMutex.unlock();return true;}
+        if(pEvent2==pEvent) {eventListMutex.unlock(); return true;}
+    }
+
+    eventListMutex.unlock();
+    return false;
+}
+
+
+
+bool interface_c::isCaptureLoopValid(capture_loop_c * pCapture)
+{
+
+    capture_loop_c* pCapture2 = firstCaptureLoop;
+
+    if(pCapture2 == NULL)
+    {
+
+        return false;
+    }
+
+    if(pCapture == NULL)
+    {
+
+        return false;
+    }
+
+    if(pCapture2==pCapture)
+    {
+
+        return true;
+    }
+
+
+    while(pCapture2->pNextLoop != NULL)
+    {
+        pCapture2 = pCapture2->pNextLoop;
+        if(pCapture2==pCapture) {return true;}
     }
 
 
     return false;
 }
+
 
 void interface_c::removeAllEvents(void)
 {
@@ -271,15 +344,47 @@ void interface_c::removeAllEvents(void)
 
 void interface_c::createInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c **pEvent)
 {
+
     if(pEvent)
         *pEvent = new interfaceEvent_c(sender,signal,eventType,param,this,repeat);
-    else new interfaceEvent_c(sender,signal,eventType,param,this,repeat);;
+    else new interfaceEvent_c(sender,signal,eventType,param,this,repeat);
 
 
 
 
 }
 
+
+int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
+{
+
+
+
+
+    if(isCaptureLoopValid(*pCaptureLoop)) return 1;
+
+    interfaceEvent_c *pEvent = firstEvent;
+
+
+    if(pEvent == NULL) {qDebug()<<"no event";return 0;}
+    else
+    {
+        if(pEvent->eventType==EVENT_CAPTURE)
+        {
+
+            if(pEvent->captureData->pCaptureLoop == pCaptureLoop) return 2;
+        }
+        while(pEvent->pNextEvent!=NULL) {
+            pEvent=pEvent->pNextEvent;
+            if(pEvent->eventType==EVENT_CAPTURE)
+            {
+                if(pEvent->captureData->pCaptureLoop == pCaptureLoop) return 2;
+            }
+        }
+    }
+
+    return 0;
+}
 
 void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCapturePort,capture_loop_c **pCaptureLoop,long length)
 {
@@ -315,7 +420,6 @@ void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCaptur
 
 
 
-
 void interface_c::init(void)
 {
 
@@ -337,7 +441,9 @@ void interface_c::init(void)
     pClick = new click_c(120,pLeft,IDLE);
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
 
-    connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
+
+    telapsed.start();
+    //connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
 
 }
 
@@ -350,6 +456,9 @@ void interface_c::run()
 
 void interface_c::keyInput(QKeyEvent *e)
 {
+
+
+
     //  qDebug()<<e->key();
     switch(e->key())
     {
@@ -372,11 +481,50 @@ void interface_c::keyInput(QKeyEvent *e)
 
         break;
     case Qt::Key_2:
-
         pActivePlayPort = pRight;
         pActiveRecPort = pRec0;
-    startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,5000);
 
+
+
+
+
+
+
+
+
+
+        captureData_s *params;
+        params = new captureData_s;
+        params->createPlayLoop = true;
+        params->length=1500;
+        params->pPlayPort=pActivePlayPort;
+        params->pPort=pActiveRecPort;
+        params->pCaptureLoop = &pActiveRecLoop;
+
+        createInterfaceEvent(pClick,SIGNAL(firstBeat()),EVENT_CAPTURE,(void*)params,false,&pActiveEvent);
+
+
+
+        break;
+
+
+
+
+        switch(getCaptureStatus(&pActiveRecLoop))
+        {
+        case 0:
+            startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,2500);
+            break;
+        case 1:pActiveRecLoop->destroyLoop();break;
+        case 2:qDebug()<<"capture loop not created yet, event in progress";break;
+        }
+
+
+
+
+
+
+        break;
 
         if(pActiveRecPort == NULL)
         {
@@ -406,7 +554,11 @@ void interface_c::keyInput(QKeyEvent *e)
         if(pActivePlayLoop)
         {
             if(pActivePlayLoop->pPrevLoop) {pActivePlayLoop = pActivePlayLoop->pPrevLoop;}
-            else {pActivePlayLoop = findLastPlaybackLoop();}
+            else {
+                playbackListMutex.lock();
+                pActivePlayLoop = findLastPlaybackLoop();
+                playbackListMutex.unlock();
+            }
         }
 
         if(pActivePlayLoop) qDebug()<<"play loop #"<<pActivePlayLoop->id<<"selected";
@@ -417,7 +569,7 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_5:
         if(pActivePlayLoop)
         {
-            if(pActivePlayLoop->status == IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
+            if((pActivePlayLoop->status == IDLE)||(pActivePlayLoop->status == SILENT))  {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
             else if(pActivePlayLoop->status == PLAY) {pActivePlayLoop->pause();qDebug()<<"loop"<<pActivePlayLoop->id<<"paused";}
 
         }
@@ -456,7 +608,7 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_8:
         if(pActivePlayLoop)
         {
-            if(pActivePlayLoop->status == IDLE) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
+            if((pActivePlayLoop->status == IDLE)||(pActivePlayLoop->status == SILENT)) {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
             else if(pActivePlayLoop->status == PLAY) {pActivePlayLoop->pause();pActivePlayLoop->rewind();qDebug()<<"loop"<<pActivePlayLoop->id<<"stopped";}
 
         }
@@ -509,9 +661,9 @@ void interface_c::Afficher(QString txt)
 void interface_c::Test(void)
 {
 
-pActivePlayPort = pRight;
-pActiveRecPort = pRec0;
-startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,5000);
+    pActivePlayPort = pRight;
+    pActiveRecPort = pRec0;
+    startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,5000);
 
 
 

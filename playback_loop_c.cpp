@@ -9,16 +9,19 @@
 playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,syncoptions syncMode,status_t status):id(id),pPort(pPort),syncMode(syncMode),status(status)
 {
 
-    if(!isClick)
-    qDebug()<<"play loop"<<id;
+
+    if((id == 0) || (id==1)) isClick = true;
+    else isClick = false;
+
+
+
 
 
     pPrevLoop = pNextLoop = NULL;
 
 
 
-    if((id == 0) || (id==1)) isClick = true;
-    else isClick = false;
+
 
     consumer = NULL;
     filename = QString::number(id)+".wav";
@@ -46,18 +49,22 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,sy
 
 
 
+
+
+
     updateFrameToPlay(length);
 
     if(syncMode == CLICKSYNC)
     {
 
-    restartplayData_s *restartplayData = new restartplayData_s;
+        restartplayData_s *restartplayData = new restartplayData_s;
 
-    restartplayData->id = id;
-    restartplayData->pLoop = this;
-    restartplayData->skipevent=0;
-    restartplayData->status=PLAY;
-   // makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent); //TODO
+        restartplayData->id = id;
+        restartplayData->pLoop = this;
+        restartplayData->skipevent=0;
+        restartplayData->status=PLAY;
+
+        makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent);
 
 
     }
@@ -66,6 +73,8 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c *pPort, long length,sy
 
     framescount = 0;
     isOutOfSample = false;
+
+
     pPort->addloop(this);
     consumer->start();
 
@@ -80,7 +89,7 @@ void playback_loop_c::openFile()
     SF_INFO sf_info;
 
 
-    QString filename2 = DIRECTORY+filename;    buf = (short*)malloc((bufsize)*sizeof(short));
+    QString filename2 = DIRECTORY+filename;
 
     isFileOpened = false;
 
@@ -262,7 +271,11 @@ void playback_loop_c::play()
 
 void playback_loop_c::pause()
 {
-    this->status = IDLE;
+    if(syncMode == CLICKSYNC)
+        status = SILENT;
+    else
+
+        this->status = IDLE;
 }
 
 void playback_loop_c::moveToPort(playback_port_c *pNuPort)
@@ -275,8 +288,6 @@ void playback_loop_c::moveToPort(playback_port_c *pNuPort)
 
 void playback_loop_c::updateFrameToPlay(long length)
 {
-
-
 
 
 
@@ -305,14 +316,13 @@ void playback_loop_c::updateFrameToPlay(long length)
     }
     else if(syncMode == CLICKSYNC)
     {
-        //length is give in bars
+        //length is given in bars
+        barstoplay = length;
         stop = false;
         framestoplay = length*4*RATE*60/pPort->interface->pClick->getTempo();
-        qDebug()<<framestoplay;
 
+   }
 
-
-    }
 
 
 
@@ -359,6 +369,7 @@ void playback_loop_c::datarequest(unsigned long frames)
 
         emit send_data(buf,0);//we still need to answer to the data request otherwise the playback port gets stuck waiting for data
 
+
         return;
 
     }
@@ -377,6 +388,7 @@ void playback_loop_c::datarequest(unsigned long frames)
 
     if(status == SILENT) memset(buf,0,nread*sizeof(short));
 
+
     emit send_data(buf,nread);
 
 
@@ -385,16 +397,18 @@ void playback_loop_c::datarequest(unsigned long frames)
 void playback_loop_c::activate()
 {
     loopConnected = true;
+
 }
 
 void playback_loop_c::addToList(void)
 {
     if(isClick) return;//this is the click, we don't keep it in the loops list
-
+    pPort->interface->playbackListMutex.lock();
 
 
     pNextLoop = NULL;//last loop created
     pPrevLoop = pPort->interface->findLastPlaybackLoop();
+
 
     if(pPort->interface->firstPlayLoop == NULL) pPort->interface->firstPlayLoop = this;
     else if(pPrevLoop)
@@ -402,7 +416,7 @@ void playback_loop_c::addToList(void)
 
         pPrevLoop->pNextLoop = this;
     }
-
+    pPort->interface->playbackListMutex.unlock();
 
 
 }
@@ -412,13 +426,13 @@ void playback_loop_c::removeFromList(void)
     if(isClick) return;//this is the click, we don't keep it in the loops list
 
 
-
+    pPort->interface->playbackListMutex.lock();
     if(pPrevLoop == NULL) pPort->interface->firstPlayLoop = pNextLoop;//it was the first loop, let's update this info
 
     if(pPrevLoop) pPrevLoop->pNextLoop = pNextLoop; //if it was not the first loop
     if(pNextLoop) pNextLoop->pPrevLoop = pPrevLoop; //it was not the last loop
 
-
+    pPort->interface->playbackListMutex.unlock();
 
 
 }
@@ -564,11 +578,7 @@ void playbackLoopConsumer::destroyloop()
     }
 
 
-    //controler->removeFromList();
 
-    //delete controler;
-    if(!controler->isClick)
-    qDebug()<<"destroy play loop"<<controler->id;
     controler->deleteLater();
 
 

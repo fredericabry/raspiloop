@@ -75,6 +75,8 @@ public:
     bool stop;//true if a length is specified and therefore the recording has to self stop
     long framesToRead;//values left to be recorded
 
+
+
 signals:
     void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c** pEvent);
 

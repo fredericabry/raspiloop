@@ -10,7 +10,7 @@
 capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort, double delta):id(id),pPort(pPort)
 {
 
-    qDebug()<<"capture loop"<<id;
+
 
     filename = QString::number(id)+".wav";
 
@@ -74,7 +74,6 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
             param = new playData_s;
             param->id = id;
             param->length = 1;//one bar
-            param->pPlayLoop = &pPlayLoop;
             param->pPlayPort = pPlayPort;
             param->skipevent = 0;
             param->status = SILENT;
@@ -82,6 +81,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
             emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,&pEvent);
 
+            //TODO : find a way to communicate between capture and play loops
 
 
         }
@@ -93,13 +93,15 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     else pPlayLoop = NULL;
 
 
+
+
 }
 
 capture_loop_c::~capture_loop_c()
 {
     free(buffile);
 
-    //    qDebug()<<"capture loop destroyed";
+
 
 }
 
@@ -107,27 +109,42 @@ void capture_loop_c::addToList(void)
 {
 
 
+
+    pPort->interface->captureListMutex.lock();
+
+
+
     pNextLoop = NULL;//last event created
+
+
     pPrevLoop = pPort->interface->findLastCaptureLoop();
+
+
 
     if(pPort->interface->firstCaptureLoop == NULL) pPort->interface->firstCaptureLoop = this;
     else if(pPrevLoop)
     {
         pPrevLoop->pNextLoop = this;
     }
+    else qDebug()<<"bug addtolist capture";
+
+
+
+    pPort->interface->captureListMutex.unlock();
 
 }
 
 void capture_loop_c::removeFromList(void)
 {
 
+    pPort->interface->captureListMutex.lock();
 
     if(pPrevLoop == NULL) pPort->interface->firstCaptureLoop = pNextLoop;//it was the first loop, let's update this info
 
     if(pPrevLoop) pPrevLoop->pNextLoop = pNextLoop; //if it was not the first loop
     if(pNextLoop) pNextLoop->pPrevLoop = pPrevLoop; //it was not the last loop
 
-
+    pPort->interface->captureListMutex.unlock();
 
 
 }
@@ -136,13 +153,6 @@ void capture_loop_c::removeFromList(void)
 void capture_loop_c::destroyLoop()
 {
 
-    //let's start the associated playback_loop :
-
-
-
-
-    //qDebug()<<beatsCountf<<"beats"<<"length: "<<nbars<<"bars";
-    //qDebug()<<"length: "<<nbars<<"bars";*/
 
 
 
@@ -153,7 +163,7 @@ void capture_loop_c::destroyLoop()
             pPlayLoop->play();//start
 
     }
-    else if(pPort->interface->synchroMode == CLICKSYNC)
+    else if((pPort->interface->synchroMode == CLICKSYNC))
     {
 
         //we need to compute the length of the loop in beats,
@@ -173,30 +183,37 @@ void capture_loop_c::destroyLoop()
         if(nbars==0) nbars = 1;//length was smaller than 1 bar, let's not ignore what has been recorded
 
 
+        qDebug()<<beatsCountf<<"beats -"<<nbars<<"bars";
 
         if(pPlayLoop != NULL)
         {
 
-            //pPlayLoop->updateFrameToPlay(nbars);
-            pPlayLoop->stop = true;
+            pPlayLoop->updateFrameToPlay(nbars);
+            pPlayLoop->play();
 
         }
         else
         {
             qDebug()<<"play loop not created yet";
+            if((pEvent)&&(pPort->interface->isEventValid(pEvent))) pEvent->playData->status=PLAY;
+            else qDebug()<<"event not created yet";
         }
+
+
 
 
     }
 
     //this loop needs to get out of the list:
-    //pPort->interface->listMutex.lock();
+
+
     removeFromList();
-    //pPort->interface->listMutex.unlock();
+
+
 
     recording = false;
 
-    qDebug()<<"delete capture loop"<<id;
+
 }
 
 int capture_loop_c::pullN(unsigned long N)
@@ -306,6 +323,7 @@ void capture_loop_c::closefile()
 
 void captureLoopConsumer::update(void)
 {
+
     int t1;
     static int tmax = 0;
     int nread,err;
