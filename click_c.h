@@ -15,7 +15,7 @@ private:
         int tempo;
 
 public:
-    click_c(int tempo, playback_port_c *pPort,status_t status);
+    click_c(int tempo, playback_port_c *pPort,status_t status,MainWindow *parent);
 
     playback_port_c *pPort;
     int status;
@@ -25,9 +25,11 @@ public:
     playback_loop_c *pDing;
     QElapsedTimer *t1;
     void stopstart(void);
-
+    MainWindow *parent;
     int getTempo(void);
     bool isActive(void);
+    void stop(void);
+    void start(void);
 
 
 
@@ -39,6 +41,9 @@ private:
 public slots:
     void tick();
     void setTempo(int);
+    void clickUp(void);
+    void clickDown(void);
+
 signals:
     void firstBeat(void);//signal the first beat of the bar
 

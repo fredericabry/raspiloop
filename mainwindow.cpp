@@ -53,34 +53,30 @@ void MainWindow::cardchoicerefresh(void)
 
 
 
-void MainWindow::topClick()
+
+
+
+void MainWindow::setClickText(int tempo)
 {
+    ui->lcdClick->display(tempo);
 
 
 }
 
 
-void MainWindow::updateTempo(int tempo)
+void MainWindow::setClickButton(bool status)
 {
+    if(status) ui->bClick->setText("Stop");
+    else ui->bClick->setText("Start");
 
-    clickTimer->start(1000*60/tempo);
 
 }
 
 
-void MainWindow::record(void)
-{
 
 
 
 
-}
-
-void MainWindow::play()
-{
-
-
-}
 
 void MainWindow::shutdown()
 {
@@ -88,6 +84,14 @@ void MainWindow::shutdown()
     exit(0);
 
 }
+
+
+void MainWindow::setLoopList(QString txt)
+{
+    ui->loopList->setText(txt);
+
+}
+
 
 
 
@@ -110,10 +114,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->brefresh,SIGNAL(pressed()),this,SLOT(cardchoicerefresh()));
     connect(ui->bconnect,SIGNAL(pressed()),this,SLOT(chooseCard()));
-    connect(ui->bclear,SIGNAL(pressed()),this,SLOT(consoleclear()));
 
 
-    Afficher("Démarrage\n");
+    connect(ui->bClickUp,SIGNAL(pressed()),this,SIGNAL(clickUp()));
+    connect(ui->bClickDown,SIGNAL(pressed()),this,SIGNAL(clickDown()));
+
+
+    connect(ui->bstop,SIGNAL(pressed()),this,SLOT(shutdown()));
+
 
 
     cardchoicerefresh();
@@ -161,6 +169,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mainInterface = new interface_c(this);
     mainInterface->start();
+
+    connect(ui->bClick,SIGNAL(pressed()),mainInterface,SLOT(clickPlayStop()));
+
+
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
 

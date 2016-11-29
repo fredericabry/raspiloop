@@ -50,6 +50,8 @@ public:
     bool isCaptureLoopValid(capture_loop_c * pCapture);//is capture loop in the list ?
     int getCaptureStatus(capture_loop_c **pCaptureLoop);//retur the stauts of a record loop pointer
 
+    bool clickStatus;
+    void printLoopList(void);
 
     interfaceEvent_c *firstEvent;//first event registered, begining of the events list
     interfaceEvent_c* findLastEvent(void);//return a pointer to the last event registered
@@ -63,6 +65,7 @@ public:
     void showPlayLoops();
     click_c *pClick;
 
+    QString statusToString(status_t status);
 
     void Afficher(QString txt);
     bool isRecording;
@@ -78,12 +81,16 @@ public:
 
 public slots:
     void Test(void);
+
+    void clickPlayStop(void);
+
 private slots:
     void keyInput(QKeyEvent *e);
     void createInterfaceEvent(const QObject * sender, const char * signal, int eventType, void *param, bool repeat, interfaceEvent_c **pEvent);
 
 signals:
     void setTempo(int);
+    void loopList(QString);
 
 
 

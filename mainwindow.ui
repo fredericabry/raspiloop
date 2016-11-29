@@ -2,46 +2,73 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>480</width>
-    <height>320</height>
+    <width>800</width>
+    <height>480</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QTextBrowser" name="console">
+   <widget class="QTextBrowser" name="loopList">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>0</y>
-      <width>141</width>
-      <height>151</height>
+      <x>380</x>
+      <y>10</y>
+      <width>391</width>
+      <height>241</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QComboBox" name="cardchoice">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>30</y>
-      <width>231</width>
-      <height>31</height>
+      <x>130</x>
+      <y>290</y>
+      <width>461</width>
+      <height>81</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QPushButton" name="brefresh">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>0</y>
-      <width>101</width>
-      <height>31</height>
+      <x>160</x>
+      <y>180</y>
+      <width>121</width>
+      <height>60</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Refresh</string>
@@ -50,11 +77,16 @@
    <widget class="QPushButton" name="bconnect">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>110</y>
-      <width>101</width>
-      <height>31</height>
+      <x>10</x>
+      <y>180</y>
+      <width>131</width>
+      <height>60</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Connect</string>
@@ -63,37 +95,41 @@
    <widget class="QRadioButton" name="bmidi">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>110</y>
-      <width>118</width>
-      <height>26</height>
+      <x>10</x>
+      <y>260</y>
+      <width>181</width>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>50</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <italic>false</italic>
+     </font>
     </property>
     <property name="text">
      <string>Midi support</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="bclear">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>160</y>
-      <width>101</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Clear</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>70</y>
-      <width>61</width>
+      <x>10</x>
+      <y>410</y>
+      <width>111</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Capture</string>
@@ -102,11 +138,16 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>30</y>
+      <x>10</x>
+      <y>320</y>
       <width>111</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Playback</string>
@@ -115,33 +156,99 @@
    <widget class="QComboBox" name="cardchoice_input">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>60</y>
-      <width>231</width>
-      <height>31</height>
+      <x>130</x>
+      <y>390</y>
+      <width>461</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>true</italic>
+     </font>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="bstop">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>370</y>
+      <width>181</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>STOP</string>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="lcdClick">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>30</y>
+      <width>91</width>
+      <height>51</height>
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="bClickUp">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>90</y>
+      <width>90</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>+</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="bClickDown">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>90</y>
+      <width>90</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="bClick">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>90</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Start</string>
+    </property>
+   </widget>
   </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>480</width>
-     <height>25</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

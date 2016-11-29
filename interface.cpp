@@ -288,6 +288,67 @@ bool interface_c::isEventValid(interfaceEvent_c* pEvent)
 }
 
 
+void interface_c::clickPlayStop(void)
+{
+    if(clickStatus) {
+        clickStatus = false;
+        pClick->stop();
+
+    }
+    else
+    {
+        clickStatus = true;
+        //play
+        pClick->start();
+    }
+
+    parent->setClickButton(clickStatus);
+
+}
+
+QString interface_c::statusToString(status_t status){
+    switch(status)
+    {
+    case IDLE:return "stopped";break;
+    case PLAY:return "playing";break;
+    case SILENT:return "silent";break;
+    default:return "unknown";break;
+
+    }
+
+
+}
+
+void interface_c::printLoopList(void)
+{
+    playback_loop_c *pLoop = this->firstPlayLoop;
+    QString txt = "";
+
+
+    if(getPlayLoopsCount() <= 0) txt="no loop";
+    else
+    {
+
+        if(pLoop)
+        {
+            txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status)+"\n";
+
+        }
+
+        while(pLoop->pNextLoop)
+        {
+            pLoop = pLoop->pNextLoop;
+           if(pLoop)  txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status)+"\n";
+
+        }
+    }
+
+    emit loopList(txt);
+
+}
+
+
+
 
 bool interface_c::isCaptureLoopValid(capture_loop_c * pCapture)
 {
@@ -438,13 +499,15 @@ void interface_c::init(void)
 
 
 
-    pClick = new click_c(120,pLeft,IDLE);
+    pClick = new click_c(120,pLeft,IDLE,parent);
+    clickStatus=false;
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
+    connect(this,SIGNAL(loopList(QString)),parent,SLOT(setLoopList(QString)));
 
 
     telapsed.start();
     //connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
-
+    printLoopList();
 }
 
 void interface_c::run()
@@ -619,6 +682,7 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_9:qDebug()<<"Active playback loops count:"<<getPlayLoopsCount();
         qDebug()<<"Active capture loops count:"<<getCaptureLoopsCount();
         qDebug()<<"Active events count:"<<getEventsCount();
+        printLoopList();
         break;
     case Qt::Key_Enter:
 
@@ -658,15 +722,13 @@ void interface_c::Afficher(QString txt)
 
 
 
+
+
+
 void interface_c::Test(void)
 {
 
     pActivePlayPort = pRight;
     pActiveRecPort = pRec0;
     startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,5000);
-
-
-
-
-
 }

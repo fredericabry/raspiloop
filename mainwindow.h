@@ -32,39 +32,42 @@ public:
     QString OutputCardName;
 
 
+
+    void setClickText(int tempo);
+    void setClickButton(bool status);
+
     QTimer *clickTimer;
     QTimer *stepTimer;
     QTimer *tester;
 
-    void Afficher(QString);
-    void AfficherI(int i);
-    void br();
+
     void AfficherListe(QStringList);
     void connectToCard(void);
     ~MainWindow();
 
     void keyPressEvent(QKeyEvent *e);
 
-
-
-
-
 private:
+
+
+
     Ui::MainWindow *ui;
 
 private slots:
     void cardchoicerefresh(void);
     void chooseCard(void);
-    void consoleclear(void);
-    void play(void);
-    void topClick(void);
-    void updateTempo(int);
-    void record(void);
+    void setLoopList(QString txt);
+
 
     void shutdown(void);
 
+
+
+
 signals:
     void sendKey(QKeyEvent *e);
+    void clickUp(void);
+    void clickDown(void);
 
 };
 

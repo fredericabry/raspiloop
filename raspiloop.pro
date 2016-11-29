@@ -49,3 +49,5 @@ LIBS += -lasound -lsndfile
 target.path = /home/pi/test
 
 INSTALLS += target
+
+
