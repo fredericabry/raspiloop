@@ -38,6 +38,7 @@ struct playData_s
     int skipevent;//number of event call to skip before actually processing the event
     syncoptions syncMode;
     status_t status;
+    capture_loop_c *pCaptureLoop;
 
 };
 

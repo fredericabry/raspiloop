@@ -107,6 +107,7 @@ public:
 private slots:
     void datarequest(unsigned long frames);
     void activate(void);
+    void infoFromCaptureLoop(unsigned long length);
 signals:
     void send_data(short *buf,int nread);
     void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c** pEvent);

@@ -78,6 +78,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
             param->skipevent = 0;
             param->status = SILENT;
             param->syncMode = CLICKSYNC;
+            param->pCaptureLoop = this;
 
             emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,&pEvent);
 
@@ -194,9 +195,11 @@ void capture_loop_c::destroyLoop()
         }
         else
         {
-            qDebug()<<"play loop not created yet";
-            if((pEvent)&&(pPort->interface->isEventValid(pEvent))) pEvent->playData->status=PLAY;
-            else qDebug()<<"event not created yet";
+
+            if((pEvent)&&(pPort->interface->isEventValid(pEvent))) pEvent->playData->status=PLAY; // we need to update the event infos
+            else  emit updatePlayLoopInfo(nbars);//event already created the loop, let us provide the infos directly to the loop
+
+
         }
 
 

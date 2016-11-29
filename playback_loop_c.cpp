@@ -329,6 +329,21 @@ void playback_loop_c::updateFrameToPlay(long length)
 
 }
 
+
+void playback_loop_c::infoFromCaptureLoop(unsigned long length)
+{
+
+    updateFrameToPlay(length);
+    play();
+
+
+}
+
+
+
+
+
+
 playback_loop_c::~playback_loop_c(void)
 {
 

@@ -79,6 +79,7 @@ public:
 
 signals:
     void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c** pEvent);
+    void updatePlayLoopInfo(unsigned long length);
 
 
 };

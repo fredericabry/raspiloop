@@ -559,7 +559,7 @@ void interface_c::keyInput(QKeyEvent *e)
         captureData_s *params;
         params = new captureData_s;
         params->createPlayLoop = true;
-        params->length=1500;
+        params->length=3500;
         params->pPlayPort=pActivePlayPort;
         params->pPort=pActiveRecPort;
         params->pCaptureLoop = &pActiveRecLoop;
