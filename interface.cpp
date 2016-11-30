@@ -158,6 +158,35 @@ int interface_c::generateNewId()
     }
     captureListMutex.unlock();
 
+
+    eventListMutex.lock();
+    interfaceEvent_c *pEvent = firstEvent;
+
+    if(pEvent != NULL)
+    {
+
+        if(pEvent->eventType==EVENT_CREATE_PLAY)
+        {
+            if(pEvent->playData->id >= id) id = pEvent->playData->id+1;
+        }
+
+        while(pEvent->pNextEvent!=NULL)
+        {
+            pEvent=pEvent->pNextEvent;
+            if(pEvent->eventType==EVENT_CREATE_PLAY)
+            {
+                if(pEvent->playData->id >= id) id = pEvent->playData->id+1;
+            }
+        }
+
+    }
+
+
+
+    eventListMutex.unlock();
+
+
+
     return id;
 
 }
@@ -331,14 +360,20 @@ void interface_c::printLoopList(void)
 
         if(pLoop)
         {
-            txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status)+"\n";
+            txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status)+" - port:"
+                    +QString::number(pLoop->pPortList[0]->channel)
+                    +" - length:"+QString::number(pLoop->barstoplay)+"bars"+"\n";
 
         }
 
         while(pLoop->pNextLoop)
         {
             pLoop = pLoop->pNextLoop;
-           if(pLoop)  txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status)+"\n";
+           if(pLoop)    {
+               txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status)+" - port:"
+                       +QString::number(pLoop->pPortList[0]->channel)
+                       +" - length:"+QString::number(pLoop->barstoplay)+"bars"+"\n";
+           }
 
         }
     }
@@ -346,8 +381,6 @@ void interface_c::printLoopList(void)
     emit loopList(txt);
 
 }
-
-
 
 
 bool interface_c::isCaptureLoopValid(capture_loop_c * pCapture)
@@ -418,16 +451,12 @@ void interface_c::createInterfaceEvent(const QObject * sender,const char * signa
 
 int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 {
-
-
-
-
     if(isCaptureLoopValid(*pCaptureLoop)) return 1;
 
     interfaceEvent_c *pEvent = firstEvent;
 
 
-    if(pEvent == NULL) {qDebug()<<"no event";return 0;}
+    if(pEvent == NULL) {return 0;}
     else
     {
         if(pEvent->eventType==EVENT_CAPTURE)
@@ -450,15 +479,24 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCapturePort,capture_loop_c **pCaptureLoop,long length)
 {
     *pCaptureLoop = NULL;
+//    playback_port_c **pPlayPorts = (playback_port_c **)malloc(sizeof(playback_port_c*));
+
+
+    unsigned int playPortsCount = 2;
+    playback_port_c **pPlayPorts = new playback_port_c *[playPortsCount]; //this  will eventually be destroyed in playback_loop_c
+    pPlayPorts[0] = pRight;
+    pPlayPorts[1] = pLeft;
+
+
 
 
     if(synchroMode == CLICKSYNC)
     {
 
 
-        if(pClick->getBeat()<1) //capture was launched too late, we are not going to wait till the next bar...
+        if(pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
         {
-            *pCaptureLoop = new capture_loop_c(generateNewId(),pCapturePort,length,true,pPlayPort,pClick->getTime());
+            *pCaptureLoop = new capture_loop_c(generateNewId(),pCapturePort,length,true,pPlayPorts,playPortsCount,pClick->getTime());
 
         }
 
@@ -468,7 +506,8 @@ void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCaptur
             captureData_s *params = new captureData_s;
             params->createPlayLoop = true;
             params->length=length;
-            params->pPlayPort=pPlayPort;
+            params->pPlayPorts = pPlayPorts;
+            params->playPortsCount = playPortsCount;
             params->pPort=pCapturePort;
             params->pCaptureLoop = pCaptureLoop;
 
@@ -476,6 +515,8 @@ void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCaptur
 
         }
     }
+
+
 
 }
 
@@ -499,7 +540,7 @@ void interface_c::init(void)
 
 
 
-    pClick = new click_c(120,pLeft,IDLE,parent);
+    pClick = new click_c(120,pLeft,IDLE,this,parent);
     clickStatus=false;
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
     connect(this,SIGNAL(loopList(QString)),parent,SLOT(setLoopList(QString)));
@@ -556,7 +597,7 @@ void interface_c::keyInput(QKeyEvent *e)
 
 
 
-        captureData_s *params;
+      /*  captureData_s *params;
         params = new captureData_s;
         params->createPlayLoop = true;
         params->length=3500;
@@ -566,9 +607,9 @@ void interface_c::keyInput(QKeyEvent *e)
 
         createInterfaceEvent(pClick,SIGNAL(firstBeat()),EVENT_CAPTURE,(void*)params,false,&pActiveEvent);
 
+*/
 
 
-        break;
 
 
 
@@ -576,7 +617,7 @@ void interface_c::keyInput(QKeyEvent *e)
         switch(getCaptureStatus(&pActiveRecLoop))
         {
         case 0:
-            startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,2500);
+            startRecord(pActivePlayPort,pActiveRecPort,&pActiveRecLoop,0);
             break;
         case 1:pActiveRecLoop->destroyLoop();break;
         case 2:qDebug()<<"capture loop not created yet, event in progress";break;
@@ -660,8 +701,8 @@ void interface_c::keyInput(QKeyEvent *e)
     case Qt::Key_7:
         if(pActivePlayLoop)
         {
-            if(pActivePlayLoop->pPort->channel == 1) {pActivePlayLoop->moveToPort(pLeft);}
-            else pActivePlayLoop->moveToPort(pRight);
+            //if(pActivePlayLoop->pPort->channel == 1) {pActivePlayLoop->moveToPort(pLeft);}
+            //else pActivePlayLoop->moveToPort(pRight);
 
         }
         else

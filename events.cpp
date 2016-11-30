@@ -30,7 +30,12 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,co
         captureData= new captureData_s;
         *captureData= (*(captureData_s*)param);
 
-         delete ((captureData_s*)param);
+        delete ((captureData_s*)param);
+
+
+
+
+
         break;
 
     case EVENT_CREATE_PLAY:
@@ -38,7 +43,12 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,co
         playData = new playData_s;
         *playData = *((playData_s*)param);
 
+
+
         delete ((playData_s*)param);
+
+
+
         break;
 
     case EVENT_PLAY_RESTART:
@@ -54,7 +64,7 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,co
 
 
 
-   if(!connect(sender,signal,this,SLOT(eventProcess()))) qDebug()<<"event connection failure";
+    if(!connect(sender,signal,this,SLOT(eventProcess()))) qDebug()<<"event connection failure";
 
 
 
@@ -99,7 +109,7 @@ void interfaceEvent_c::updateParameters(void *param)
     switch(eventType)
     {
     case EVENT_CAPTURE:
-       // qDebug()<<"capt";
+        // qDebug()<<"capt";
         *captureData= (*(captureData_s*)param);
         break;
 
@@ -109,7 +119,7 @@ void interfaceEvent_c::updateParameters(void *param)
         break;
 
     case EVENT_PLAY_RESTART:
-      //  qDebug()<<"rewind";
+        //  qDebug()<<"rewind";
         *restartplayData = *((restartplayData_s*)param);
         break;
     }
@@ -130,8 +140,8 @@ void interfaceEvent_c::eventProcess() //launch the actual event
     {
     case EVENT_CAPTURE:
         id=interface->generateNewId();
-       // qDebug()<<"capture id"<<id;
-        *(captureData->pCaptureLoop) = new capture_loop_c(id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPort,0);
+        // qDebug()<<"capture id"<<id;
+        *(captureData->pCaptureLoop) = new capture_loop_c(id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,captureData->playPortsCount,0);
         killEvent = true;
 
         break;
@@ -148,10 +158,15 @@ void interfaceEvent_c::eventProcess() //launch the actual event
         {
 
 
-                  playback_loop_c *pLoop =  new playback_loop_c(playData->id,playData->pPlayPort,playData->length,playData->syncMode,playData->status);
+            //      playback_port_c **pPlayPorts = new playback_port_c*[playData->playPortsCount];
+            //      *pPlayPorts=*(playData->pPlayPorts);
 
-                  if(playData->pCaptureLoop)
-                  connect(playData->pCaptureLoop,SIGNAL(updatePlayLoopInfo(ulong)),pLoop,SLOT(infoFromCaptureLoop(ulong))); //used to update the playback loop with infos when the capture loop is destroyed
+            //playData->pPlayPorts[0]->test();
+
+            playback_loop_c *pLoop =  new playback_loop_c(playData->id,playData->pPlayPorts,playData->playPortsCount,playData->length,playData->syncMode,playData->status,interface);
+
+            if(playData->pCaptureLoop)
+                connect(playData->pCaptureLoop,SIGNAL(updatePlayLoopInfo(ulong)),pLoop,SLOT(infoFromCaptureLoop(ulong))); //used to update the playback loop with infos when the capture loop is destroyed
 
             killEvent = true;
         }
@@ -177,8 +192,6 @@ void interfaceEvent_c::eventProcess() //launch the actual event
                 //  qDebug()<<"process"<<restartplayData->pLoop->status;
                 restartplayData->pLoop ->rewind();
 
-                //  qDebug()<<"status"<<pLoop->status << params3->status;
-                //  pLoop->status = params3->status;
             }
 
 
@@ -207,6 +220,11 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
 interfaceEvent_c::~interfaceEvent_c()
 {
+
+
+
+
+
     //qDebug()<<"event killed"<<eventType;
 
 }
@@ -227,10 +245,12 @@ void interfaceEvent_c::destroy(void)
     switch(eventType)
     {
     case EVENT_CAPTURE:
+
         delete captureData;
         break;
 
     case EVENT_CREATE_PLAY:
+
 
         delete playData;
         break;

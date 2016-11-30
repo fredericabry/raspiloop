@@ -36,12 +36,12 @@ class playback_port_c : public QObject
     Q_OBJECT
 
 public:
-    playback_port_c(const unsigned long maxlength, const unsigned long bufsize, const int channel, interface_c *interface);
+    playback_port_c(const unsigned long maxlength, const int channel, interface_c *interface);
     ~playback_port_c();
 
-   // const interface_c interface;
+
     const unsigned long maxlength;
-    const unsigned long bufsize;
+    unsigned long bufsize;
 
     int const channel;
     interface_c *interface;
@@ -57,7 +57,7 @@ public:
 
     playbackPortConsumer *consumer;
     bool fg_empty ;
-
+    void test(void);
     void removeallloops(void);
     int getDataReady(unsigned long N);
     int push(short data);

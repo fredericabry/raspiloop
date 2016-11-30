@@ -29,10 +29,10 @@
    <widget class="QTextBrowser" name="loopList">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>290</x>
       <y>10</y>
-      <width>391</width>
-      <height>241</height>
+      <width>501</width>
+      <height>261</height>
      </rect>
     </property>
     <property name="font">

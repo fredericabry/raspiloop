@@ -5,8 +5,10 @@
 #include "interface.h"
 #include "qtimer.h"
 
-playback_port_c::playback_port_c(const unsigned long maxlength, const unsigned long bufsize,  const int channel,  interface_c *interface):maxlength(maxlength),bufsize(bufsize),channel(channel),interface(interface)
+playback_port_c::playback_port_c(const unsigned long maxlength,  const int channel,  interface_c *interface):maxlength(maxlength),channel(channel),interface(interface)
 {
+    bufsize = PLAYBACK_BUFSIZE;
+
 
     this->tail = 0;
     this->head = 0;
@@ -42,7 +44,6 @@ playback_port_c::~playback_port_c()
     free(bufmix);
 
 }
-
 
 unsigned long playback_port_c::length()
 {
@@ -103,12 +104,6 @@ void playback_port_c::pushN(short *buf_in, unsigned long N)
     ring_lock.unlock();
 
 }
-
-
-
-
-
-
 
 int playback_port_c::pullN(unsigned long N)
 {
@@ -187,19 +182,11 @@ int playback_port_c::pullN(unsigned long N)
     return N+N0;
 }
 
-
-
 void playback_port_c::addloop(playback_loop_c *pLoop)
 {
 
     //this->connected_loops++;
     this->nu_connected_loops++;
-
-
-    // qDebug()<<nu_connected_loops<<pLoop->id;
-
-
-
 
     if(nu_connected_loops <= 0) {qDebug()<<"err";return;}
 
@@ -215,39 +202,26 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
 
     if(nu_connected_loops == 1) pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
 
-
-    //interface->listMutex.lock();
-
-    pLoop->addToList();
-    //interface->listMutex.unlock();
-    /*
-    if(!pLoop->isClick) //if this is the click, we don't keep it in the loops list
-    {
-        if(interface->firstPlayLoop == NULL) interface->firstPlayLoop = pLoop;
-
-        else if(interface->findLastPlaybackLoop() != NULL)
-        {
-            pLoop->pPrevLoop = interface->findLastPlaybackLoop();
-            pLoop->pPrevLoop->pNextLoop = pLoop;//let's add it at the end of the chain
-
-        }
-        else qDebug()<<"playback loop list bug";
-
-
-        pLoop->pNextLoop = NULL;//last loop created.
-
-
-
-    }*/
-
-
-
-
+qDebug()<<pLoop->id<<"connected to"<<channel;
 
 
 
 
 }
+
+
+
+
+
+void playback_port_c::test(void)
+{
+
+    qDebug()<<"playback port ok "<<this->channel;
+}
+
+
+
+
 
 void playback_port_c::removeloop(playback_loop_c *pLoop)
 {
@@ -264,30 +238,10 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
         qDebug()<<"connection failed";
 
 
-    if(pLoop->isClick) //this is the click, we don't keep it in the loops list
-        return;
 
-
-
-    /*  if(pLoop->pPrevLoop==NULL) interface->firstPlayLoop = pLoop->pNextLoop;//it was the first loop
-    else
-    {
-        pLoop->pPrevLoop->pNextLoop = pLoop->pNextLoop;
-    }
-
-    if(pLoop->pNextLoop!=NULL) //there is a next loop
-    {
-        pLoop->pNextLoop->pPrevLoop = pLoop->pPrevLoop;
-    }
-
-*/
-    //interface->listMutex.lock();
-    pLoop->removeFromList();
-    //interface->listMutex.unlock();
 
 
 }
-
 
 void playbackPortConsumer::run()
 {
@@ -298,9 +252,6 @@ void playbackPortConsumer::run()
     exec();
 }
 
-
-
-
 void playback_port_c::triggerempty(void)
 {
 
@@ -309,7 +260,6 @@ void playback_port_c::triggerempty(void)
 
     if(wait_for_data)
     {
-        //qDebug()<<"waiting";
         return;
     }
 
@@ -335,13 +285,10 @@ void playback_port_c::triggerempty(void)
 
 }
 
-
-
-
 void playbackPortConsumer::data_available(short *buf, int nread)
 {
 
-
+qDebug()<<"received";
     //implement mix strategy here
 
 
@@ -411,8 +358,4 @@ void playbackPortConsumer::update()
     controler->triggerempty();
 
 }
-
-
-
-
 

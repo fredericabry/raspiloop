@@ -38,7 +38,7 @@ class capture_loop_c:public QObject
 {
     Q_OBJECT
 public:
-    capture_loop_c(const int id, capture_port_c *pPort, long length, bool createPlayLoop, playback_port_c *pPlayPort,double delta);
+    capture_loop_c(const int id, capture_port_c *pPort, long length, bool createPlayLoop, playback_port_c **pPlayPorts, unsigned int playPortsCount, double delta);
     ~capture_loop_c();
     void destroyLoop(void);
     void openfile(QString filename);

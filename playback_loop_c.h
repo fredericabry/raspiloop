@@ -40,22 +40,28 @@ class playback_loop_c:public QObject
     Q_OBJECT
 
 public:
-    playback_loop_c(const int id, playback_port_c *pPort, long length, syncoptions syncMode, status_t status);
+    playback_loop_c(const int id, playback_port_c **pPort,unsigned int portNumber, long length, syncoptions syncMode, status_t status,interface_c *interface);
     ~playback_loop_c();
 
     const int id;
 
-    playback_port_c *pPort;
+   // playback_port_c *pPort;
 
     unsigned long length();
     syncoptions syncMode;
     status_t status;
-
+    interface_c *interface;
 
     QString filename;
     bool loopConnected;//loop has been connected to a port
     bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
+
+
+    playback_port_c **pPortList;
+    unsigned int portCount;
+    bool addToPortList(playback_port_c* pNuPort);
+
 
 
     short *ringbuf;//big buffer for circular storage
@@ -101,6 +107,7 @@ public:
     unsigned long freespace();
     void pushN(short *buf_in, unsigned long N);
     int pullN(unsigned long N);
+    int pullN2(unsigned long N,unsigned long *tail2);
     void destroy(void);
 
 

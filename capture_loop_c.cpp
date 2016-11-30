@@ -7,7 +7,7 @@
 #include "click_c.h"
 
 
-capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c *pPlayPort, double delta):id(id),pPort(pPort)
+capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c **pPlayPorts,unsigned int playPortsCount, double delta):id(id),pPort(pPort)
 {
 
 
@@ -65,7 +65,8 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
         if(pPort->interface->synchroMode == NOSYNC)
         {
 
-            pPlayLoop = new playback_loop_c(id,pPlayPort,-1,NOSYNC,IDLE);//by default loop
+
+          //  pPlayLoop = new playback_loop_c(id,pPlayPorts,playPortsCount,-1,NOSYNC,IDLE,pPort->interface);//by default loop
         }
         else if(pPort->interface->synchroMode == CLICKSYNC)
         {
@@ -74,15 +75,14 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
             param = new playData_s;
             param->id = id;
             param->length = 1;//one bar
-            param->pPlayPort = pPlayPort;
+            param->pPlayPorts = pPlayPorts;
+            param->playPortsCount = playPortsCount;
             param->skipevent = 0;
             param->status = SILENT;
             param->syncMode = CLICKSYNC;
             param->pCaptureLoop = this;
 
             emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,&pEvent);
-
-            //TODO : find a way to communicate between capture and play loops
 
 
         }
@@ -150,7 +150,6 @@ void capture_loop_c::removeFromList(void)
 
 }
 
-
 void capture_loop_c::destroyLoop()
 {
 
@@ -196,7 +195,7 @@ void capture_loop_c::destroyLoop()
         else
         {
 
-            if((pEvent)&&(pPort->interface->isEventValid(pEvent))) pEvent->playData->status=PLAY; // we need to update the event infos
+            if((pEvent)&&(pPort->interface->isEventValid(pEvent))) {pEvent->playData->status=PLAY;pEvent->playData->pCaptureLoop=NULL;} // we need to update the event infos
             else  emit updatePlayLoopInfo(nbars);//event already created the loop, let us provide the infos directly to the loop
 
 

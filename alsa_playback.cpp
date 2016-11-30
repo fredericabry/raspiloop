@@ -84,7 +84,7 @@ void alsa_init_playback(int channels,int rate,interface_c *interface)
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,PLAYBACK_BUFSIZE,i,interface);
+        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,i,interface);
         playback_buf[i] = main_buf_playback[i]->buf;
     }
 

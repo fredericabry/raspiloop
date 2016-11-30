@@ -6,8 +6,8 @@
 
 
 
-click_c::click_c(int tempo, playback_port_c *pPort, status_t status,MainWindow *parent):pPort(pPort),status(status),parent(parent)
 
+click_c::click_c(int tempo, playback_port_c *pPort, status_t status, interface_c *interface, MainWindow *parent):pPort(pPort),status(status),interface(interface),parent(parent)
 {
     if(tempo<=0) {qDebug()<<"invalid tempo";delete this;return;}
     t1 = new QElapsedTimer;
@@ -31,7 +31,6 @@ click_c::click_c(int tempo, playback_port_c *pPort, status_t status,MainWindow *
 
 }
 
-
 double click_c::getBeat(void)
 {
     double t = ((double)t1->elapsed())/1000;//time elapsed since the tick in seconds
@@ -51,8 +50,6 @@ double click_c::getTime(void)
 
 }
 
-
-
 void click_c::clickDown()
 {
     setTempo(getTempo()-5);
@@ -67,13 +64,11 @@ void click_c::clickUp()
 }
 
 
-
-
-
-
-
 void click_c::tick(void)
 {
+    playback_port_c **pPorts = new playback_port_c*[1];
+    pPorts[0] = pPort;
+
     t1->start();
     beat ++;
     if(beat>4) beat = 1;
@@ -81,36 +76,19 @@ void click_c::tick(void)
     {
         emit firstBeat();
 
-
         if(status == PLAY)
-            new playback_loop_c(0,pPort,0,NOSYNC,PLAY);//once, autoplay
-
+            new playback_loop_c(0,pPorts,1,0,NOSYNC,PLAY,interface);//once, autoplay
 
         // qDebug()<<"first beat";
-
     }
     else
     {
         if(status == PLAY)
-            new playback_loop_c(1,pPort,0,NOSYNC,PLAY);//once, autoplay
-
-
+            new playback_loop_c(1,pPorts,1,0,NOSYNC,PLAY,interface);//once, autoplay
     }
-
-    //if(beat == 3) qDebug()<<"third beat";
-    //qDebug()<<t1->elapsed();
-
-    //qDebug()<<"\ntick";
-
-    //t1->start();
-
-
 
 
 }
-
-
-
 
 bool click_c::isActive(void)
 {
@@ -119,7 +97,6 @@ bool click_c::isActive(void)
     else return false;
 
 }
-
 
 void click_c::setTempo(int temp)
 {

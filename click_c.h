@@ -15,7 +15,7 @@ private:
         int tempo;
 
 public:
-    click_c(int tempo, playback_port_c *pPort,status_t status,MainWindow *parent);
+    click_c(int tempo, playback_port_c *pPort, status_t status, interface_c *interface, MainWindow *parent);
 
     playback_port_c *pPort;
     int status;
@@ -25,7 +25,10 @@ public:
     playback_loop_c *pDing;
     QElapsedTimer *t1;
     void stopstart(void);
+    interface_c *interface;
     MainWindow *parent;
+
+
     int getTempo(void);
     bool isActive(void);
     void stop(void);
