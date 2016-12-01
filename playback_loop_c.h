@@ -40,14 +40,21 @@ class playback_loop_c:public QObject
     Q_OBJECT
 
 public:
-    playback_loop_c(const int id, playback_port_c **pPort,unsigned int portNumber, long length, syncoptions syncMode, status_t status,interface_c *interface);
+    playback_loop_c(const int id, std::vector<playback_port_c*>pPorts, long length, syncoptions syncMode, status_t status,interface_c *interface);
     ~playback_loop_c();
 
     const int id;
 
-   // playback_port_c *pPort;
+   std::vector<playback_port_c*>pPorts;
+   std::vector<int>portsChannel;
+   std::vector<unsigned long>tails;
+   std::vector<unsigned long>framesPlayed;
+
+
+
 
     unsigned long length();
+    unsigned long length(unsigned long tail2);
     syncoptions syncMode;
     status_t status;
     interface_c *interface;
@@ -56,12 +63,12 @@ public:
     bool loopConnected;//loop has been connected to a port
     bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
+    bool isFinished(void);
 
 
-    playback_port_c **pPortList;
-    unsigned int portCount;
+
     bool addToPortList(playback_port_c* pNuPort);
-
+    bool removeFromPortList(playback_port_c *pOldPort);
 
 
     short *ringbuf;//big buffer for circular storage
@@ -76,7 +83,7 @@ public:
 
     long framestoplay;
     long framescount;
-
+    unsigned long min_frame_request;
 
     int barstoplay;
     bool stop;
@@ -107,16 +114,16 @@ public:
     unsigned long freespace();
     void pushN(short *buf_in, unsigned long N);
     int pullN(unsigned long N);
-    int pullN2(unsigned long N,unsigned long *tail2);
+    int pullN2(unsigned long N, int portNumber);
     void destroy(void);
 
 
 private slots:
-    void datarequest(unsigned long frames);
+    void datarequest(unsigned long frames, int channel);
     void activate(void);
     void infoFromCaptureLoop(unsigned long length);
 signals:
-    void send_data(short *buf,int nread);
+    void send_data(short *buf,int nread,int channel);
     void makeInterfaceEvent(const QObject * sender,const char * signal, int eventType, void *param,bool repeat,interfaceEvent_c** pEvent);
 
 

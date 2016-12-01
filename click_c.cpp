@@ -66,7 +66,8 @@ void click_c::clickUp()
 
 void click_c::tick(void)
 {
-    playback_port_c **pPorts = new playback_port_c*[1];
+    std::vector<playback_port_c*>pPorts(1);
+
     pPorts[0] = pPort;
 
     t1->start();
@@ -77,14 +78,14 @@ void click_c::tick(void)
         emit firstBeat();
 
         if(status == PLAY)
-            new playback_loop_c(0,pPorts,1,0,NOSYNC,PLAY,interface);//once, autoplay
+            new playback_loop_c(0,pPorts,0,NOSYNC,PLAY,interface);//once, autoplay
 
         // qDebug()<<"first beat";
     }
     else
     {
         if(status == PLAY)
-            new playback_loop_c(1,pPorts,1,0,NOSYNC,PLAY,interface);//once, autoplay
+            new playback_loop_c(1,pPorts,0,NOSYNC,PLAY,interface);//once, autoplay
     }
 
 
@@ -122,17 +123,21 @@ int click_c::getTempo()
 void click_c::stopstart(void)
 {
 
+
     if(status == PLAY)
     {
         status = IDLE;
-        beat = 1;
+        parent->setClickButton(false);
 
     }
     else
     {
         status = PLAY;
-
+        parent->setClickButton(true);
     }
+
+
+
 
 }
 

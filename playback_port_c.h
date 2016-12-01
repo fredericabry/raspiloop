@@ -21,7 +21,7 @@ public:
     playback_port_c* controler;
     int datalength;
 public slots:
-    void data_available(short *buf,int nread);
+    void data_available(short *buf, int nread, int chan);
     void update(void);
 signals:
     void update_loops(void);//signal all loop that they are now autorized to feed data
@@ -78,7 +78,7 @@ public:
     QMutex ring_lock;
 
 signals:
-    void signal_trigger(unsigned long frames);
+    void signal_trigger(unsigned long frames,int);
 
 
 

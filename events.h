@@ -23,8 +23,8 @@ struct captureData_s
     capture_port_c *pPort;
     long length;
     bool createPlayLoop;
-    playback_port_c **pPlayPorts;
-    unsigned int playPortsCount;
+    std::vector<playback_port_c*>pPlayPorts;
+
     capture_loop_c **pCaptureLoop;
 };
 
@@ -34,8 +34,7 @@ struct captureData_s
 struct playData_s
 {
     int id;
-    playback_port_c **pPlayPorts;
-    unsigned int playPortsCount;
+    std::vector<playback_port_c*>pPlayPorts;
     long length;
     int skipevent;//number of event call to skip before actually processing the event
     syncoptions syncMode;

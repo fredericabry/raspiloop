@@ -6,7 +6,7 @@
 #include "click_c.h"
 #include "events.h"
 
-playback_loop_c::playback_loop_c(int id,  playback_port_c **pPorts,unsigned int portNumber, long length,syncoptions syncMode,status_t status,interface_c *interface):id(id),syncMode(syncMode),status(status),interface(interface)
+playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, long length,syncoptions syncMode,status_t status,interface_c *interface):id(id),pPorts(pPorts),syncMode(syncMode),status(status),interface(interface)
 {
 
 
@@ -44,7 +44,11 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c **pPorts,unsigned int 
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
     memset(ringbuf,0,(maxlength+1)*sizeof(short));
     bufsize = PLAYBACK_BUFSIZE;
+
+
     buf = (short*)malloc(bufsize*sizeof(short));
+
+
     memset(buf,0,bufsize*sizeof(short));
     tail =0;
     head = 0;
@@ -69,25 +73,37 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c **pPorts,unsigned int 
 
 
     framescount = 0;
+    std::fill(framesPlayed.begin(),framesPlayed.end(),0);
     isOutOfSample = false;
 
 
-    portCount = 0;
 
 
 
 
-    //  pPort->addloop(this);
+    //qDebug()<<"size:"<<pPorts.size();
 
-    for(unsigned j = 0;j<portNumber;j++)
+
+    for (auto &pPort : pPorts)
     {
-        addToPortList(pPorts[j]);
+        pPort->addloop(this);
+        portsChannel.push_back(pPort->channel);
+        tails.push_back(head);
+        framesPlayed.push_back(0);
+
     }
 
 
-     delete[] pPorts;
+
+
+
+
+
 
     addToList();
+
+
+
 
 
 
@@ -98,35 +114,7 @@ playback_loop_c::playback_loop_c(int id,  playback_port_c **pPorts,unsigned int 
 
 
 
-bool playback_loop_c::addToPortList(playback_port_c* pNuPort)
-{
 
-    //first let us check if port is already in the list
-    for(unsigned int i=0;i<portCount;i++)
-    {
-        if(pPortList[i] == pNuPort) {qDebug()<<"Playback por already in loop port list";return false;}
-    }
-
-    portCount++;
-
-    if(portCount == 1)
-    {
-        pPortList = (playback_port_c**)malloc(sizeof(playback_port_c*)*portCount);
-
-    }
-    else
-    {
-        pPortList = (playback_port_c**)realloc(pPortList,sizeof(playback_port_c*)*portCount);
-
-    }
-
-    pPortList[portCount-1] = pNuPort;
-
-    pNuPort->addloop(this);
-
-    return true;
-
-}
 
 void playback_loop_c::openFile()
 {
@@ -252,7 +240,7 @@ void playback_loop_c::pushN(short *buf_in, unsigned long N)
 
 
 
-
+/*
 
 int playback_loop_c::pullN(unsigned long N)
 {
@@ -277,21 +265,21 @@ int playback_loop_c::pullN(unsigned long N)
     {
         //first let us copy the part that fits
         int first = this->maxlength+1 - this->tail; //maxlength + 1 because of the additionnal value in the buffer
-        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        pt = this->ringbuf+(this->tail);
         memcpy(this->buf,pt,first*sizeof(short));
 
         //then what remains
         int second = N-first;
         pt = this->ringbuf;
 
-        memcpy(this->buf+first/*sizeof(short)*/,pt,second*sizeof(short));
+        memcpy(this->buf+first,pt,second*sizeof(short));
         this->tail = second;
 
 
     }
     else
     {
-        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        pt = this->ringbuf+(this->tail);
         memcpy(this->buf,pt,N*sizeof(short));
         this->tail += N;
 
@@ -301,19 +289,18 @@ int playback_loop_c::pullN(unsigned long N)
 
     return N;
 }
+*/
 
-
-
-
-//Idée : pull avec une tail "dynamique" pour avoir un curseur différent selon le port demandant les données.
-int playback_loop_c::pullN2(unsigned long N,unsigned long *tail2)
+int playback_loop_c::pullN2(unsigned long N,int portNumber)
 {
+
+
 
     playloop_mutex.lock();
 
     short *pt ;
 
-    unsigned long length = this->length();
+    unsigned long length = this->length(tails[portNumber]);
 
     if((length == 0)&&(loopReadyToStop)) {consumer->stop();playloop_mutex.unlock();return 0;} //file is empty, ringbuffer is empty, we can start destroying the loop
 
@@ -325,11 +312,11 @@ int playback_loop_c::pullN2(unsigned long N,unsigned long *tail2)
         N = length;
     }
 
-    if((this->head < this->tail)&&(this->tail+N>this->maxlength))
+    if((this->head < tails[portNumber])&&(tails[portNumber]+N>this->maxlength))
     {
         //first let us copy the part that fits
-        int first = this->maxlength+1 - this->tail; //maxlength + 1 because of the additionnal value in the buffer
-        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        int first = this->maxlength+1 - tails[portNumber]; //maxlength + 1 because of the additionnal value in the buffer
+        pt = this->ringbuf+(tails[portNumber])/*sizeof(short)*/;
         memcpy(this->buf,pt,first*sizeof(short));
 
         //then what remains
@@ -337,15 +324,15 @@ int playback_loop_c::pullN2(unsigned long N,unsigned long *tail2)
         pt = this->ringbuf;
 
         memcpy(this->buf+first/*sizeof(short)*/,pt,second*sizeof(short));
-        this->tail = second;
+        tails[portNumber] = second;
 
 
     }
     else
     {
-        pt = this->ringbuf+(this->tail)/*sizeof(short)*/;
+        pt = this->ringbuf+(tails[portNumber])/*sizeof(short)*/;
         memcpy(this->buf,pt,N*sizeof(short));
-        this->tail += N;
+        tails[portNumber] += N;
 
     }
 
@@ -356,21 +343,38 @@ int playback_loop_c::pullN2(unsigned long N,unsigned long *tail2)
 
 
 
+unsigned long playback_loop_c::length(unsigned long tail2)
+{
+    if(this->head>=tail2) return this->head-tail2;
+    else return this->maxlength-tail2 + this->head + 1;
+
+}
 
 
-
-
+/*
 unsigned long playback_loop_c::length()
 {
     if(this->head>=this->tail) return this->head-this->tail;
     else return this->maxlength-this->tail + this->head + 1;
 
-}
+}*/
 
 unsigned long playback_loop_c::freespace()
 {
+    unsigned long minfreespace,temp;
 
-    return this->maxlength-this->length();
+    minfreespace = maxlength;
+
+    for (auto &tail_t : tails)
+    {
+        temp = this->maxlength-this->length(tail_t);
+        if(temp<minfreespace) minfreespace = temp;
+
+    }
+
+    return minfreespace;
+
+    //  return this->maxlength-this->length();
 
 }
 
@@ -393,20 +397,74 @@ void playback_loop_c::pause()
     interface->printLoopList();
 }
 
+
+
+bool playback_loop_c::addToPortList(playback_port_c *pNuPort)
+{
+
+    for (auto &pPort : pPorts)
+    {
+
+        if(pPort->channel == pNuPort->channel) {qDebug()<<"playback port already in the loop list";return false;}
+
+    }
+
+
+    pNuPort->addloop(this);
+    portsChannel.push_back(pNuPort->channel);
+    pPorts.push_back(pNuPort);
+    tails.push_back(head);
+    framesPlayed.push_back(0);
+
+    interface->printLoopList();
+
+    return true;
+
+}
+
+
+
+bool playback_loop_c::removeFromPortList(playback_port_c *pOldPort)
+{
+
+    int n = -1;
+    for (unsigned int i =0;i<pPorts.size();i++)
+    {
+
+        if(pPorts[i]->channel == pOldPort->channel) {n = i;break;}
+
+    }
+
+    if(n==-1) {qDebug()<<"playback port not in the loop list";return false;}
+
+
+    pOldPort->removeloop(this);
+    portsChannel.erase(portsChannel.begin()+n);
+    pPorts.erase(pPorts.begin()+n);
+    tails.erase(tails.begin()+n);
+    framesPlayed.erase(framesPlayed.begin()+n);
+
+    interface->printLoopList();
+
+    return true;
+
+}
+
+
+
+
 void playback_loop_c::moveToPort(playback_port_c *pNuPort)
 {
     if(!pNuPort) {qDebug()<<"invalid port";return;}
 
-    this->addToPortList(pNuPort);
+    //this->addToPortList(pNuPort);
 
 
 
 
-    return; //todo
-
-    //  pPort->removeloop(this);
-    // pPort = pNuPort;
-    //  pPort->addloop(this);
+    /*  pPort->removeloop(this);
+    pPort = pNuPort;
+    pPort->addloop(this);*/
 }
 
 void playback_loop_c::updateFrameToPlay(long length)
@@ -468,7 +526,7 @@ playback_loop_c::~playback_loop_c(void)
     free(buffile);
     free(ringbuf);
     free(buf);
-    free(pPortList);
+
     //  qDebug()<<"playback loop destroyed";
 }
 
@@ -476,11 +534,12 @@ void playback_loop_c::rewind(void)
 {
     sf_seek(soundfile,0,SFM_READ);
     framescount = 0;
+    std::fill(framesPlayed.begin(),framesPlayed.end(),0);
     isOutOfSample = false;
 
 }
 
-void playback_loop_c::datarequest(unsigned long frames)
+void playback_loop_c::datarequest(unsigned long frames,int channel)
 {
 
     int nread;
@@ -489,8 +548,29 @@ void playback_loop_c::datarequest(unsigned long frames)
     if(!loopConnected)
         return;
 
+
     if(frames > bufsize)
         frames = bufsize;
+
+
+    //find out which playbackport is requesting data
+
+
+    int portNumber = -1;
+    for (unsigned int j = 0;j<portsChannel.size();j++)
+    {
+        if(portsChannel[j]==channel) {portNumber=j;break;}
+
+
+    }
+
+    if(portNumber == -1) {qDebug()<<"port channel unknown";return;}
+
+
+
+
+
+
 
 
     //the associated playback port requests more data
@@ -501,31 +581,38 @@ void playback_loop_c::datarequest(unsigned long frames)
 
         //pausing, not sending any data
 
-        emit send_data(buf,0);//we still need to answer to the data request otherwise the playback port gets stuck waiting for data
+        emit send_data(buf,0,channel);//we still need to answer to the data request otherwise the playback port gets stuck waiting for data
 
 
         return;
 
     }
 
-    unsigned long ringbuflength = length();
+    unsigned long ringbuflength = length(tails[portNumber]);
 
     if(frames > ringbuflength) frames = ringbuflength; //limit data transfert to what is available in the ringbuffer
 
 
-    nread = pullN(frames);
+    // nread = pullN(frames);
+    nread = pullN2(frames,portNumber);
+
 
 
     if (nread != (signed long)frames) qDebug()<<"error pulling from ringbuf";
 
     this->framescount += nread;
+    framesPlayed[portNumber]+=nread;
+
 
     if(status == SILENT) memset(buf,0,nread*sizeof(short));
 
 
-    emit send_data(buf,nread);
+    short *buf2 = new short[nread];
+    memcpy(buf2,buf,nread*sizeof(short));
 
-    qDebug()<<"send data";
+    emit send_data(buf2,nread,channel);
+
+    //qDebug()<<"send data";
 
 }
 
@@ -576,6 +663,18 @@ void playback_loop_c::removeFromList(void)
 
 }
 
+bool playback_loop_c::isFinished(void)
+{
+
+    for (int i = 0;i<framesPlayed.size();i++)
+    {
+
+
+        if(framesPlayed[i]>=framestoplay) return true;
+
+    }
+    return false;
+}
 
 
 
@@ -640,14 +739,15 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     if(controler->syncMode == NOSYNC)
     {
 
-        if((controler->stop&&(controler->framestoplay<=controler->framescount))
+        if((controler->stop&&(controler->isFinished()))
                 ||((nread <= 0)&&(nrequest!=0)))
         {
 
 
             if(controler->repeat)
             {
-
+                for (auto &pPort : controler->pPorts)
+                    pPort->removeloop(controler);
                 sf_seek(controler->soundfile,0,SFM_READ);
 
             }
@@ -668,7 +768,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     else if(controler->syncMode == CLICKSYNC)
     {
 
-        if(      ( (controler->framestoplay<=controler->framescount) ||((nread <= 0)&&(nrequest!=0)) ))
+        if(      ( (controler->isFinished()) ||((nread <= 0)&&(nrequest!=0)) ))
 
         {
 
@@ -705,31 +805,17 @@ void playbackLoopConsumer::stop(void)
 
 void playbackLoopConsumer::destroyloop()
 {
-
-
     if (controler->isFileOpened)
     {
 
         sf_close(controler->soundfile);
 
-        // controler->pPort->removeloop(controler);
-        for(unsigned int i = 0;i<controler->portCount;i++)
-        {
 
-            controler->pPortList[i]->removeloop(controler);
-
-        }
+        for (auto &pPort : controler->pPorts)
+            pPort->removeloop(controler);
 
         controler->removeFromList();
-
-
-
     }
-
-
-
     controler->deleteLater();
-
-
 
 }

@@ -30,10 +30,9 @@ interface_c *mainInterface;
 
 void MainWindow::chooseCard(void)
 {
-    int numout = ui->cardchoice->currentIndex();
-    int numin = ui->cardchoice_input->currentIndex();
-    InputCardName = InputCardNames.at(numin);
-    OutputCardName = OutputCardNames.at(numout);
+
+    //InputCardName = InputCardNames.at(numin);
+    //OutputCardName = OutputCardNames.at(numout);
 }
 
 void MainWindow::cardchoicerefresh(void)
@@ -41,10 +40,8 @@ void MainWindow::cardchoicerefresh(void)
     getCardList(SND_PCM_STREAM_PLAYBACK,&OutputCardNames,&OutputCardLongNames);
     getCardList(SND_PCM_STREAM_CAPTURE,&InputCardNames,&InputCardLongNames);
 
-    ui->cardchoice->clear();
-    ui->cardchoice->addItems(OutputCardLongNames);
-    ui->cardchoice_input->clear();
-    ui->cardchoice_input->addItems(InputCardLongNames);
+
+
 }
 
 
@@ -112,8 +109,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->setupUi(this);
-    connect(ui->brefresh,SIGNAL(pressed()),this,SLOT(cardchoicerefresh()));
-    connect(ui->bconnect,SIGNAL(pressed()),this,SLOT(chooseCard()));
+
 
 
     connect(ui->bClickUp,SIGNAL(pressed()),this,SIGNAL(clickUp()));
@@ -150,6 +146,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
+  //  system(txt.toStdString().c_str());
+
+    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
+    system(txt.toStdString().c_str());
+
+    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor";
+    system(txt.toStdString().c_str());
+
+
+    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
 
     txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor";

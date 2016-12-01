@@ -7,7 +7,7 @@
 #include "click_c.h"
 
 
-capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop, playback_port_c **pPlayPorts,unsigned int playPortsCount, double delta):id(id),pPort(pPort)
+capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop,std::vector<playback_port_c*>pPlayPorts, double delta):id(id),pPort(pPort)
 {
 
 
@@ -71,12 +71,13 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
         else if(pPort->interface->synchroMode == CLICKSYNC)
         {
 
+
+
             playData_s *param;
             param = new playData_s;
             param->id = id;
             param->length = 1;//one bar
             param->pPlayPorts = pPlayPorts;
-            param->playPortsCount = playPortsCount;
             param->skipevent = 0;
             param->status = SILENT;
             param->syncMode = CLICKSYNC;

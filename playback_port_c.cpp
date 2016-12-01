@@ -188,40 +188,39 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
     //this->connected_loops++;
     this->nu_connected_loops++;
 
+
+   // qDebug()<<"nu connected"<<nu_connected_loops;
+
     if(nu_connected_loops <= 0) {qDebug()<<"err";return;}
 
-    if(!connect(this,SIGNAL(signal_trigger(unsigned long)), pLoop, SLOT(datarequest(unsigned long)),Qt::UniqueConnection))
+    if(!connect(this,SIGNAL(signal_trigger(unsigned long,int)), pLoop, SLOT(datarequest(unsigned long,int)),Qt::UniqueConnection))
         qDebug()<<"connection failed";
+
 
     if(!connect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate()),Qt::UniqueConnection))
         qDebug()<<"connection failed";
 
-    if( !connect(pLoop,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int)),Qt::UniqueConnection))
+    if( !connect(pLoop,SIGNAL(send_data(short*,int,int)), consumer, SLOT(data_available(short*, int,int)),Qt::UniqueConnection))
         qDebug()<<"connection failed";
 
 
-    if(nu_connected_loops == 1) pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
+    if(nu_connected_loops == 1)
+    {
+        pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
+        this->wait_for_data = false;//unblock the port
 
-qDebug()<<pLoop->id<<"connected to"<<channel;
-
+    }
+//qDebug()<<"loop"<<pLoop->id<<"connected to"<<channel;
 
 
 
 }
-
-
-
-
 
 void playback_port_c::test(void)
 {
 
     qDebug()<<"playback port ok "<<this->channel;
 }
-
-
-
-
 
 void playback_port_c::removeloop(playback_loop_c *pLoop)
 {
@@ -230,9 +229,9 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
     //this->connected_loops--;
     this->nu_connected_loops--;
 
-    if(!disconnect(this,SIGNAL(signal_trigger(unsigned long)), pLoop, SLOT(datarequest(unsigned long))))
+    if(!disconnect(this,SIGNAL(signal_trigger(unsigned long,int)), pLoop, SLOT(datarequest(unsigned long,int))))
         qDebug()<<"playback loop disconnection failed 1";
-    if( !disconnect(pLoop,SIGNAL(send_data(short*,int)), consumer, SLOT(data_available(short*, int))))
+    if( !disconnect(pLoop,SIGNAL(send_data(short*,int,int)), consumer, SLOT(data_available(short*, int,int))))
         qDebug()<<"playback loop  disconnection failed 2";
     if(!disconnect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate())))
         qDebug()<<"connection failed";
@@ -260,6 +259,7 @@ void playback_port_c::triggerempty(void)
 
     if(wait_for_data)
     {
+        //qDebug()<<"WAIT";
         return;
     }
 
@@ -279,17 +279,21 @@ void playback_port_c::triggerempty(void)
 
     wait_for_data = true;
     // qDebug()<<"emit"<<frames;
-    emit signal_trigger(frames);
+    emit signal_trigger(frames,channel);
 
 
 
 }
 
-void playbackPortConsumer::data_available(short *buf, int nread)
+void playbackPortConsumer::data_available(short *buf, int nread,int chan)
 {
 
-qDebug()<<"received";
+//qDebug()<<"received";
     //implement mix strategy here
+   // qDebug()<<chan<<controler->channel;
+    if(chan != controler->channel) return;//not the right playback port
+
+
 
 
     if(nread > datalength) datalength = nread; //keep the longest sample size
@@ -333,6 +337,8 @@ qDebug()<<"received";
         }
     }
 
+    if(nread>0)
+    delete buf;
 
     if(controler->data_received >= controler->connected_loops)
     {
