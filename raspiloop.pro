@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     click_c.cpp \
     events.cpp \
     alsa_playback_device.cpp \
-    alsa_capture_device.cpp
+    alsa_capture_device.cpp \
+    dialogdevice.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
@@ -39,9 +40,11 @@ HEADERS  += mainwindow.h \
     click_c.h \
     events.h \
     alsa_playback_device.h \
-    alsa_capture_device.h
+    alsa_capture_device.h \
+    dialogdevice.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    dialogdevice.ui
 
 
 LIBS += -lasound -lsndfile

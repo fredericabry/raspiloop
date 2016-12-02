@@ -11,7 +11,7 @@
 #include "QKeyEvent"
 #include "interface.h"
 
-
+#include "dialogdevice.h"
 
 #define LOOP_LENGTH 2000
 
@@ -92,6 +92,27 @@ void MainWindow::setLoopList(QString txt)
 
 
 
+void MainWindow::dialogInputDevice(void)//lot of boucing...
+{
+    DialogDevice *dialog = new DialogDevice(this,mainInterface,1);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
+}
+void MainWindow::dialogOutputDevice(void)
+{
+    DialogDevice *dialog = new DialogDevice(this,mainInterface,0);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
+}
+
+
+
 
 
 
@@ -115,8 +136,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->bClickUp,SIGNAL(pressed()),this,SIGNAL(clickUp()));
     connect(ui->bClickDown,SIGNAL(pressed()),this,SIGNAL(clickDown()));
-
-
+    connect(ui->bCaptureDevice,SIGNAL(pressed()),this,SLOT(dialogInputDevice()));
+    connect(ui->bPlaybackDevice,SIGNAL(pressed()),this,SLOT(dialogOutputDevice()));
     connect(ui->bstop,SIGNAL(pressed()),this,SLOT(shutdown()));
 
 
@@ -141,38 +162,20 @@ MainWindow::MainWindow(QWidget *parent) :
     pLeft = alsa_playback_port_by_num(0);
     pLeft = alsa_playback_port_by_num(1);
 */
-qDebug()<<"min playback "<<n2s(data.min_playback);
-qDebug()<<"max playback "<<n2s(data.max_playback);
-qDebug()<<"min record "<<n2s(data.min_capture);
-qDebug()<<"max record "<<n2s(data.max_capture);
 
 
 
 
-    QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
-  //  system(txt.toStdString().c_str());
-
-    txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
+    // QString txt = "taskset -cp 3 "+n2s(QCoreApplication::applicationPid());
+    QString  txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
-
     txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
-
-
     txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
-
     txt = "echo \"performance\" |sudo tee /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor";
     system(txt.toStdString().c_str());
 
-    /*  txt = "sudo chrt -f -p 99 "+QString::number(QCoreApplication::applicationPid());
-    system(txt.toStdString().c_str());
-
-
-    txt = "sudo renice -n -19 -p "+QString::number(QCoreApplication::applicationPid());
-    system(txt.toStdString().c_str());
-
-*/
 
 
 
@@ -185,14 +188,7 @@ qDebug()<<"max record "<<n2s(data.max_capture);
 
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
-
-    /*tester = new QTimer;
-    connect(tester,SIGNAL(timeout()),mainInterface,SLOT(Test()));
-    tester->start(5000);*/
-
-
-
-
+ //   QTimer::singleShot(100,this,SLOT(dialogDevice(0)));
 }
 
 

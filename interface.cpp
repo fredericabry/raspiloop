@@ -540,15 +540,12 @@ void interface_c::init(void)
 
     playDevice = new alsa_playback_device("hw:1,0", 2,RATE,this);
     playDevice2 = new alsa_playback_device("hw:1,1", 2,RATE,this);
-
     captureDevice = new alsa_capture_device("hw:1,0", 2, RATE,this);
 
     pLeft = playDevice->alsa_playback_port_by_num(0);
     pRight = playDevice->alsa_playback_port_by_num(1);
     pLeft2 = playDevice2->alsa_playback_port_by_num(0);
     pRight2 = playDevice2->alsa_playback_port_by_num(1);
-
-
 
     pRec0 = captureDevice->alsa_capture_port_by_num(0);
     pRec1 = captureDevice->alsa_capture_port_by_num(1);

@@ -219,7 +219,7 @@ void getCardList(snd_pcm_stream_t stream,QStringList *CardName,QStringList *Card
             }
 
             //count = snd_pcm_info_get_subdevices_count(pcminfo);
-            CardName->append(name);
+            CardName->append(QString(name)+"."+QString::number(dev));
             card_desc =
                     (QString)snd_ctl_card_info_get_id(info)
                     +" ["
