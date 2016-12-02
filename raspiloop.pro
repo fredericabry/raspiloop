@@ -18,20 +18,18 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     util.cpp \
     alsa_util.cpp \
-    alsa_playback.cpp \
-    alsa_capture.cpp \
     playback_port_c.cpp \
     capture_port_c.cpp \
     playback_loop_c.cpp \
     capture_loop_c.cpp \
     interface.cpp \
     click_c.cpp \
-    events.cpp
+    events.cpp \
+    alsa_playback_device.cpp \
+    alsa_capture_device.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
-    alsa_playback.h \
-    alsa_capture.h \
     playback_port_c.h \
     capture_port_c.h \
     playback_loop_c.h \
@@ -39,7 +37,9 @@ HEADERS  += mainwindow.h \
     interface.h \
     parameters.h \
     click_c.h \
-    events.h
+    events.h \
+    alsa_playback_device.h \
+    alsa_capture_device.h
 
 FORMS    += mainwindow.ui
 

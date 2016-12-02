@@ -59,7 +59,7 @@ public:
     int getEventsCount();
     void removeAllEvents();
 
-
+    void destroy();
     void startRecord(playback_port_c *pPlayPort, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
 
 

@@ -78,6 +78,7 @@ void MainWindow::setClickButton(bool status)
 void MainWindow::shutdown()
 {
 
+    mainInterface->destroy();
     exit(0);
 
 }
@@ -201,8 +202,7 @@ qDebug()<<"max record "<<n2s(data.max_capture);
 MainWindow::~MainWindow()
 {
 
-    alsa_cleanup_playback();
-    alsa_cleanup_capture();
+
     delete ui;
 
 

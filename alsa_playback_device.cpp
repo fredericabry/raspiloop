@@ -1,29 +1,11 @@
-#include "alsa_playback.h"
-#include <qdebug.h>
+#include "alsa_playback_device.h"
+#include "qdebug.h"
 #include "qthread.h"
 #include "parameters.h"
 
 
-short **playback_buf;
 
-
-bool playing;
-
-
-ConsumerPlayback *consumer;
-
-
-snd_pcm_t *playback_handle;
-snd_pcm_uframes_t playback_frames,playback_period_size,playback_hw_buffersize;
-
-int playback_rate;
-int playback_channels;
-
-
-playback_port_c** main_buf_playback;
-
-
-void alsa_start_playback(QString device, int channels, int rate, interface_c *interface)
+alsa_playback_device::alsa_playback_device(QString device, int channels, int rate, interface_c *interface)
 {
     if (!alsa_open_device_playback(device)) return;
     alsa_init_playback(channels,rate,interface);
@@ -34,7 +16,7 @@ void alsa_start_playback(QString device, int channels, int rate, interface_c *in
 
 }
 
-bool alsa_open_device_playback(QString device)
+bool alsa_playback_device::alsa_open_device_playback(QString device)
 {
     int err;
     device = "plug"+device;//allow non interleaving
@@ -63,7 +45,7 @@ bool alsa_open_device_playback(QString device)
 
 }
 
-void alsa_init_playback(int channels,int rate,interface_c *interface)
+void alsa_playback_device::alsa_init_playback(int channels,int rate,interface_c *interface)
 {
 
     playback_channels = channels;
@@ -73,7 +55,7 @@ void alsa_init_playback(int channels,int rate,interface_c *interface)
     playback_frames = PLAYBACK_CHANNEL_WIDTH;
     playback_period_size = playback_frames*playback_channels;
 
-    playing = true;
+
 
 
 
@@ -94,7 +76,7 @@ void alsa_init_playback(int channels,int rate,interface_c *interface)
 
 }
 
-void alsa_set_hw_parameters_playback(void)
+void alsa_playback_device::alsa_set_hw_parameters_playback(void)
 {
 
     int err;
@@ -171,7 +153,7 @@ void alsa_set_hw_parameters_playback(void)
 
 }
 
-void alsa_set_sw_parameters_playback(void)
+void alsa_playback_device::alsa_set_sw_parameters_playback(void)
 {
     int err;
     snd_pcm_sw_params_t *swparams;
@@ -201,7 +183,7 @@ void alsa_set_sw_parameters_playback(void)
 
 }
 
-void alsa_begin_playback(playback_port_c **port)
+void alsa_playback_device::alsa_begin_playback(playback_port_c **port)
 {
 
     int err;
@@ -219,7 +201,9 @@ void alsa_begin_playback(playback_port_c **port)
     //   snd_async_handler_t *pcm_callback;
     //   snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,port);
 
-    consumer = new ConsumerPlayback();
+    consumer = new ConsumerDevicePlayback();
+    consumer->playing = true;
+    consumer->controler = this;
     consumer->port = port;
     consumer->start();
 
@@ -229,7 +213,7 @@ void alsa_begin_playback(playback_port_c **port)
 
 }
 
-void alsa_write_playback(playback_port_c **port)
+void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 {
     int err;
 
@@ -265,7 +249,7 @@ void alsa_write_playback(playback_port_c **port)
 }
 
 
-void alsa_conf(void)
+void alsa_playback_device::alsa_conf(void)
 {
     snd_pcm_uframes_t  	buffer_size;
     snd_pcm_uframes_t period_size;
@@ -273,16 +257,16 @@ void alsa_conf(void)
 
 }
 
-playback_port_c* alsa_playback_port_by_num(int channel)
+playback_port_c* alsa_playback_device::alsa_playback_port_by_num(int channel)
 {
 
 
     return main_buf_playback[channel];
 }
 
-void alsa_cleanup_playback()
+void alsa_playback_device::alsa_cleanup_playback()
 {
-    playing = false;
+    consumer->playing = false;
 
 
 
@@ -296,7 +280,7 @@ void alsa_cleanup_playback()
     //qDebug()<<"cleaning up";
 }
 
-int wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
+int ConsumerDevicePlayback::wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
     unsigned short revents;
     while (1) {
@@ -309,12 +293,12 @@ int wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
     }
 }
 
-void write_and_poll_loop(playback_port_c **port)
+void ConsumerDevicePlayback::write_and_poll_loop(playback_port_c **port)
 {
     struct pollfd *ufds;
 
     int err, count;
-    count = snd_pcm_poll_descriptors_count (playback_handle);
+    count = snd_pcm_poll_descriptors_count (controler->playback_handle);
     if (count <= 0) {
         qDebug()<<"Invalid poll descriptors count\n";
         return ;
@@ -325,7 +309,7 @@ void write_and_poll_loop(playback_port_c **port)
         qDebug()<<"No enough memory\n";
         return ;
     }
-    if ((err = snd_pcm_poll_descriptors(playback_handle, ufds, count)) < 0) {
+    if ((err = snd_pcm_poll_descriptors(controler->playback_handle, ufds, count)) < 0) {
         qDebug()<<"Unable to obtain poll descriptors for playback: "<<snd_strerror(err);
         return ;
     }
@@ -335,7 +319,7 @@ void write_and_poll_loop(playback_port_c **port)
 
 
     while (playing) {
-        err = wait_for_poll(playback_handle, ufds, count);
+        err = wait_for_poll(controler->playback_handle, ufds, count);
         if (err < 0) {qDebug()<<"playback polling error";return;}
         else
         {
@@ -346,18 +330,18 @@ void write_and_poll_loop(playback_port_c **port)
 
 
     snd_pcm_uframes_t avail;
-    avail = snd_pcm_avail_update(playback_handle);
+    avail = snd_pcm_avail_update(controler->playback_handle);
 
    // qDebug()<<avail;
-    while(avail >= playback_frames)
+    while(avail >= controler->playback_frames)
     {
-        alsa_write_playback(port);
-        avail = snd_pcm_avail_update(playback_handle);
+        controler->alsa_write_playback(port);
+        avail = snd_pcm_avail_update(controler->playback_handle);
     }
 
 }
 
-void ConsumerPlayback::run()
+void ConsumerDevicePlayback::run()
 {
 
     while(playing)
@@ -366,11 +350,5 @@ void ConsumerPlayback::run()
         QThread::usleep(PLAYBACK_READBUF_SLEEP);
     }
 }
-
-
-
-
-
-
 
 

@@ -58,7 +58,7 @@ private slots:
     void chooseCard(void);
     void setLoopList(QString txt);
 
-
+public slots:
     void shutdown(void);
 
 

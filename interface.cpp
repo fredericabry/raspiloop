@@ -8,10 +8,12 @@
 #include "click_c.h"
 
 #include "events.h"
+#include "alsa_playback_device.h"
+#include "alsa_capture_device.h"
 
-
-
-
+alsa_playback_device *playDevice;
+alsa_playback_device *playDevice2;
+alsa_capture_device *captureDevice;
 
 
 playback_port_c *pLeft,*pRight,*pLeft2,*pRight2;
@@ -534,16 +536,25 @@ void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCaptur
 void interface_c::init(void)
 {
 
-    alsa_start_playback("hw:1,0", 4,RATE,this);
-    alsa_start_capture("hw:1,0", 2, RATE,this);
-    //QThread::sleep(0.5);
-    pLeft = alsa_playback_port_by_num(0);
-    pRight = alsa_playback_port_by_num(1);
-    pLeft2 = alsa_playback_port_by_num(2);
-    pRight2 = alsa_playback_port_by_num(3);
 
-    pRec0 = alsa_capture_port_by_num(0);
-    pRec1 = alsa_capture_port_by_num(1);
+
+    playDevice = new alsa_playback_device("hw:1,0", 2,RATE,this);
+    playDevice2 = new alsa_playback_device("hw:1,1", 2,RATE,this);
+
+    captureDevice = new alsa_capture_device("hw:1,0", 2, RATE,this);
+
+    pLeft = playDevice->alsa_playback_port_by_num(0);
+    pRight = playDevice->alsa_playback_port_by_num(1);
+    pLeft2 = playDevice2->alsa_playback_port_by_num(0);
+    pRight2 = playDevice2->alsa_playback_port_by_num(1);
+
+
+
+    pRec0 = captureDevice->alsa_capture_port_by_num(0);
+    pRec1 = captureDevice->alsa_capture_port_by_num(1);
+
+
+
     pActiveRecPort = NULL;
     synchroMode = CLICKSYNC;
 
@@ -552,7 +563,7 @@ void interface_c::init(void)
 
 
 
-    pClick = new click_c(120,pLeft2,IDLE,this,parent);
+    pClick = new click_c(120,pRight2,IDLE,this,parent);
     clickStatus=false;
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
     connect(this,SIGNAL(loopList(QString)),parent,SLOT(setLoopList(QString)));
@@ -739,7 +750,7 @@ void interface_c::keyInput(QKeyEvent *e)
         break;
     case Qt::Key_Enter:
 
-        parent->close();
+        parent->shutdown();
 
 
         break;
@@ -774,7 +785,12 @@ void interface_c::Afficher(QString txt)
 }
 
 
-
+void interface_c::destroy(void)
+{
+    playDevice->alsa_cleanup_playback();
+    captureDevice->alsa_cleanup_capture();
+    playDevice2->alsa_cleanup_playback();
+}
 
 
 
