@@ -14,7 +14,7 @@
 
 
 
-playback_port_c *pLeft,*pRight;
+playback_port_c *pLeft,*pRight,*pLeft2,*pRight2;
 capture_port_c *pRec0, *pRec1 ;
 
 capture_port_c *pActiveRecPort;
@@ -490,17 +490,6 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCapturePort,capture_loop_c **pCaptureLoop,long length)
 {
     *pCaptureLoop = NULL;
@@ -545,11 +534,14 @@ void interface_c::startRecord(playback_port_c *pPlayPort,capture_port_c *pCaptur
 void interface_c::init(void)
 {
 
-    alsa_start_playback("hw:1,0", 2,RATE,this);
+    alsa_start_playback("hw:1,0", 4,RATE,this);
     alsa_start_capture("hw:1,0", 2, RATE,this);
     //QThread::sleep(0.5);
     pLeft = alsa_playback_port_by_num(0);
     pRight = alsa_playback_port_by_num(1);
+    pLeft2 = alsa_playback_port_by_num(2);
+    pRight2 = alsa_playback_port_by_num(3);
+
     pRec0 = alsa_capture_port_by_num(0);
     pRec1 = alsa_capture_port_by_num(1);
     pActiveRecPort = NULL;
@@ -560,7 +552,7 @@ void interface_c::init(void)
 
 
 
-    pClick = new click_c(120,pLeft,IDLE,this,parent);
+    pClick = new click_c(120,pLeft2,IDLE,this,parent);
     clickStatus=false;
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
     connect(this,SIGNAL(loopList(QString)),parent,SLOT(setLoopList(QString)));

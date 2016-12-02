@@ -197,7 +197,7 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
         qDebug()<<"connection failed";
 
 
-    if(!connect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate()),Qt::UniqueConnection))
+    if(!connect(consumer,SIGNAL(update_loops(int)), pLoop, SLOT(activate(int)),Qt::UniqueConnection))
         qDebug()<<"connection failed";
 
     if( !connect(pLoop,SIGNAL(send_data(short*,int,int)), consumer, SLOT(data_available(short*, int,int)),Qt::UniqueConnection))
@@ -206,7 +206,8 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
 
     if(nu_connected_loops == 1)
     {
-        pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
+        //pLoop->loopConnected = true;//first loop : let's avoid the activation procedure
+        pLoop->activate(channel);//first loop : let's avoid the activation procedure
         this->wait_for_data = false;//unblock the port
 
     }
@@ -233,7 +234,7 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
         qDebug()<<"playback loop disconnection failed 1";
     if( !disconnect(pLoop,SIGNAL(send_data(short*,int,int)), consumer, SLOT(data_available(short*, int,int))))
         qDebug()<<"playback loop  disconnection failed 2";
-    if(!disconnect(consumer,SIGNAL(update_loops()), pLoop, SLOT(activate())))
+    if(!disconnect(consumer,SIGNAL(update_loops(int)), pLoop, SLOT(activate(int))))
         qDebug()<<"connection failed";
 
 
@@ -268,7 +269,7 @@ void playback_port_c::triggerempty(void)
     if(connected_loops != nu_connected_loops)
     {
         connected_loops = nu_connected_loops;//maybe we need to update the connect loops count
-        emit consumer->update_loops(); //tell the added loops to get ready
+        emit consumer->update_loops(channel); //tell the added loops to get ready
     }
 
 
@@ -337,7 +338,7 @@ void playbackPortConsumer::data_available(short *buf, int nread,int chan)
         }
     }
 
-    if(nread>0)
+
     delete buf;
 
     if(controler->data_received >= controler->connected_loops)

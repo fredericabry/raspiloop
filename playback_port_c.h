@@ -24,7 +24,7 @@ public slots:
     void data_available(short *buf, int nread, int chan);
     void update(void);
 signals:
-    void update_loops(void);//signal all loop that they are now autorized to feed data
+    void update_loops(int channel);//signal all loop that they are now autorized to feed data
 
 };
 

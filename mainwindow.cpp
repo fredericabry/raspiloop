@@ -119,13 +119,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bstop,SIGNAL(pressed()),this,SLOT(shutdown()));
 
 
-
+    ui->bClick->setCheckable(false);
     cardchoicerefresh();
 
 
 
     hw_info data;
-    data = get_device_info("hw:1,0");
+    data = get_device_info("hw:1,1");
 
     /*
     Afficher(data.name);
@@ -140,7 +140,10 @@ MainWindow::MainWindow(QWidget *parent) :
     pLeft = alsa_playback_port_by_num(0);
     pLeft = alsa_playback_port_by_num(1);
 */
-
+qDebug()<<"min playback "<<n2s(data.min_playback);
+qDebug()<<"max playback "<<n2s(data.max_playback);
+qDebug()<<"min record "<<n2s(data.min_capture);
+qDebug()<<"max record "<<n2s(data.max_capture);
 
 
 

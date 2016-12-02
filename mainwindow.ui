@@ -119,6 +119,9 @@
     <property name="text">
      <string>Start</string>
     </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
    </widget>
   </widget>
  </widget>

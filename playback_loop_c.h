@@ -48,8 +48,8 @@ public:
    std::vector<playback_port_c*>pPorts;
    std::vector<int>portsChannel;
    std::vector<unsigned long>tails;
-   std::vector<unsigned long>framesPlayed;
-
+   std::vector<unsigned long>framesCount;
+   std::vector<bool>loopConnectedToPort;
 
 
 
@@ -72,17 +72,17 @@ public:
 
 
     short *ringbuf;//big buffer for circular storage
-    short *buf;//small buffer for transfert
+
     short *buffile;//small buffer used to read files;
 
-    unsigned long tail,head;
+    unsigned long head;
     unsigned long maxlength;
     unsigned long bufsize;//size of "buf" used for transfert
     bool isFileOpened;
 
 
     long framestoplay;
-    long framescount;
+
     unsigned long min_frame_request;
 
     int barstoplay;
@@ -96,7 +96,7 @@ public:
 
     playback_loop_c *pPrevLoop,*pNextLoop;
     QMutex playloop_mutex;
-
+    int findCapturePortNumber(int channel);
     void test(QString a);
     void openFile(void);
     void moveToPort(playback_port_c *pNuPort);
@@ -114,13 +114,14 @@ public:
     unsigned long freespace();
     void pushN(short *buf_in, unsigned long N);
     int pullN(unsigned long N);
-    int pullN2(unsigned long N, int portNumber);
+    int pullN(unsigned long N, int portNumber, short **buf3);
     void destroy(void);
 
+public slots:
+    void activate(int channel);
 
 private slots:
     void datarequest(unsigned long frames, int channel);
-    void activate(void);
     void infoFromCaptureLoop(unsigned long length);
 signals:
     void send_data(short *buf,int nread,int channel);
