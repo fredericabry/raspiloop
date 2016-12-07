@@ -19,14 +19,15 @@ class capture_port_c : public QObject
     Q_OBJECT
 
 public:
-    capture_port_c(const unsigned long maxlength,const unsigned long bufsize,const int rate,const int id,interface_c *interface);
+    capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int channel, const QString deviceName, interface_c *interface);
     ~capture_port_c();
 
 
     const unsigned long maxlength;
     const unsigned long bufsize;
-    int const rate;
-    int const id;
+    const int rate;
+    const int channel;
+    const QString deviceName;
     interface_c *interface;
 
 
@@ -41,6 +42,7 @@ public:
     void openfile(QString filename);
     void closefile();
     void destroyport();
+    QString getDeviceName(void);
 
 
 };

@@ -219,19 +219,14 @@ void getCardList(snd_pcm_stream_t stream,QStringList *CardName,QStringList *Card
             }
 
             //count = snd_pcm_info_get_subdevices_count(pcminfo);
-            CardName->append(QString(name)+"."+QString::number(dev));
+            CardName->append(QString(name)+","+QString::number(dev));
             card_desc =
-                    (QString)snd_ctl_card_info_get_id(info)
-                    +" ["
+                    (QString)//snd_ctl_card_info_get_id(info)
+
                     +snd_ctl_card_info_get_name(info)
-                    +"], "
-                    //+"device "
-                    //+QString::number(dev)
-                    //+": "
-                    +snd_pcm_info_get_id(pcminfo)
-                    +"["
+                    +" - "
                     +snd_pcm_info_get_name(pcminfo)
-                    +"]"
+
                     //+"\nSubdevices: "
                     //+QString::number(snd_pcm_info_get_subdevices_avail(pcminfo))
                     //+"\\"
@@ -275,7 +270,92 @@ next_card:
 }
 
 
-struct hw_info get_device_info(QString device_name) {
+
+
+
+
+
+
+
+
+QString getCardDescription(QString cardName,snd_pcm_stream_t stream)
+{
+
+
+
+    QString card_desc;
+
+
+    snd_ctl_t *handle;
+    int err;
+    snd_ctl_card_info_t *info;
+    snd_pcm_info_t *pcminfo;
+    snd_ctl_card_info_alloca(&info);
+    snd_pcm_info_alloca(&pcminfo);
+
+
+    QStringList nameParts = cardName.split(",",QString::SkipEmptyParts);
+
+    if(nameParts.size()!=2)
+    {
+        qDebug()<<"card name error";
+        return "";
+
+    }
+    QString name = nameParts[0];
+    QString id = nameParts[1];
+    QRegExp re("\\d*");  // a digit (\d), zero or more times (*)
+    if (!re.exactMatch(id))
+    {
+        qDebug()<<"card name error";
+        return "";
+
+    }
+
+    if((err = snd_ctl_open(&handle,name.toStdString().c_str(),0))<0)
+    {
+        qDebug()<<"control open (%i): %s";
+        return "";
+    }
+
+
+    if((err = snd_ctl_card_info(handle,info))<0)
+    {
+        qDebug()<<"control hardware info (%i): %s";
+        snd_ctl_close(handle);
+        return "";
+    }
+
+
+    snd_pcm_info_set_device(pcminfo,id.toInt());
+    snd_pcm_info_set_subdevice(pcminfo,0);
+    snd_pcm_info_set_stream(pcminfo,stream);
+
+    if((err = snd_ctl_pcm_info(handle,pcminfo))<0)
+    {
+        if(err != -ENOENT) qDebug() << "control digital audio info";
+        return "";
+
+    }
+
+    card_desc =
+            (QString)
+            +snd_ctl_card_info_get_name(info)
+            +" - "
+            +snd_pcm_info_get_name(pcminfo)
+            ;
+
+
+
+
+    return card_desc;
+
+}
+
+
+
+
+struct hw_info get_device_info(QString device_name,snd_pcm_stream_t stream) {
     snd_pcm_hw_params_t *hw_params;
     int err;
     snd_pcm_t *handle;
@@ -289,24 +369,23 @@ struct hw_info get_device_info(QString device_name) {
     struct hw_info info;
 
 
-    snd_pcm_stream_t stream;
-
     info.name = device_name;
 
-
-
-    stream = SND_PCM_STREAM_PLAYBACK;
+    // stream = SND_PCM_STREAM_PLAYBACK;
 
 
 
     if ((err = snd_pcm_open (&handle, device_name.toStdString().c_str(), stream, 0)) < 0) {
 
-        info.max_playback = 0;
-        info.min_playback = 0;
-        goto capture;
+        info.max_port = 0;
+        info.min_port = 0;
+        return info;
     }
 
 
+
+    //  info.longname = (QString)snd_pcm_name(handle);
+    info.longname = "";
 
 
     if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
@@ -328,7 +407,7 @@ struct hw_info get_device_info(QString device_name) {
         exit (1);
     }
 
-    info.max_playback = max;
+    info.max_port = max;
 
 
 
@@ -338,7 +417,7 @@ struct hw_info get_device_info(QString device_name) {
         exit (1);
     }
 
-    info.min_playback = min;
+    info.min_port = min;
 
 
 
@@ -381,7 +460,7 @@ struct hw_info get_device_info(QString device_name) {
         exit (1);
     }
     //printf("min period size in frames %d\n", frames);
-    info.min_period_size = frames;
+    info.min_period_size = frames  ;
 
     if ((err = snd_pcm_hw_params_get_period_size_max(hw_params, &frames, &dir)) < 0) {
         fprintf (stderr, "cannot  get max period size (%s)\n",
@@ -442,153 +521,7 @@ struct hw_info get_device_info(QString device_name) {
 
     snd_pcm_close(handle);
 
-capture:
 
-
-    stream = SND_PCM_STREAM_CAPTURE;
-
-
-
-
-    if ((err = snd_pcm_open (&handle, device_name.toStdString().c_str(), stream, 0)) < 0) {
-
-        info.max_capture = 0;
-        info.min_capture = 0;
-        goto end;
-    }
-
-    if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
-        fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    if ((err = snd_pcm_hw_params_any (handle, hw_params)) < 0) {
-        fprintf (stderr, "cannot initialize hardware parameter structure (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    if ((err = snd_pcm_hw_params_get_channels_max(hw_params, &max)) < 0) {
-        fprintf (stderr, "cannot  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    info.max_capture = max;
-
-
-
-    if ((err = snd_pcm_hw_params_get_channels_min(hw_params, &min)) < 0) {
-        fprintf (stderr, "cannot get channel info  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    info.min_capture = min;
-
-
-
-    if ((err = snd_pcm_hw_params_get_rate_min(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot get min rate (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    info.min_rate = val;
-
-
-    if ((err = snd_pcm_hw_params_get_rate_max(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot get max rate (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    info.max_rate = val;
-
-    if ((err = snd_pcm_hw_params_get_period_time_min(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot get min period time  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-
-    info.min_period_time = val;
-
-    if ((err = snd_pcm_hw_params_get_period_time_max(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot  get max period time  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    // printf("max period time %d usecs\n", val);
-    info.max_period_time = val;
-
-    if ((err = snd_pcm_hw_params_get_period_size_min(hw_params, &frames, &dir)) < 0) {
-        fprintf (stderr, "cannot  get min period size  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    //printf("min period size in frames %d\n", frames);
-    info.min_period_size = frames;
-
-    if ((err = snd_pcm_hw_params_get_period_size_max(hw_params, &frames, &dir)) < 0) {
-        fprintf (stderr, "cannot  get max period size (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    // printf("max period size in frames %d\n", frames);
-    info.max_period_size = frames;
-
-    if ((err = snd_pcm_hw_params_get_periods_min(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot  get min periods  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    // printf("min periods per buffer %d\n", val);
-    info.min_period_per_buffer= val;
-
-    if ((err = snd_pcm_hw_params_get_periods_max(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot  get min periods (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    //printf("max periods per buffer %d\n", val);
-    info.max_period_per_buffer= val;
-
-    if ((err = snd_pcm_hw_params_get_buffer_time_min(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot get min buffer time (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    //printf("min buffer time %d usecs\n", val);
-    info.min_buffer_time = val;
-    if ((err = snd_pcm_hw_params_get_buffer_time_max(hw_params, &val, &dir)) < 0) {
-        fprintf (stderr, "cannot get max buffer time  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    //  printf("max buffer time %d usec  buf+="min buffer size in frames " + n2s(frames) + "\n";s\n", val);
-    info.max_buffer_time = val;
-    if ((err = snd_pcm_hw_params_get_buffer_size_min(hw_params, &frames)) < 0) {
-        fprintf (stderr, "cannot get min buffer size (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    //printf("min buffer size in frames %d\n", frames);
-    info.min_buffer_size = frames;
-
-
-    if ((err = snd_pcm_hw_params_get_buffer_size_max(hw_params, &frames)) < 0) {
-        fprintf (stderr, "cannot get max buffer size  (%s)\n",
-                 snd_strerror (err));
-        exit (1);
-    }
-    // printf("max buffer size in frames %d\n", frames);
-    info.max_buffer_size = frames;
-
-    snd_pcm_close(handle);
-
-
-end:
 
 
     return info;

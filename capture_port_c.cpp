@@ -5,7 +5,7 @@
 
 
 
-capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int id, interface_c *interface):maxlength(maxlength),bufsize(bufsize),rate(rate),id(id),interface(interface)
+capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned long bufsize, const int rate, const int channel,const QString deviceName, interface_c *interface):maxlength(maxlength),bufsize(bufsize),rate(rate),channel(channel),deviceName(deviceName),interface(interface)
 {
     ring_lock.lock();
     this->head = 0;
@@ -15,7 +15,7 @@ capture_port_c::capture_port_c(const unsigned long maxlength, const unsigned lon
     memset(bufin,0,bufsize*sizeof(short));
     ring_lock.unlock();
 
-    interface->Afficher("capture port created");
+    interface->Afficher("capture port "+QString::number(channel)+" created on "+deviceName);
 }
 
 capture_port_c::~capture_port_c()
@@ -24,6 +24,12 @@ capture_port_c::~capture_port_c()
     free(bufin);
 
 }
+
+QString capture_port_c::getDeviceName(void)
+{
+    return deviceName;
+}
+
 
 void capture_port_c::pushN(unsigned long N)
 {

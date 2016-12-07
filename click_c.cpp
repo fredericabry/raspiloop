@@ -7,7 +7,7 @@
 
 
 
-click_c::click_c(int tempo, playback_port_c *pPort, status_t status, interface_c *interface, MainWindow *parent):pPort(pPort),status(status),interface(interface),parent(parent)
+click_c::click_c(int tempo, std::vector<playback_port_c*> pPorts, status_t status, interface_c *interface, MainWindow *parent):pPorts(pPorts),status(status),interface(interface),parent(parent)
 {
     if(tempo<=0) {qDebug()<<"invalid tempo";delete this;return;}
     t1 = new QElapsedTimer;
@@ -66,9 +66,9 @@ void click_c::clickUp()
 
 void click_c::tick(void)
 {
-    std::vector<playback_port_c*>pPorts(1);
 
-    pPorts[0] = pPort;
+
+
 
     t1->start();
     beat ++;

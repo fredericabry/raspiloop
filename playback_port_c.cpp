@@ -5,7 +5,7 @@
 #include "interface.h"
 #include "qtimer.h"
 
-playback_port_c::playback_port_c(const unsigned long maxlength,  const int channel,  interface_c *interface):maxlength(maxlength),channel(channel),interface(interface)
+playback_port_c::playback_port_c(const unsigned long maxlength,  const int channel,QString deviceName,interface_c *interface):maxlength(maxlength),channel(channel),deviceName(deviceName),interface(interface)
 {
     bufsize = PLAYBACK_BUFSIZE;
 
@@ -29,10 +29,16 @@ playback_port_c::playback_port_c(const unsigned long maxlength,  const int chann
 
     consumer->start();
 
-    interface->Afficher("playback port created");
+    interface->Afficher("playback port "+QString::number(channel)+" created on "+deviceName);
 
 
 
+}
+
+
+QString playback_port_c::getDeviceName(void)
+{
+    return deviceName;
 }
 
 playback_port_c::~playback_port_c()
@@ -66,7 +72,7 @@ void playback_port_c::pushN(short *buf_in, unsigned long N)
 
 
 
-    if(N > this->freespace())  {qDebug()<<"playback ringbuf full"<<N;ring_lock.unlock();return;}
+    if(N > this->freespace())  {/*qDebug()<<"playback ringbuf full"<<N;*/ring_lock.unlock();return;}
 
     if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct";ring_lock.unlock(); return;}
 
@@ -185,23 +191,26 @@ int playback_port_c::pullN(unsigned long N)
 void playback_port_c::addloop(playback_loop_c *pLoop)
 {
 
+
+
+
+    // qDebug()<<"nu connected"<<nu_connected_loops;
+
+    if(nu_connected_loops < 0) {qDebug()<<"err";return;}
+
     //this->connected_loops++;
     this->nu_connected_loops++;
 
 
-   // qDebug()<<"nu connected"<<nu_connected_loops;
-
-    if(nu_connected_loops <= 0) {qDebug()<<"err";return;}
 
     if(!connect(this,SIGNAL(signal_trigger(unsigned long,int)), pLoop, SLOT(datarequest(unsigned long,int)),Qt::UniqueConnection))
-        qDebug()<<"connection failed";
-
-
-    if(!connect(consumer,SIGNAL(update_loops(int)), pLoop, SLOT(activate(int)),Qt::UniqueConnection))
-        qDebug()<<"connection failed";
+        qDebug()<<"signal trigger connection failed";
 
     if( !connect(pLoop,SIGNAL(send_data(short*,int,int)), consumer, SLOT(data_available(short*, int,int)),Qt::UniqueConnection))
-        qDebug()<<"connection failed";
+        qDebug()<<"send data connection failed";
+
+    if(!connect(consumer,SIGNAL(update_loops(int)), pLoop, SLOT(activate(int)),Qt::UniqueConnection))
+        qDebug()<<"update loops connection failed";
 
 
     if(nu_connected_loops == 1)
@@ -211,17 +220,19 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
         this->wait_for_data = false;//unblock the port
 
     }
-//qDebug()<<"loop"<<pLoop->id<<"connected to"<<channel;
+
+
+
+
+
+
+    // qDebug()<<"loop"<<pLoop->id<<"connected to"<<channel;
 
 
 
 }
 
-void playback_port_c::test(void)
-{
 
-    qDebug()<<"playback port ok "<<this->channel;
-}
 
 void playback_port_c::removeloop(playback_loop_c *pLoop)
 {
@@ -234,12 +245,10 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
         qDebug()<<"playback loop disconnection failed 1";
     if( !disconnect(pLoop,SIGNAL(send_data(short*,int,int)), consumer, SLOT(data_available(short*, int,int))))
         qDebug()<<"playback loop  disconnection failed 2";
-    if(!disconnect(consumer,SIGNAL(update_loops(int)), pLoop, SLOT(activate(int))))
-        qDebug()<<"connection failed";
 
 
 
-
+    // qDebug()<<"loop"<<pLoop->id<<"removed from"<<channel;
 
 }
 
@@ -268,7 +277,7 @@ void playback_port_c::triggerempty(void)
 
     if(connected_loops != nu_connected_loops)
     {
-        connected_loops = nu_connected_loops;//maybe we need to update the connect loops count
+        connected_loops = nu_connected_loops;//we need to update the connect loops count
         emit consumer->update_loops(channel); //tell the added loops to get ready
     }
 
@@ -289,9 +298,9 @@ void playback_port_c::triggerempty(void)
 void playbackPortConsumer::data_available(short *buf, int nread,int chan)
 {
 
-//qDebug()<<"received";
+    //qDebug()<<"received";
     //implement mix strategy here
-   // qDebug()<<chan<<controler->channel;
+    // qDebug()<<chan<<controler->channel;
     if(chan != controler->channel) return;//not the right playback port
 
 

@@ -4,8 +4,7 @@
 #include <qtimer.h>
 #include <qelapsedtimer.h>
 
-#include "alsa_capture.h"
-#include "alsa_playback.h"
+
 #include "alsa_util.h"
 
 #include "QKeyEvent"
@@ -35,14 +34,6 @@ void MainWindow::chooseCard(void)
     //OutputCardName = OutputCardNames.at(numout);
 }
 
-void MainWindow::cardchoicerefresh(void)
-{
-    getCardList(SND_PCM_STREAM_PLAYBACK,&OutputCardNames,&OutputCardLongNames);
-    getCardList(SND_PCM_STREAM_CAPTURE,&InputCardNames,&InputCardLongNames);
-
-
-
-}
 
 
 
@@ -92,8 +83,9 @@ void MainWindow::setLoopList(QString txt)
 
 
 
-void MainWindow::dialogInputDevice(void)//lot of boucing...
+void MainWindow::dialogInputDevice(void)
 {
+    this->setEnabled(false);
     DialogDevice *dialog = new DialogDevice(this,mainInterface,1);
     dialog->show();
     QPoint pos = this->pos();
@@ -103,6 +95,7 @@ void MainWindow::dialogInputDevice(void)//lot of boucing...
 }
 void MainWindow::dialogOutputDevice(void)
 {
+    this->setEnabled(false);
     DialogDevice *dialog = new DialogDevice(this,mainInterface,0);
     dialog->show();
     QPoint pos = this->pos();
@@ -142,12 +135,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->bClick->setCheckable(false);
-    cardchoicerefresh();
+
 
 
 
     hw_info data;
-    data = get_device_info("hw:1,1");
+    data = get_device_info("hw:1,1",SND_PCM_STREAM_PLAYBACK);
+
 
     /*
     Afficher(data.name);
@@ -189,6 +183,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
  //   QTimer::singleShot(100,this,SLOT(dialogDevice(0)));
+
+
+
+
+
+
+
+
+
 }
 
 

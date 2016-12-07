@@ -14,6 +14,8 @@ class capture_port_c;
 class playback_port_c;
 class interfaceEvent_c;
 class click_c;
+class alsa_playback_device;
+class alsa_capture_device;
 
 enum status_t {IDLE,//not playing : paused
                   PLAY,//Normal behavior
@@ -60,11 +62,11 @@ public:
     void removeAllEvents();
 
     void destroy();
-    void startRecord(playback_port_c *pPlayPort, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
+    void startRecord(std::vector<playback_port_c*>pPlayPorts, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
 
 
 
-    void startRecord2(std::vector<playback_port_c *>pPlayPorts, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
+
 
     void showPlayLoops();
     click_c *pClick;
@@ -83,8 +85,13 @@ public:
     QElapsedTimer telapsed;
 
 
+    std::vector<alsa_capture_device*> captureDevicesList;
+    std::vector<alsa_playback_device*> playbackDevicesList;
+    std::vector<playback_port_c*> playbackPortsList;
+    std::vector<capture_port_c*> capturePortsList;
+    unsigned int playbackPortsCount,capturePortsCount;
+
 public slots:
-    void Test(void);
 
     void clickPlayStop(void);
 

@@ -36,7 +36,7 @@ class playback_port_c : public QObject
     Q_OBJECT
 
 public:
-    playback_port_c(const unsigned long maxlength, const int channel, interface_c *interface);
+    playback_port_c(const unsigned long maxlength, const int channel,const QString deviceName, interface_c *interface);
     ~playback_port_c();
 
 
@@ -44,6 +44,7 @@ public:
     unsigned long bufsize;
 
     int const channel;
+    const QString deviceName;
     interface_c *interface;
     short *ringbuf;//big buffer for circular storage
     short *buf;//small buffer for transfert
@@ -70,6 +71,7 @@ public:
     void triggerempty(void);
     void addloop(playback_loop_c *pLoop);
     void removeloop(playback_loop_c *pLoop);
+    QString getDeviceName(void);
 
    // loop_c **pLoops;
     int connected_loops;//nbr of loops connected to this ringbuffer

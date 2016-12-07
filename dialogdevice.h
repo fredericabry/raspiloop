@@ -3,7 +3,7 @@
 
 #include <QDialog>
 #include "qstringlist.h"
-
+#include "QSignalMapper"
 class interface_c;
 
 namespace Ui {
@@ -22,6 +22,16 @@ public:
 private:
     Ui::DialogDevice *ui;
     interface_c *pInterface;
+    QSignalMapper *signalMapper;
+    unsigned int devicesCount;
+    QStringList cardNames,cardLongNames;
+    QString keyWord;
+    std::vector<QPushButton*> buttonsList;
+
+private slots:
+    void clicked(const QString &text);
+
+
 
 };
 

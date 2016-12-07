@@ -3,6 +3,9 @@
 #include "interface.h"
 #include "alsa_util.h"
 #include "qdebug.h"
+#include "parameterdialog.h"
+#include "config_file.h"
+
 
 DialogDevice::DialogDevice(QWidget *parent, interface_c *pInterface,int type):
     QDialog(parent),
@@ -11,23 +14,26 @@ DialogDevice::DialogDevice(QWidget *parent, interface_c *pInterface,int type):
 {
     ui->setupUi(this);
 
+    //  signalMapper = new QSignalMapper(this);
 
-qDebug()<<"device"<<type;
+
     connect(this->ui->bClose,SIGNAL(pressed()),this,SLOT(deleteLater()));
 
-    QStringList cardNames,cardLongNames;
+    QStringList cardNamesFile;
 
 
-    int l;
+
+    devicesCount = 0;
 
 
     if(type == 0) //playback devices
     {
 
         this->ui->labelTitle->setText("Available playback devices");
-        l = getCardListLength(SND_PCM_STREAM_PLAYBACK);
+        devicesCount = getCardListLength(SND_PCM_STREAM_PLAYBACK);
         getCardList(SND_PCM_STREAM_PLAYBACK,&cardNames,&cardLongNames);
-        if(l>6) {qDebug()<<"bug: too many devices";l = 6;}
+        if(devicesCount>6) {qDebug()<<"bug: too many devices";devicesCount = 6;}
+        keyWord = KEYWORD_PLAYBACK_LIST;
 
 
     }
@@ -36,17 +42,20 @@ qDebug()<<"device"<<type;
     {
 
         this->ui->labelTitle->setText("Available capture devices");
-        l = getCardListLength(SND_PCM_STREAM_CAPTURE);
+        devicesCount = getCardListLength(SND_PCM_STREAM_CAPTURE);
         getCardList(SND_PCM_STREAM_CAPTURE,&cardNames,&cardLongNames);
-        if(l>6) {qDebug()<<"bug: too many devices";l = 6;}
+        if(devicesCount>6) {qDebug()<<"bug: too many devices";devicesCount = 6;}
+        keyWord = KEYWORD_CAPTURE_LIST;
 
     }
 
 
+    extractParameter(keyWord, &cardNamesFile);
 
-    for (int i = 0;i<l;i++)
+    for (unsigned int i = 0;i<devicesCount;i++)
     {
         QPushButton *deviceButton = new QPushButton(this);
+
         QFont font;
         font.setPointSize(6);
         deviceButton->setFont(font);
@@ -56,10 +65,23 @@ qDebug()<<"device"<<type;
         pos.setHeight(40);
         pos.moveTo(40,40+60*i);
         deviceButton->setGeometry(pos);
-      //  qDebug()<<cardNames[i];
+        deviceButton->setCheckable(true);
+
+        if(cardNamesFile.contains(cardNames[i])) //device is in config file already
+        {
+            deviceButton->setChecked(true);
+
+        }
+
+        //  connect(deviceButton, SIGNAL(pressed()), signalMapper, SLOT(map()));
+        //  signalMapper->setMapping(deviceButton, cardNames[i]);
+
+
+        buttonsList.push_back(deviceButton);
+
     }
 
-
+    //  connect(signalMapper, SIGNAL(mapped(QString)), this, SLOT(clicked(QString)));
 
 
 
@@ -69,8 +91,59 @@ qDebug()<<"device"<<type;
 
 
 }
+
+
+void DialogDevice::clicked(const QString &text)
+{
+    qDebug()<<(text);
+
+}
+
+
+
+
+
+
+
+
+
+
 
 DialogDevice::~DialogDevice()
 {
+    ((QMainWindow*)parent())->setEnabled(true);
+
+
+
+    QStringList nuParams;
+
+    for (unsigned int i = 0;i<devicesCount;i++)
+    {
+        if(buttonsList[i]->isChecked())
+            nuParams.append(cardNames[i]);
+
+
+    }
+    if(cardNames.size()>0)
+    setParameter(keyWord,nuParams,true);
+
     delete ui;
 }
+
+
+/*
+
+void DialogDevice::clickDevice(QString deviceName)
+{
+
+
+    qDebug()<<deviceName;
+
+DialogDevice *dialog = new DialogDevice(this,mainInterface,1);
+dialog->show();
+QPoint pos = this->pos();
+pos.setX(20);
+pos.setY(20);
+dialog->move(pos);
+
+}*/

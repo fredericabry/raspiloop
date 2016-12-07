@@ -10,9 +10,6 @@
 
 
 
-
-
-
 class playback_loop_c;
 
 class playbackLoopConsumer:public QThread
@@ -31,10 +28,6 @@ protected:
     void destroyloop(void);
 };
 
-
-
-
-
 class playback_loop_c:public QObject
 {
     Q_OBJECT
@@ -49,7 +42,7 @@ public:
    std::vector<int>portsChannel;
    std::vector<unsigned long>tails;
    std::vector<unsigned long>framesCount;
-   std::vector<bool>loopConnectedToPort;
+   std::vector<bool>loopConnectedToPort; //loop has been connected to a port
 
 
 
@@ -60,7 +53,7 @@ public:
     interface_c *interface;
 
     QString filename;
-    bool loopConnected;//loop has been connected to a port
+
     bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
     bool isFinished(void);

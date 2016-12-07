@@ -2,11 +2,15 @@
 #include "qdebug.h"
 #include "qthread.h"
 #include "parameters.h"
+#include "alsa_util.h"
 
 
-
-alsa_playback_device::alsa_playback_device(QString device, int channels, int rate, interface_c *interface)
+alsa_playback_device::alsa_playback_device(QString device,  int channels, int rate, interface_c *interface):deviceName(device)
 {
+
+     deviceDesc = getCardDescription(device,SND_PCM_STREAM_PLAYBACK);
+
+
     if (!alsa_open_device_playback(device)) return;
     alsa_init_playback(channels,rate,interface);
 
@@ -66,7 +70,8 @@ void alsa_playback_device::alsa_init_playback(int channels,int rate,interface_c 
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,i,interface);
+        interface->playbackPortsCount++;
+        main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,interface->playbackPortsCount,deviceDesc,interface);
         playback_buf[i] = main_buf_playback[i]->buf;
     }
 

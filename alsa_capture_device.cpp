@@ -1,10 +1,13 @@
 #include "alsa_capture_device.h"
 #include <qdebug.h>
+#include "alsa_util.h"
 
 
-
-alsa_capture_device::alsa_capture_device(QString device, int channels, int rate,interface_c *interface)
+alsa_capture_device::alsa_capture_device(QString device,int channels, int rate,interface_c *interface):deviceName(device)
 {
+
+
+    deviceDesc = getCardDescription(device,SND_PCM_STREAM_CAPTURE);
 
     if (!alsa_open_device_capture(device)) return;
 
@@ -64,7 +67,8 @@ void alsa_capture_device::alsa_init_capture(int channels,int rate,interface_c *i
 
     for(int i =0;i<channels;i++)
     {
-        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames/**capture_channels*/,rate,i,interface);
+        interface->capturePortsCount++;
+        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames,rate, interface->capturePortsCount,deviceDesc,interface);
         capture_buf[i] = main_buf_capture[i]->bufin;
     }
 
@@ -189,6 +193,7 @@ void alsa_capture_device::alsa_begin_capture(capture_port_c **port)
     consumer = new ConsumerDeviceCapture();
     consumer->recording = true;
     consumer->controler = this;
+    consumer->consumerLock = false;
     consumer->port = port;
     consumer->start();
 
@@ -263,17 +268,18 @@ int ConsumerDeviceCapture::wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *uf
 
 
     qDebug()<<"bug wait for poll IN";
+    return 0;
 }
 
 void ConsumerDeviceCapture::read_and_poll_loop(capture_port_c **port)
 {
 
-    static bool test = false;
 
 
-    if(test) {qDebug()<<"overlap read capture";return;}
 
-    test = true;
+    if(consumerLock) {qDebug()<<"overlap read capture";return;}
+
+    consumerLock = true;
 
     struct pollfd *ufds;
 
@@ -326,7 +332,7 @@ void ConsumerDeviceCapture::read_and_poll_loop(capture_port_c **port)
 
     }
 
-    test = false;
+    consumerLock = false;
 
 }
 

@@ -24,7 +24,7 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
     consumer = new playbackLoopConsumer;
     consumer->controler = this;
     consumer->active = true;
-    loopConnected = false;
+
     loopReadyToStop = false;
 
     buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
@@ -64,7 +64,6 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
     //multi port support : each playback port to which the loop is connected has its own tail and framescount
     for (auto &pPort : pPorts)
     {
-
         portsChannel.push_back(pPort->channel);
         tails.push_back(head);
         framesCount.push_back(0);
@@ -74,26 +73,12 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
     }
 
 
-
-
-
-
-
-
     addToList();
-
-
-
-
-
 
     consumer->start();
 
 
 }
-
-
-
 
 
 void playback_loop_c::openFile()
@@ -172,7 +157,7 @@ void playback_loop_c::pushN(short *buf_in, unsigned long N)
 
     if(N > this->maxlength) {qDebug()<<"Failed to copy to ringbuf struct";playloop_mutex.unlock(); return;}
 
-   /* if(this->head >= this->tail)
+    /* if(this->head >= this->tail)
     {
         if(N+this->head <= this->maxlength)
         {
@@ -206,27 +191,27 @@ void playback_loop_c::pushN(short *buf_in, unsigned long N)
 
     */
 
-            if(N+this->head <= this->maxlength)
-            {
-                pt = this->ringbuf+(this->head);
-                memcpy(pt,buf_in,N*sizeof(short));
-                this->head += N;
-            }
-            else
-            {
+    if(N+this->head <= this->maxlength)
+    {
+        pt = this->ringbuf+(this->head);
+        memcpy(pt,buf_in,N*sizeof(short));
+        this->head += N;
+    }
+    else
+    {
 
-                //first let us copy the part that fits
-                int first = this->maxlength+1 - this->head; //maxlength + 1 because of the additionnal value in the buffer
-                pt = this->ringbuf+(this->head);
-                memcpy(pt,buf_in,first*sizeof(short));
-                //then what remains
-                int second = N-first;
-                pt = this->ringbuf;
-                memcpy(pt,buf_in+first,second*sizeof(short));
+        //first let us copy the part that fits
+        int first = this->maxlength+1 - this->head; //maxlength + 1 because of the additionnal value in the buffer
+        pt = this->ringbuf+(this->head);
+        memcpy(pt,buf_in,first*sizeof(short));
+        //then what remains
+        int second = N-first;
+        pt = this->ringbuf;
+        memcpy(pt,buf_in+first,second*sizeof(short));
 
-                this->head = second;
+        this->head = second;
 
-            }
+    }
 
 
 
@@ -495,8 +480,9 @@ void playback_loop_c::datarequest(unsigned long frames,int channel)
 
     //first request only activate the loop to avoid synchronization issues
     if(!loopConnectedToPort[portNumber])
+    {qDebug()<<"bug connected to port";
         return;
-
+    }
 
     if(frames > bufsize)
         frames = bufsize;
@@ -504,14 +490,7 @@ void playback_loop_c::datarequest(unsigned long frames,int channel)
 
 
 
-
-
-
-
-
-
-
-     short *buf2 = new short[bufsize];
+    short *buf2 = new short[bufsize];
 
     //the associated playback port requests more data
 
@@ -563,9 +542,8 @@ void playback_loop_c::activate(int channel)
 
     loopConnectedToPort[portNumber] = true;
 
-
-
-    loopConnected = true;
+    if(!disconnect(pPorts[portNumber]->consumer,SIGNAL(update_loops(int)), this, SLOT(activate(int))))
+        qDebug()<<"update loop disconnection failed";
 
 }
 

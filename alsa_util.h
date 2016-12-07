@@ -8,16 +8,14 @@
 
 
 #include <qmutex.h>
-static QMutex filelock;
+
 
 struct hw_info
 {
     QString name;
     QString longname;
-    short max_capture;
-    short min_capture;
-    short max_playback;
-    short min_playback;
+    short max_port;
+    short min_port;
     int max_rate;
     int min_rate;
     int min_period_time;
@@ -39,9 +37,9 @@ struct hw_info
 void getCardList(snd_pcm_stream_t,QStringList*, QStringList*);
 int getCardListLength(snd_pcm_stream_t);
 QStringList pcm_list(snd_pcm_stream_t);
-struct hw_info get_device_info(QString);
+struct hw_info get_device_info(QString, snd_pcm_stream_t stream);
 
-
+QString getCardDescription(QString, snd_pcm_stream_t stream);
 
 
 

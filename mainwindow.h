@@ -54,7 +54,6 @@ private:
     Ui::MainWindow *ui;
 
 private slots:
-    void cardchoicerefresh(void);
     void chooseCard(void);
     void setLoopList(QString txt);
     void dialogInputDevice(void);

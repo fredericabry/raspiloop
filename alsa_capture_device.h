@@ -21,6 +21,7 @@ public:
     int wait_for_poll_IN(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count);
     void read_and_poll_loop(capture_port_c **port);
     bool recording;
+    bool consumerLock;
 };
 
 
@@ -41,13 +42,16 @@ public:
     void alsa_monitor_capture(int channel, unsigned long *data);
     capture_port_c* alsa_capture_port_by_num(int channel);
 
-
     snd_pcm_t *capture_handle;
     int capture_rate, capture_channels;
     snd_pcm_uframes_t capture_frames,capture_period_size,capture_hw_buffersize;
     capture_port_c** main_buf_capture;
     short **capture_buf;
     ConsumerDeviceCapture *consumer;
+
+private:
+    QString deviceName;
+    QString deviceDesc;
 };
 
 #endif // ALSA_CAPTURE_DEVICE_H

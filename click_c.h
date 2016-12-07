@@ -15,9 +15,9 @@ private:
         int tempo;
 
 public:
-    click_c(int tempo, playback_port_c *pPort, status_t status, interface_c *interface, MainWindow *parent);
+    click_c(int tempo, std::vector<playback_port_c *> pPorts, status_t status, interface_c *interface, MainWindow *parent);
 
-    playback_port_c *pPort;
+    std::vector<playback_port_c*> pPorts;
     int status;
     double getBeat(void);//time elapsed since the begining of bar in beats
     double getTime(void);//time elapsed since the begining of bar in s;

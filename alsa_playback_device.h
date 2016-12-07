@@ -33,7 +33,7 @@ public:
     alsa_playback_device(QString device, int channels, int rate, interface_c *interface);
 
     short **playback_buf;
-
+    QString deviceName;
     ConsumerDevicePlayback *consumer;
     snd_pcm_t *playback_handle;
     snd_pcm_uframes_t playback_frames,playback_period_size,playback_hw_buffersize;
@@ -54,6 +54,8 @@ public:
     playback_port_c* alsa_playback_port_by_num(int channel);
     void alsa_monitor_playback(int channel,unsigned long *data);
 
+private:
+    QString deviceDesc;
 
 
 };
