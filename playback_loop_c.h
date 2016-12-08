@@ -28,6 +28,8 @@ protected:
     void destroyloop(void);
 };
 
+
+
 class playback_loop_c:public QObject
 {
     Q_OBJECT
@@ -42,7 +44,6 @@ public:
    std::vector<int>portsChannel;
    std::vector<unsigned long>tails;
    std::vector<unsigned long>framesCount;
-   std::vector<bool>loopConnectedToPort; //loop has been connected to a port
 
 
 
@@ -59,25 +60,14 @@ public:
     bool isFinished(void);
 
 
-
-    bool addToPortList(playback_port_c* pNuPort);
-    bool removeFromPortList(playback_port_c *pOldPort);
-
-
     short *ringbuf;//big buffer for circular storage
-
     short *buffile;//small buffer used to read files;
-
     unsigned long head;
     unsigned long maxlength;
     unsigned long bufsize;//size of "buf" used for transfert
     bool isFileOpened;
-
-
     long framestoplay;
-
     unsigned long min_frame_request;
-
     int barstoplay;
     bool stop;
     bool repeat;
@@ -106,15 +96,15 @@ public:
 
     unsigned long freespace();
     void pushN(short *buf_in, unsigned long N);
-    int pullN(unsigned long N);
+
     int pullN(unsigned long N, int portNumber, short **buf3);
     void destroy(void);
 
-public slots:
-    void activate(int channel);
-
+/*public slots:
+    void activate(int channel);*/
+    void datarequest(unsigned long frames, int channel, short *buf2, int *nread);
 private slots:
-    void datarequest(unsigned long frames, int channel);
+
     void infoFromCaptureLoop(unsigned long length);
 signals:
     void send_data(short *buf,int nread,int channel);

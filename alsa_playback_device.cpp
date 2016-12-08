@@ -12,10 +12,14 @@ alsa_playback_device::alsa_playback_device(QString device,  int channels, int ra
 
 
     if (!alsa_open_device_playback(device)) return;
+
+
     alsa_init_playback(channels,rate,interface);
 
     alsa_set_hw_parameters_playback();
+
     alsa_set_sw_parameters_playback();
+
     alsa_begin_playback(main_buf_playback);
 
 }
@@ -72,7 +76,7 @@ void alsa_playback_device::alsa_init_playback(int channels,int rate,interface_c 
     {
         interface->playbackPortsCount++;
         main_buf_playback[i] = new playback_port_c(RINGBUFSIZE_PLAYBACK,interface->playbackPortsCount,deviceDesc,interface);
-        playback_buf[i] = main_buf_playback[i]->buf;
+        playback_buf[i] = main_buf_playback[i]->consumer->buf;
     }
 
 
@@ -226,7 +230,7 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 
     for(int i = 0;i<playback_channels;i++)
     {
-        port[i]->pullN(playback_frames);
+        port[i]->consumer->pullN(playback_frames);
 
     }
 

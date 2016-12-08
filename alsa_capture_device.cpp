@@ -18,6 +18,7 @@ alsa_capture_device::alsa_capture_device(QString device,int channels, int rate,i
 
     alsa_begin_capture(main_buf_capture);
 
+
 }
 
 bool alsa_capture_device::alsa_open_device_capture(QString device)

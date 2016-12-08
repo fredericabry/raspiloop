@@ -665,15 +665,14 @@ void interface_c::keyInput(QKeyEvent *e)
         std::vector<playback_port_c*> pPlayPorts2;
         pPlayPorts2.push_back(playbackPortsList[0]);
         pPlayPorts2.push_back(playbackPortsList[1]);
-        pPlayPorts2.push_back(playbackPortsList[2]);
-        pPlayPorts2.push_back(playbackPortsList[3]);
+
 
 
 
         switch(getCaptureStatus(&pActiveRecLoop))
         {
         case 0:
-            startRecord(pPlayPorts2,pActiveRecPort,&pActiveRecLoop,0);
+            startRecord(playbackPortsList,pActiveRecPort,&pActiveRecLoop,0);
             break;
         case 1:pActiveRecLoop->destroyLoop();break;
         case 2:qDebug()<<"capture loop not created yet, event in progress";break;

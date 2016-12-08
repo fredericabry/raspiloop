@@ -62,18 +62,22 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
     //qDebug()<<"size:"<<pPorts.size();
 
     //multi port support : each playback port to which the loop is connected has its own tail and framescount
+
+
+
     for (auto &pPort : pPorts)
     {
+
         portsChannel.push_back(pPort->channel);
         tails.push_back(head);
         framesCount.push_back(0);
-        loopConnectedToPort.push_back(false);
         pPort->addloop(this);
 
     }
 
 
     addToList();
+
 
     consumer->start();
 
@@ -320,54 +324,8 @@ void playback_loop_c::pause()
     interface->printLoopList();
 }
 
-bool playback_loop_c::addToPortList(playback_port_c *pNuPort)
-{
-
-    for (auto &pPort : pPorts)
-    {
-
-        if(pPort->channel == pNuPort->channel) {qDebug()<<"playback port already in the loop list";return false;}
-
-    }
 
 
-    pNuPort->addloop(this);
-    portsChannel.push_back(pNuPort->channel);
-    pPorts.push_back(pNuPort);
-    tails.push_back(head);
-    framesCount.push_back(0);
-
-    interface->printLoopList();
-
-    return true;
-
-}
-
-bool playback_loop_c::removeFromPortList(playback_port_c *pOldPort)
-{
-
-    int n = -1;
-    for (unsigned int i =0;i<pPorts.size();i++)
-    {
-
-        if(pPorts[i]->channel == pOldPort->channel) {n = i;break;}
-
-    }
-
-    if(n==-1) {qDebug()<<"playback port not in the loop list";return false;}
-
-
-    pOldPort->removeloop(this);
-    portsChannel.erase(portsChannel.begin()+n);
-    pPorts.erase(pPorts.begin()+n);
-    tails.erase(tails.begin()+n);
-    framesCount.erase(framesCount.begin()+n);
-
-    interface->printLoopList();
-
-    return true;
-
-}
 
 void playback_loop_c::moveToPort(playback_port_c *pNuPort)
 {
@@ -467,30 +425,16 @@ int playback_loop_c::findCapturePortNumber(int channel)
 
 }
 
-
-void playback_loop_c::datarequest(unsigned long frames,int channel)
+void playback_loop_c::datarequest(unsigned long frames,int channel,short *buf2,int *nread)
 {
-
-    int nread;
 
     //find out which playbackport is requesting data
     int portNumber = findCapturePortNumber(channel);
     if(portNumber == -1) {qDebug()<<"data request port channel unknown"<<channel;return;}
 
-
-    //first request only activate the loop to avoid synchronization issues
-    if(!loopConnectedToPort[portNumber])
-    {qDebug()<<"bug connected to port";
-        return;
-    }
-
     if(frames > bufsize)
         frames = bufsize;
 
-
-
-
-    short *buf2 = new short[bufsize];
 
     //the associated playback port requests more data
 
@@ -498,12 +442,7 @@ void playback_loop_c::datarequest(unsigned long frames,int channel)
             (isOutOfSample))//we chose to stop or the interface is in clicksync mode and the play loop awaits rewind
     {
 
-
-        //pausing, not sending any data
-
-        emit send_data(buf2,0,channel);//we still need to answer to the data request otherwise the playback port gets stuck waiting for data
-
-
+        *nread = 0;
         return;
 
     }
@@ -513,42 +452,19 @@ void playback_loop_c::datarequest(unsigned long frames,int channel)
     if(frames > ringbuflength) frames = ringbuflength; //limit data transfert to what is available in the ringbuffer
 
 
-    // nread = pullN(frames);
-    nread = pullN(frames,portNumber,&buf2);
+    *nread = pullN(frames,portNumber,&buf2);
 
+    if (*nread != (signed long)frames) qDebug()<<"error pulling from ringbuf";
 
+    framesCount[portNumber]+=*nread;
 
-    if (nread != (signed long)frames) qDebug()<<"error pulling from ringbuf";
-
-
-    framesCount[portNumber]+=nread;
-
-
-    if(status == SILENT) memset(buf2,0,nread*sizeof(short));
-
-
-
-
-    emit send_data(buf2,nread,channel);
-
-
-
-}
-
-void playback_loop_c::activate(int channel)
-{
-    int portNumber = findCapturePortNumber(channel);
-    if(portNumber == -1) {qDebug()<<"activate port channel unknown"<<channel;return;}
-
-    loopConnectedToPort[portNumber] = true;
-
-    if(!disconnect(pPorts[portNumber]->consumer,SIGNAL(update_loops(int)), this, SLOT(activate(int))))
-        qDebug()<<"update loop disconnection failed";
+    if(status == SILENT) memset(buf2,0,*nread*sizeof(short));
 
 }
 
 void playback_loop_c::addToList(void)
 {
+
     if(isClick) return;//this is the click, we don't keep it in the loops list
     interface->playbackListMutex.lock();
 
@@ -566,6 +482,10 @@ void playback_loop_c::addToList(void)
     interface->playbackListMutex.unlock();
 
     interface->printLoopList();
+
+
+
+
 }
 
 void playback_loop_c::removeFromList(void)
