@@ -1,12 +1,15 @@
-#include "parameterdialog.h"
-#include "ui_parameterdialog.h"
+#include "dialog_parameters.h"
+#include "ui_dialog_parameters.h"
 #include "interface.h"
 #include "playback_port_c.h"
 #include "config_file.h"
+#include "dialog_device.h"
+#include "dialog_newcontrol.h"
 
-ParameterDialog::ParameterDialog(QWidget *parent,interface_c *pInterface) :
+
+dialog_parameters::dialog_parameters(QWidget *parent,interface_c *pInterface) :
     QDialog(parent),
-    ui(new Ui::ParameterDialog),
+    ui(new Ui::dialog_parameters),
     pInterface(pInterface)
 {
     ui->setupUi(this);
@@ -15,8 +18,9 @@ ParameterDialog::ParameterDialog(QWidget *parent,interface_c *pInterface) :
     connect(this->ui->bPreset,SIGNAL(pressed()),this,SLOT(bMixPreset()));
     connect(this->ui->bPresetPlus,SIGNAL(pressed()),this,SLOT(bMixPresetPlus()));
     connect(this->ui->bPresetMinus,SIGNAL(pressed()),this,SLOT(bMixPresetMinus()));
-
-
+    connect(this->ui->bCaptureDevice,SIGNAL(pressed()),this,SLOT(dialogInputDevice()));
+    connect(this->ui->bPlaybackDevice,SIGNAL(pressed()),this,SLOT(dialogOutputDevice()));
+    connect(this->ui->bNewControl,SIGNAL(pressed()),this,SLOT(newControl()));
 
     setupCLickButtons();
 
@@ -79,13 +83,55 @@ ParameterDialog::ParameterDialog(QWidget *parent,interface_c *pInterface) :
 
 
 
+void dialog_parameters::newControl()
+{
+    this->setEnabled(false);
+    dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),pInterface);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
+
+}
+
+
+
+
+
+void dialog_parameters::dialogInputDevice(void)
+{
+    this->setEnabled(false);
+    DialogDevice *dialog = new DialogDevice(this,((QMainWindow*)parent()),pInterface,1);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
+
+}
+void dialog_parameters::dialogOutputDevice(void)
+{
+    this->setEnabled(false);
+    DialogDevice *dialog = new DialogDevice(this,((QMainWindow*)parent()),pInterface,0);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
+
+}
 
 
 
 
 
 
-void ParameterDialog::setupCLickButtons(void)
+
+
+
+
+void dialog_parameters::setupCLickButtons(void)
 {
 
     QStringList portNamesFile;
@@ -120,7 +166,7 @@ void ParameterDialog::setupCLickButtons(void)
 
 }
 
-void ParameterDialog::bMixAuto(void)
+void dialog_parameters::bMixAuto(void)
 {
 
         ui->bPreset->setChecked(ui->bAuto->isChecked());
@@ -130,20 +176,20 @@ void ParameterDialog::bMixAuto(void)
 
 }
 
-void ParameterDialog::bMixPreset(void)
+void dialog_parameters::bMixPreset(void)
 {
     ui->bPresetPlus->setEnabled(!ui->bPreset->isChecked());
     ui->bPresetMinus->setEnabled(!ui->bPreset->isChecked());
     ui->bAuto->setChecked(ui->bPreset->isChecked());
 }
-void ParameterDialog::bMixPresetPlus(void)
+void dialog_parameters::bMixPresetPlus(void)
 {
 if(mixLoopNumber<100) mixLoopNumber++;
 ui->bPreset->setText("Preset\n"+QString::number(mixLoopNumber)+" loops");
 
 
 }
-void ParameterDialog::bMixPresetMinus(void)
+void dialog_parameters::bMixPresetMinus(void)
 {
     if(mixLoopNumber>1) mixLoopNumber--;
     ui->bPreset->setText("Preset\n"+QString::number(mixLoopNumber)+" loops");
@@ -155,7 +201,7 @@ void ParameterDialog::bMixPresetMinus(void)
 
 
 
-ParameterDialog::~ParameterDialog()
+dialog_parameters::~dialog_parameters()
 {
 
     //click ports

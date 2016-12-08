@@ -27,9 +27,10 @@ SOURCES += main.cpp\
     events.cpp \
     alsa_playback_device.cpp \
     alsa_capture_device.cpp \
-    dialogdevice.cpp \
-    parameterdialog.cpp \
-    config_file.cpp
+    config_file.cpp \
+    dialog_newcontrol.cpp \
+    dialog_device.cpp \
+    dialog_parameters.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
@@ -43,13 +44,15 @@ HEADERS  += mainwindow.h \
     events.h \
     alsa_playback_device.h \
     alsa_capture_device.h \
-    dialogdevice.h \
-    parameterdialog.h \
-    config_file.h
+    config_file.h \
+    dialog_newcontrol.h \
+    dialog_device.h \
+    dialog_parameters.h
 
 FORMS    += mainwindow.ui \
-    dialogdevice.ui \
-    parameterdialog.ui
+    dialog_newcontrol.ui \
+    dialog_device.ui \
+    dialog_parameters.ui
 
 
 LIBS += -lasound -lsndfile

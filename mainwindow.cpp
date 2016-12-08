@@ -10,8 +10,10 @@
 #include "QKeyEvent"
 #include "interface.h"
 
-#include "dialogdevice.h"
-#include "parameterdialog.h"
+#include "dialog_device.h"
+#include "dialog_parameters.h"
+#include "dialog_newcontrol.h"
+
 
 #define LOOP_LENGTH 2000
 
@@ -68,7 +70,7 @@ void MainWindow::setLoopList(QString txt)
 void MainWindow::dialogInputDevice(void)
 {
     this->setEnabled(false);
-    DialogDevice *dialog = new DialogDevice(this,mainInterface,1);
+    DialogDevice *dialog = new DialogDevice(this,this,mainInterface,1);
     dialog->show();
     QPoint pos = this->pos();
     pos.setX(20);
@@ -77,20 +79,21 @@ void MainWindow::dialogInputDevice(void)
 }
 void MainWindow::dialogOutputDevice(void)
 {
-    this->setEnabled(false);
-    DialogDevice *dialog = new DialogDevice(this,mainInterface,0);
+
+    dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),mainInterface);
     dialog->show();
     QPoint pos = this->pos();
-    pos.setX(20);
-    pos.setY(20);
+    pos.setX(0);
+    pos.setY(0);
     dialog->move(pos);
+
 }
 
 
 void MainWindow::dialogConfig(void)
 {
     this->setEnabled(false);
-    ParameterDialog *dialog = new ParameterDialog(this,mainInterface);
+    dialog_parameters *dialog = new dialog_parameters(this,mainInterface);
     dialog->show();
     QPoint pos = this->pos();
     pos.setX(20);
@@ -121,8 +124,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->bClickUp,SIGNAL(pressed()),this,SIGNAL(clickUp()));
     connect(ui->bClickDown,SIGNAL(pressed()),this,SIGNAL(clickDown()));
-    connect(ui->bCaptureDevice,SIGNAL(pressed()),this,SLOT(dialogInputDevice()));
-    connect(ui->bPlaybackDevice,SIGNAL(pressed()),this,SLOT(dialogOutputDevice()));
+
     connect(ui->bstop,SIGNAL(pressed()),this,SLOT(shutdown()));
     connect(ui->bConfig,SIGNAL(pressed()),this,SLOT(dialogConfig()));
 
@@ -174,7 +176,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
-  //QTimer::singleShot(1000,this,SLOT(dialogConfig()));
+ QTimer::singleShot(500,this,SLOT(dialogOutputDevice()));
 
 
 

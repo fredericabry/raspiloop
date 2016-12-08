@@ -12,7 +12,7 @@
 
 
 #include "config_file.h"
-
+#include "dialog_newcontrol.h"
 
 
 
@@ -657,6 +657,17 @@ void interface_c::init(void)
 void interface_c::run()
 {
     init();
+
+
+
+
+
+
+
+
+
+
+
 
     exec();
 }

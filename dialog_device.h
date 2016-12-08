@@ -4,6 +4,9 @@
 #include <QDialog>
 #include "qstringlist.h"
 #include "QSignalMapper"
+
+class QMainWindow;
+
 class interface_c;
 
 namespace Ui {
@@ -15,11 +18,12 @@ class DialogDevice : public QDialog
     Q_OBJECT
 
 public:
-    explicit DialogDevice(QWidget *parent = 0, interface_c *pInterface =0, int type=0);
+    explicit DialogDevice(QWidget *parent = 0,QMainWindow* mainwindow = NULL, interface_c *pInterface =0, int type=0);
     ~DialogDevice();
 
 
 private:
+    QMainWindow* mainwindow;
     Ui::DialogDevice *ui;
     interface_c *pInterface;
     QSignalMapper *signalMapper;

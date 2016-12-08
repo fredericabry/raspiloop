@@ -1,14 +1,15 @@
-#include "dialogdevice.h"
+#include "dialog_device.h"
 #include "ui_dialogdevice.h"
 #include "interface.h"
 #include "alsa_util.h"
 #include "qdebug.h"
-#include "parameterdialog.h"
+#include "dialog_parameters.h"
 #include "config_file.h"
 
 
-DialogDevice::DialogDevice(QWidget *parent, interface_c *pInterface,int type):
+DialogDevice::DialogDevice(QWidget *parent,QMainWindow* mainwindow, interface_c *pInterface,int type):
     QDialog(parent),
+    mainwindow(mainwindow),
     ui(new Ui::DialogDevice),
     pInterface(pInterface)
 {
@@ -107,8 +108,7 @@ void DialogDevice::clicked(const QString &text)
 
 DialogDevice::~DialogDevice()
 {
-    ((QMainWindow*)parent())->setEnabled(true);
-
+    ((QWidget*)parent())->setEnabled(true);
 
 
     QStringList nuParams;
