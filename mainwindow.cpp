@@ -11,6 +11,7 @@
 #include "interface.h"
 
 #include "dialogdevice.h"
+#include "parameterdialog.h"
 
 #define LOOP_LENGTH 2000
 
@@ -23,21 +24,6 @@
 
 
 interface_c *mainInterface;
-
-
-
-
-void MainWindow::chooseCard(void)
-{
-
-    //InputCardName = InputCardNames.at(numin);
-    //OutputCardName = OutputCardNames.at(numout);
-}
-
-
-
-
-
 
 
 
@@ -59,10 +45,6 @@ void MainWindow::setClickButton(bool status)
 
 
 }
-
-
-
-
 
 
 
@@ -105,7 +87,17 @@ void MainWindow::dialogOutputDevice(void)
 }
 
 
+void MainWindow::dialogConfig(void)
+{
+    this->setEnabled(false);
+    ParameterDialog *dialog = new ParameterDialog(this,mainInterface);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
 
+}
 
 
 
@@ -132,7 +124,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bCaptureDevice,SIGNAL(pressed()),this,SLOT(dialogInputDevice()));
     connect(ui->bPlaybackDevice,SIGNAL(pressed()),this,SLOT(dialogOutputDevice()));
     connect(ui->bstop,SIGNAL(pressed()),this,SLOT(shutdown()));
-
+    connect(ui->bConfig,SIGNAL(pressed()),this,SLOT(dialogConfig()));
 
     ui->bClick->setCheckable(false);
 
@@ -182,8 +174,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
- //   QTimer::singleShot(100,this,SLOT(dialogDevice(0)));
-
+  //QTimer::singleShot(1000,this,SLOT(dialogConfig()));
 
 
 

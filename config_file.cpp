@@ -127,7 +127,7 @@ void setParameter(QString keyword, QStringList parameter, bool reset)
     {
        parameter = parameter.toSet().toList();
        buf.append(keyword+" "+parameter.join(";")+"\n");
-       qDebug()<<"not found";
+//       qDebug()<<"not found";
     }
 
 

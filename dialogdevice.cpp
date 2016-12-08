@@ -86,10 +86,6 @@ DialogDevice::DialogDevice(QWidget *parent, interface_c *pInterface,int type):
 
 
 
-
-
-
-
 }
 
 
@@ -131,19 +127,3 @@ DialogDevice::~DialogDevice()
 }
 
 
-/*
-
-void DialogDevice::clickDevice(QString deviceName)
-{
-
-
-    qDebug()<<deviceName;
-
-DialogDevice *dialog = new DialogDevice(this,mainInterface,1);
-dialog->show();
-QPoint pos = this->pos();
-pos.setX(20);
-pos.setY(20);
-dialog->move(pos);
-
-}*/

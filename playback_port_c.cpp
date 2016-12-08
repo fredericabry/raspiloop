@@ -59,8 +59,6 @@ QString playback_port_c::getDeviceName(void)
 playback_port_c::~playback_port_c()
 {
 
-
-
     consumer->quit();
 
 
@@ -202,9 +200,6 @@ int playbackPortConsumer::pullN(unsigned long N)
     return N+N0;
 }
 
-
-
-
 playbackPortConsumer::playbackPortConsumer(const unsigned maxlength, const unsigned long bufsize):maxlength(maxlength),bufsize(bufsize)
 {
     ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
@@ -212,8 +207,6 @@ playbackPortConsumer::playbackPortConsumer(const unsigned maxlength, const unsig
     buf = (short*)malloc((bufsize)*sizeof(short));
 
 }
-
-
 
 
 void playbackPortConsumer::run()
@@ -236,7 +229,7 @@ void playbackPortConsumer::update()
 {
     loop_lock.lock();
     int nread;
-    unsigned int connected_loops;//nbr of loops connected to this ringbuffer
+    short connected_loops;//nbr of loops connected to this ringbuffer
 
     unsigned long frames = freespace();
 
@@ -251,6 +244,7 @@ void playbackPortConsumer::update()
 
     connected_loops = controler->pConnectedLoops.size();
 
+
     if(connected_loops==0) { loop_lock.unlock();return;} //still zero ? return
 
     wait_for_data = true;
@@ -261,14 +255,22 @@ void playbackPortConsumer::update()
     short *buf2 = new short[PLAYBACK_BUFSIZE];
 
     datalength=0;
+
+
+    //implement mix strategies here
+
     for (auto &pLoop : controler->pConnectedLoops)
     {
         memset(buf2,0,sizeof(short)*PLAYBACK_BUFSIZE);
         pLoop->datarequest(frames,controler->channel,buf2,&nread);
         if(nread > datalength) datalength = nread; //keep the longest sample size
-        for(int i = 0;i<nread;i++)  bufmix[i]+=buf2[i]/connected_loops;
 
+        if(controler->interface->getMixStrategy() == AUTO)
+        for(int i = 0;i<nread;i++)  bufmix[i]+=buf2[i]/connected_loops;
+        else if(controler->interface->getMixStrategy() == PRESET)
+        for(int i = 0;i<nread;i++)  bufmix[i]+=buf2[i]/(short)controler->interface->getMixLoopNumber();
     }
+
     pushN(bufmix,datalength);
     datalength=0;
     wait_for_data = false;

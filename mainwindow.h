@@ -54,10 +54,10 @@ private:
     Ui::MainWindow *ui;
 
 private slots:
-    void chooseCard(void);
     void setLoopList(QString txt);
     void dialogInputDevice(void);
     void dialogOutputDevice(void);
+    void dialogConfig(void);
 public slots:
     void shutdown(void);
 

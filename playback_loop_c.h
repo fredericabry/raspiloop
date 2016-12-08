@@ -46,7 +46,6 @@ public:
    std::vector<unsigned long>framesCount;
 
 
-
     unsigned long length();
     unsigned long length(unsigned long tail2);
     syncoptions syncMode;
@@ -82,7 +81,9 @@ public:
     int findCapturePortNumber(int channel);
     void test(QString a);
     void openFile(void);
-    void moveToPort(playback_port_c *pNuPort);
+    void moveToPort(std::vector<playback_port_c *> pNuPorts);
+    void addPort(playback_port_c * pNuPort);
+    void removePort(playback_port_c * pOldPort);
     void rewind(void);
     bool isRewindRegistered;
     void registerRewind(void);//create the event to rewind the loop at the next appropriate moment

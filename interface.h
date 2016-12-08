@@ -28,6 +28,13 @@ enum syncoptions {NOSYNC,//no synchronization, loop are played as they are recor
                   AUTOCLICK};//click is defined by the first recorded loop
 
 
+enum mixStrategies {AUTO,PRESET};
+
+
+
+
+
+
 
 class interface_c:public QThread
 {
@@ -63,7 +70,7 @@ public:
 
     void destroy();
     void startRecord(std::vector<playback_port_c*>pPlayPorts, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
-
+    void moveClick(std::vector<playback_port_c*> pPorts);
 
 
 
@@ -91,8 +98,23 @@ public:
     std::vector<capture_port_c*> capturePortsList;
     unsigned int playbackPortsCount,capturePortsCount;
 
-public slots:
+    mixStrategies getMixStrategy() const;
+    void setMixStrategy(mixStrategies value);
 
+    unsigned int getMixLoopNumber();
+    void setMixLoopNumber(unsigned int value);
+
+private:
+    //mix strategy:
+    mixStrategies mixStrategy;
+    unsigned int mixLoopNumber;
+
+
+
+
+
+
+public slots:
     void clickPlayStop(void);
 
 private slots:

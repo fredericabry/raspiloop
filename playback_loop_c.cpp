@@ -324,21 +324,87 @@ void playback_loop_c::pause()
     interface->printLoopList();
 }
 
-
-
-
-void playback_loop_c::moveToPort(playback_port_c *pNuPort)
+void playback_loop_c::moveToPort(std::vector<playback_port_c *> pNuPorts)
 {
-    if(!pNuPort) {qDebug()<<"invalid port";return;}
+    unsigned long old_tails,old_frameCount;
+    if(pPorts.size()>0)
+    {
+        old_tails = tails[0];
+        old_frameCount = framesCount[0];
+    }
+    else
+    {
+        old_frameCount = 0;
+        old_tails = head;
+    }
 
-    //this->addToPortList(pNuPort);
 
 
+    for (auto &pPort : pPorts)
+    {
+        pPort->removeloop(this);
+    }
+    portsChannel.clear();
+    tails.clear();
+    framesCount.clear();
+    pPorts.clear();
+
+    for (auto &pPort : pNuPorts)
+    {
+        portsChannel.push_back(pPort->channel);
+        tails.push_back(old_tails);
+        framesCount.push_back(old_frameCount);
+        pPorts.push_back(pPort);
+        pPort->addloop(this);
+    }
 
 
-    /*  pPort->removeloop(this);
-    pPort = pNuPort;
-    pPort->addloop(this);*/
+    interface->printLoopList();
+
+}
+
+void playback_loop_c::addPort(playback_port_c * pNuPort)
+{
+    unsigned long old_tails,old_frameCount;
+    if(pPorts.size()>0)
+    {
+        old_tails = tails[0];
+        old_frameCount = framesCount[0];
+    }
+    else
+    {
+        old_frameCount = 0;
+        old_tails = head;
+    }
+    if(std::find(pPorts.begin(), pPorts.end(), pNuPort) != pPorts.end()) {
+        qDebug()<<"error: loop already connected to port";
+        return;
+    }
+    portsChannel.push_back(pNuPort->channel);
+    tails.push_back(old_tails);
+    framesCount.push_back(old_frameCount);
+    pPorts.push_back(pNuPort);
+    pNuPort->addloop(this);
+    interface->printLoopList();
+
+}
+
+void playback_loop_c::removePort(playback_port_c * pOldPort)
+{
+
+    for (unsigned int i=0;i<pPorts.size();i++)
+    {
+        if(pPorts[i] == pOldPort)
+        {
+            pOldPort->removeloop(this);
+            pPorts.erase(pPorts.begin()+i);
+            tails.erase(tails.begin()+i);
+            framesCount.erase(framesCount.begin()+i);
+            portsChannel.erase(portsChannel.begin()+i);
+        }
+
+    }
+    interface->printLoopList();
 }
 
 void playback_loop_c::updateFrameToPlay(long length)

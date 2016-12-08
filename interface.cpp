@@ -16,6 +16,7 @@
 
 
 
+
 alsa_playback_device *playDevice;
 alsa_playback_device *playDevice2;
 alsa_capture_device *captureDevice;
@@ -321,12 +322,25 @@ bool interface_c::isEventValid(interfaceEvent_c* pEvent)
     return false;
 }
 
-
 void interface_c::clickPlayStop(void)
 {
     pClick->stopstart();
 
 }
+
+
+void interface_c::moveClick(std::vector<playback_port_c*> pPorts)
+{
+
+    if(pClick)
+    {
+        pClick->pPorts.clear();
+        pClick->pPorts = pPorts;
+    }
+
+}
+
+
 
 QString interface_c::statusToString(status_t status){
     switch(status)
@@ -561,24 +575,6 @@ void interface_c::init(void)
             playbackPortsList.push_back(pPlaybackDevice->alsa_playback_port_by_num(j));
     }
 
-    /*playDevice = new alsa_playback_device("hw:1,0",2,RATE,this);
-    playDevice2 = new alsa_playback_device("hw:1,1", 2,RATE,this);
-    captureDevice = new alsa_capture_device("hw:1,0", 2, RATE,this);*/
-
-
-
-
-
-/*    pLeft = playDevice->alsa_playback_port_by_num(0);
-    pRight = playDevice->alsa_playback_port_by_num(1);
-    pLeft2 = playDevice2->alsa_playback_port_by_num(0);
-    pRight2 = playDevice2->alsa_playback_port_by_num(1);
-    pRec0 = captureDevice->alsa_capture_port_by_num(0);
-    pRec1 = captureDevice->alsa_capture_port_by_num(1);*/
-
-
-
-
 
     pActiveRecPort = NULL;
     synchroMode = CLICKSYNC;
@@ -586,9 +582,62 @@ void interface_c::init(void)
     isRecording = false;
 
 
+    QStringList portNamesFile;
+    std::vector <playback_port_c *> pClickPorts;
+    extractParameter(KEYWORD_CLICK_PORTS, &portNamesFile);
+
+    for(int i =0;i<portNamesFile.size();i++)
+    {
 
 
-    pClick = new click_c(120,playbackPortsList,IDLE,this,parent);
+        if((portNamesFile[i].toInt()> 0)&&(portNamesFile[i].toInt()<= (signed)playbackPortsList.size()))
+            pClickPorts.push_back(playbackPortsList[portNamesFile[i].toInt()-1]);
+
+    }
+
+
+    //get mix strategies
+    QStringList mix,mix_preset;
+    extractParameter(KEYWORD_MIX_STRATEGY, &mix);
+    extractParameter(KEYWORD_MIX_PRESET_NUMBER, &mix_preset);
+    if(mix.size()>0) //we only use [0] value
+    {
+        if(mix[0] == MIX_STRATEGY_PRESET)
+        {
+            setMixStrategy(PRESET);
+        }
+        else if(mix[0] == MIX_STRATEGY_AUTO)
+        {
+            setMixStrategy(AUTO);
+        }
+    }
+
+
+    bool test = true;
+
+    if(mix_preset.size()>0)
+    {
+        setMixLoopNumber(mix_preset[0].toInt(&test));
+        if(!test) setMixLoopNumber(1);//error
+    }
+    else setMixLoopNumber(1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    pClick = new click_c(120,pClickPorts,IDLE,this,parent);
     clickStatus=false;
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
     connect(this,SIGNAL(loopList(QString)),parent,SLOT(setLoopList(QString)));
@@ -600,24 +649,6 @@ void interface_c::init(void)
 
 
 
-    /*  QStringList value;
-    extractParameter(KEYWORD_PLAYBACK_LIST, &value);
-    qDebug()<<"devices:"<<value;
-    setParameter(KEYWORD_PLAYBACK_LIST, (QStringList)"hw:test", false);
-    extractParameter(KEYWORD_PLAYBACK_LIST, &value);
-    qDebug()<<"devices:"<<value;
-    setParameter(KEYWORD_PLAYBACK_LIST, (QStringList)"hw1:1", true);
-    extractParameter(KEYWORD_PLAYBACK_LIST, &value);
-    qDebug()<<"devices:"<<value;
-    setParameter(KEYWORD_PLAYBACK_LIST, (QStringList)"hw1:1", false);
-    extractParameter(KEYWORD_PLAYBACK_LIST, &value);
-    qDebug()<<"devices:"<<value;
-
-    setParameter(KEYWORD_CAPTURE_LIST, (QStringList)"hw1:12", false);
-    extractParameter(KEYWORD_CAPTURE_LIST, &value);
-    qDebug()<<"devices:"<<value;
-
-*/
 
 
 
@@ -632,7 +663,7 @@ void interface_c::run()
 
 void interface_c::keyInput(QKeyEvent *e)
 {
-
+    static bool test = false;
 
 
     //  qDebug()<<e->key();
@@ -679,7 +710,7 @@ void interface_c::keyInput(QKeyEvent *e)
         default:break;
 
         }
-    break;
+        break;
 
     }
     case Qt::Key_3:
@@ -733,20 +764,44 @@ void interface_c::keyInput(QKeyEvent *e)
 
         break;
     case Qt::Key_7:
+    {
+        playback_loop_c *pLoop = findPlayLoopById(2);
+        if(pLoop)
+        {
+            if(test)
+            {
+                pLoop->addPort(playbackPortsList[1]);
+                test = false;
+            }
+            else
+            {
+                pLoop->removePort(playbackPortsList[1]);
+                test = true;
 
-
-
-
-
-
+            }
+        }
 
 
         break;
+    }
     case Qt::Key_8:
+    {
+        playback_loop_c *pLoop = findPlayLoopById(2);
+        if(pLoop)
+        {
+            std::vector<playback_port_c*> pPlayPorts2;
+            pPlayPorts2.push_back(playbackPortsList[0]);
 
+
+            pLoop->moveToPort(pPlayPorts2);
+
+        }
 
 
         break;
+    }
+
+
     case Qt::Key_9:qDebug()<<"Active playback loops count:"<<getPlayLoopsCount();
         qDebug()<<"Active capture loops count:"<<getCaptureLoopsCount();
         qDebug()<<"Active events count:"<<getEventsCount();
@@ -788,15 +843,35 @@ void interface_c::Afficher(QString txt)
 
 }
 
+mixStrategies interface_c::getMixStrategy() const
+{
+    return mixStrategy;
+}
+
+void interface_c::setMixStrategy(mixStrategies value)
+{
+    mixStrategy = value;
+}
+
+unsigned int interface_c::getMixLoopNumber()
+{
+    if(mixLoopNumber==0)
+        setMixLoopNumber(1);
+
+    return mixLoopNumber;
+}
+
+void interface_c::setMixLoopNumber(unsigned int value)
+{
+    mixLoopNumber = value;
+}
+
 
 void interface_c::destroy(void)
 {
     for (auto &pPlaybackDevice : playbackDevicesList) pPlaybackDevice->alsa_cleanup_playback();
-
     for (auto &pCaptureDevice : captureDevicesList) pCaptureDevice->alsa_cleanup_capture();
-    /*playDevice->alsa_cleanup_playback();
-    captureDevice->alsa_cleanup_capture();
-    playDevice2->alsa_cleanup_playback();*/
+
 }
 
 

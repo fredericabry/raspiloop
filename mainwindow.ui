@@ -35,7 +35,7 @@
       <x>290</x>
       <y>10</y>
       <width>501</width>
-      <height>261</height>
+      <height>321</height>
      </rect>
     </property>
     <property name="font">
@@ -162,6 +162,25 @@
     </property>
     <property name="text">
      <string>Capture</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="bConfig">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>300</y>
+      <width>99</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+     </font>
+    </property>
+    <property name="text">
+     <string>Config</string>
     </property>
    </widget>
   </widget>
