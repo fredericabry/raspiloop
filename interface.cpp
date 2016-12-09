@@ -22,8 +22,7 @@ alsa_playback_device *playDevice2;
 alsa_capture_device *captureDevice;
 
 
-/*playback_port_c *pLeft,*pRight,*pLeft2,*pRight2;
-capture_port_c *pRec0, *pRec1 ;*/
+
 
 capture_port_c *pActiveRecPort;
 capture_loop_c *pActiveRecLoop;
@@ -577,9 +576,12 @@ void interface_c::init(void)
 
 
     pActiveRecPort = NULL;
+
+
     synchroMode = CLICKSYNC;
 
     isRecording = false;
+
 
 
     QStringList portNamesFile;
@@ -646,6 +648,11 @@ void interface_c::init(void)
     telapsed.start();
     //connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
     printLoopList();
+
+
+
+    createControls();
+
 
 
 
@@ -876,7 +883,6 @@ void interface_c::setMixLoopNumber(unsigned int value)
 {
     mixLoopNumber = value;
 }
-
 
 void interface_c::destroy(void)
 {

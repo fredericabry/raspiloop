@@ -5,10 +5,10 @@
 void extractParameter(QString keyword, QStringList *value)
 {
 
-    QFile file(FILEPATH);
+    QFile file(FILEPATH_CONFIG);
     if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
     {
-        qDebug()<<"file"<<FILEPATH<<"opening error";
+        qDebug()<<"file"<<FILEPATH_CONFIG<<"opening error";
         return;
     }
 
@@ -16,6 +16,8 @@ void extractParameter(QString keyword, QStringList *value)
     QTextStream in (&file);
     QString line;
     QString buf;
+
+    value->clear();
 
     bool keyWordFound = false;
 
@@ -45,12 +47,12 @@ void extractParameter(QString keyword, QStringList *value)
         else
         {
             if(line!="")
-            buf.append(line+"\n");
+                buf.append(line+"\n");
         }
     } while (!line.isNull());
 
 
-    if(!keyWordFound) qDebug()<<"no"<<keyword<<"set in file"<<FILEPATH;
+    if(!keyWordFound) qDebug()<<"no"<<keyword<<"set in file"<<FILEPATH_CONFIG;
 
 
     //clean up the file
@@ -64,15 +66,14 @@ void extractParameter(QString keyword, QStringList *value)
 
 }
 
-
 void setParameter(QString keyword, QStringList parameter, bool reset)
 {
 
 
-    QFile file(FILEPATH);
+    QFile file(FILEPATH_CONFIG);
     if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
     {
-        qDebug()<<"file"<<FILEPATH<<"opening error";
+        qDebug()<<"file"<<FILEPATH_CONFIG<<"opening error";
         return;
     }
 
@@ -118,16 +119,16 @@ void setParameter(QString keyword, QStringList parameter, bool reset)
         else
         {
             if(line!="")
-            buf.append(line+"\n");
+                buf.append(line+"\n");
         }
     } while (!line.isNull());
 
 
     if(!keyWordFound)
     {
-       parameter = parameter.toSet().toList();
-       buf.append(keyword+" "+parameter.join(";")+"\n");
-//       qDebug()<<"not found";
+        parameter = parameter.toSet().toList();
+        buf.append(keyword+" "+parameter.join(";")+"\n");
+        //       qDebug()<<"not found";
     }
 
 
@@ -142,4 +143,169 @@ void setParameter(QString keyword, QStringList parameter, bool reset)
 
 }
 
+void fileSetControl(QString keyword, QStringList controls)
+{
 
+    fileRemoveControl(keyword);
+
+    QString buf;
+    QFile file(FILEPATH_CONTROL);
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+        qDebug()<<"file"<<FILEPATH_CONTROL<<"opening error";
+        return;
+    }
+
+    QTextStream in (&file);
+    buf=in.readAll();
+
+    buf.append(keyword+"\n"+controls.join("\n")+"\n"+KEYWORD_CONTROL_END);
+
+    //clean up the file
+    file.resize(0);
+
+    in<<buf;
+
+    file.close();
+
+
+}
+
+void fileRemoveControl(QString keyword)
+{
+
+
+    QFile file(FILEPATH_CONTROL);
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+        qDebug()<<"file"<<FILEPATH_CONTROL<<"opening error";
+        return;
+    }
+
+
+    QTextStream in (&file);
+    QString line;
+    QString buf;
+    bool keyWordFound = false;
+
+    bool deleteLine = false;//if keyword has been found, is true until KEYWORD_CONTROL_END is reached
+
+    do {
+        line = in.readLine();
+        if (line.contains(keyword, Qt::CaseSensitive))
+        {
+            keyWordFound = true;
+            deleteLine = true;//all line will be deleted until END is reached
+        }
+        else if(deleteLine)
+        {
+            if(line.contains(KEYWORD_CONTROL_END, Qt::CaseSensitive)) deleteLine = false;
+        }
+        else
+        {
+            if(line!="")
+                buf.append(line+"\n");
+        }
+    } while (!line.isNull());
+
+
+    if(!keyWordFound)
+    {
+
+             // qDebug()<<"not found";
+    }
+
+    //clean up the file
+    file.resize(0);
+
+    in<<buf;
+
+    file.close();
+}
+
+void fileGetControl(QString keyword, QStringList *control)
+{
+
+    QFile file(FILEPATH_CONTROL);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug()<<"file"<<FILEPATH_CONTROL<<"opening error";
+        return;
+    }
+
+    control->clear();
+
+    QTextStream in (&file);
+    QString line;
+
+    bool keyWordFound = false;
+
+    do {
+        line = in.readLine();
+        if (line.contains(keyword, Qt::CaseSensitive))
+        {
+            keyWordFound = true;
+
+        }
+        else if(keyWordFound)
+        {
+            if(line.contains(KEYWORD_CONTROL_END, Qt::CaseSensitive)) break;
+            else
+            {
+                //we are between keyword and KEYWORD_CONTROL_END, let us copy
+                if(line!="")
+                control->append(line);
+            }
+        }
+        else
+        {
+
+        }
+    } while (!line.isNull());
+
+
+    if(!keyWordFound)
+    {
+
+            qDebug()<<"control "+keyword+" not found in file";
+    }
+
+
+    file.close();
+}
+
+bool fileIsControlDefined(QString keyword)
+{
+
+    QFile file(FILEPATH_CONTROL);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug()<<"file"<<FILEPATH_CONTROL<<"opening error";
+        return false;
+    }
+
+    QTextStream in (&file);
+    QString line;
+
+
+
+    do {
+        line = in.readLine();
+        if (line.contains(keyword, Qt::CaseSensitive))
+        {
+            file.close();
+           return true;
+
+        }
+
+
+    } while (!line.isNull());
+
+
+
+
+
+    file.close();
+    return false;
+
+}

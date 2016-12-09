@@ -16,21 +16,24 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    util.cpp \
-    alsa_util.cpp \
-    playback_port_c.cpp \
+       playback_port_c.cpp \
     capture_port_c.cpp \
     playback_loop_c.cpp \
     capture_loop_c.cpp \
     interface.cpp \
     click_c.cpp \
     events.cpp \
-    alsa_playback_device.cpp \
-    alsa_capture_device.cpp \
     config_file.cpp \
     dialog_newcontrol.cpp \
     dialog_device.cpp \
-    dialog_parameters.cpp
+    dialog_parameters.cpp \
+    dialog_controllist.cpp \
+    alsa_capture_device.cpp \
+    alsa_playback_device.cpp \
+    alsa_util.cpp \
+    control.cpp \
+    dialog_numeric.cpp \
+    dialog_key.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
@@ -47,12 +50,19 @@ HEADERS  += mainwindow.h \
     config_file.h \
     dialog_newcontrol.h \
     dialog_device.h \
-    dialog_parameters.h
+    dialog_parameters.h \
+    dialog_controllist.h \
+    control.h \
+    dialog_numeric.h \
+    dialog_key.h
 
 FORMS    += mainwindow.ui \
     dialog_newcontrol.ui \
     dialog_device.ui \
-    dialog_parameters.ui
+    dialog_parameters.ui \
+    dialog_controllist.ui \
+    dialog_numeric.ui \
+    dialog_key.ui
 
 
 LIBS += -lasound -lsndfile

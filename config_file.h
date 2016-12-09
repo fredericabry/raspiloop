@@ -6,7 +6,8 @@
 #include "qdebug.h"
 
 
-#define FILEPATH "/home/pi/test/config.txt"
+#define FILEPATH_CONFIG "/home/pi/test/config.txt"
+#define FILEPATH_CONTROL "/home/pi/test/control.txt"
 
 #define KEYWORD_PLAYBACK_LIST "PLAYBACK_DEVICES"
 #define KEYWORD_CAPTURE_LIST "CAPTURE_DEVICES"
@@ -17,6 +18,7 @@
 
 #define KEYWORD_MIX_PRESET_NUMBER "MIX_PRESET_NUMBER"
 
+#define KEYWORD_CONTROL_END "CONTROL_END"
 
 
 
@@ -25,7 +27,8 @@
 void extractParameter(QString keyword, QStringList *value);
 void setParameter(QString keyword, QStringList parameter, bool reset);
 
-
-
-
+void fileSetControl(QString keyword, QStringList parameter);
+void fileRemoveControl(QString keyword);
+void fileGetControl(QString keyword, QStringList *control);
+bool fileIsControlDefined(QString keyword);
 #endif // CONFIG_FILE_H

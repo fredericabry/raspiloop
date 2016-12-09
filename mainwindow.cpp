@@ -13,7 +13,7 @@
 #include "dialog_device.h"
 #include "dialog_parameters.h"
 #include "dialog_newcontrol.h"
-
+#include "dialog_controllist.h"
 
 #define LOOP_LENGTH 2000
 
@@ -79,7 +79,7 @@ void MainWindow::dialogInputDevice(void)
 }
 void MainWindow::dialogOutputDevice(void)
 {
-
+    this->setEnabled(false);
     dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),mainInterface);
     dialog->show();
     QPoint pos = this->pos();
@@ -176,7 +176,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
- QTimer::singleShot(500,this,SLOT(dialogOutputDevice()));
+ //QTimer::singleShot(500,this,SLOT(dialogOutputDevice()));
+
 
 
 

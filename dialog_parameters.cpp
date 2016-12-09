@@ -89,8 +89,8 @@ void dialog_parameters::newControl()
     dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),pInterface);
     dialog->show();
     QPoint pos = this->pos();
-    pos.setX(20);
-    pos.setY(20);
+    pos.setX(0);
+    pos.setY(0);
     dialog->move(pos);
 
 }

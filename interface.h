@@ -16,6 +16,8 @@ class interfaceEvent_c;
 class click_c;
 class alsa_playback_device;
 class alsa_capture_device;
+class control;
+class interface_c;
 
 enum status_t {IDLE,//not playing : paused
                   PLAY,//Normal behavior
@@ -31,6 +33,20 @@ enum syncoptions {NOSYNC,//no synchronization, loop are played as they are recor
 enum mixStrategies {AUTO,PRESET};
 
 
+
+
+enum type_e {VOID,INT,QSTRING};
+
+
+
+struct controlId
+{
+    type_e type;
+    QString key;
+    void (interface_c::*exec_void)();
+    void (interface_c::*exec_qstring)(QString);
+    void (interface_c::*exec_int)(int);
+};
 
 
 
@@ -72,6 +88,17 @@ public:
     void startRecord(std::vector<playback_port_c*>pPlayPorts, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
     void moveClick(std::vector<playback_port_c*> pPorts);
 
+    void createControls(void);
+    std::vector<controlId*> controlList;
+
+
+    void registerControl(QString key,void (interface_c::*function)());
+    void registerControl(QString key,void (interface_c::*function)(QString));
+    void registerControl(QString key,void (interface_c::*function)(int));
+
+
+
+
 
 
 
@@ -103,6 +130,34 @@ public:
 
     unsigned int getMixLoopNumber();
     void setMixLoopNumber(unsigned int value);
+
+
+
+
+
+
+
+
+ //functions defined in control.cpp
+    void createCapture(int desiredId);
+    void stopCapture(int Id);
+    void selectPlayback(int channel);
+    void unselectPlayback(int channel);
+    void selectCapture(int channel);
+    void unselectCapture(int channel);
+    void startstopLoop(int id);
+    void startLoop(int id);
+    void stopLoop(int id);
+    void stopAllLoops(void);
+    void muteunmuteLoop(int id);
+    void muteunmuteAllLoops(void);
+    void unselectAllPlaybacks(void);
+    void selectAllPlaybacks(void);
+    void unselectAllCaptures(void);
+    void selectAllCaptures(void);
+    void waitForNextControl(void);
+
+
 
 private:
     //mix strategy:
