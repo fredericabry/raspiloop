@@ -132,16 +132,19 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
 
 
-    int id;
+
     //qDebug()<<"process"<<eventType;
     bool killEvent = false;
 
     switch(eventType)
     {
     case EVENT_CAPTURE:
-        id=interface->generateNewId();
+
+
         // qDebug()<<"capture id"<<id;
-        *(captureData->pCaptureLoop) = new capture_loop_c(id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,0);
+        if(captureData->pCaptureLoop)
+        *(captureData->pCaptureLoop) = new capture_loop_c(captureData->id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,0);
+        else new capture_loop_c(captureData->id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,0);
         killEvent = true;
 
         break;
@@ -186,7 +189,8 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
             if(restartplayData->pLoop)
             {
-                //  qDebug()<<"process"<<restartplayData->pLoop->status;
+                // qDebug()<<"process"<<restartplayData->pLoop->status;
+
                 restartplayData->pLoop ->rewind();
 
             }

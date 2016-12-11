@@ -24,7 +24,7 @@ struct captureData_s
     long length;
     bool createPlayLoop;
     std::vector<playback_port_c*>pPlayPorts;
-
+    int id;
     capture_loop_c **pCaptureLoop;
 };
 

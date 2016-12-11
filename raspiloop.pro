@@ -33,7 +33,8 @@ SOURCES += main.cpp\
     alsa_util.cpp \
     control.cpp \
     dialog_numeric.cpp \
-    dialog_key.cpp
+    dialog_key.cpp \
+    dialog_keylist.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
@@ -54,7 +55,8 @@ HEADERS  += mainwindow.h \
     dialog_controllist.h \
     control.h \
     dialog_numeric.h \
-    dialog_key.h
+    dialog_key.h \
+    dialog_keylist.h
 
 FORMS    += mainwindow.ui \
     dialog_newcontrol.ui \
@@ -62,7 +64,8 @@ FORMS    += mainwindow.ui \
     dialog_parameters.ui \
     dialog_controllist.ui \
     dialog_numeric.ui \
-    dialog_key.ui
+    dialog_key.ui \
+    dialog_keylist.ui
 
 
 LIBS += -lasound -lsndfile

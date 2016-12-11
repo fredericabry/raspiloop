@@ -143,6 +143,8 @@ void playback_loop_c::destroy()
 
     if(!consumer) {qDebug()<<"no consumer bug";return;}
 
+    interface->removeRestartEvents(id); //let's not try to restart the loop after it is destroyed
+
     consumer->stop(); //consumer is going to stop and then destroy the loop
 
 }
@@ -277,7 +279,6 @@ int playback_loop_c::pullN(unsigned long N,int portNumber,short **buf)
 
     return N;
 }
-
 
 unsigned long playback_loop_c::length(unsigned long tail2)
 {
@@ -437,15 +438,46 @@ void playback_loop_c::updateFrameToPlay(long length)
     }
     else if(syncMode == CLICKSYNC)
     {
-        //length is given in bars
+
+        if(length>0)//length is given in bars
+        {
         barstoplay = length;
         stop = false;
         framestoplay = length*4*RATE*60/interface->pClick->getTempo();
+        }
+        else
+        {
+        //we need to compute the lenght and frames to play
+        qDebug()<<"computing length";
+            SF_INFO sf_info;
+            QString filename2 = DIRECTORY+filename;
+            SNDFILE *sf;
+
+
+            if ((sf = sf_open (filename2.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
+                char errstr[256];
+                sf_error_str (0, errstr, sizeof (errstr) - 1);
+                fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",filename.toStdString().c_str(), errstr);
+                return;
+            }
+
+
+            framestoplay = sf_info.frames;
+            barstoplay = framestoplay*interface->pClick->getTempo()/(4*RATE*60);
+
+            if(barstoplay < 1) barstoplay = 1;
+
+        sf_close(sf);
+        qDebug()<<"length computed"<<barstoplay;
+
+        }
+
+
 
     }
 
 
-
+ interface->printLoopList();
 
 
 }
@@ -466,7 +498,7 @@ playback_loop_c::~playback_loop_c(void)
     free(ringbuf);
 
 
-    //  qDebug()<<"playback loop destroyed";
+  //    qDebug()<<"playback loop destroyed";
 }
 
 void playback_loop_c::rewind(void)
@@ -627,6 +659,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
 
     sf_command (controler->soundfile, SFC_UPDATE_HEADER_NOW, NULL, 0) ; //update the file length, we might be writing on it in some other thread
+
 
 
 

@@ -36,13 +36,14 @@ public:
     void setClickText(int tempo);
     void setClickButton(bool status);
 
+
     QTimer *clickTimer;
     QTimer *stepTimer;
     QTimer *tester;
 
 
     void AfficherListe(QStringList);
-    void connectToCard(void);
+
     ~MainWindow();
 
     void keyPressEvent(QKeyEvent *e);
@@ -58,6 +59,8 @@ private slots:
     void dialogInputDevice(void);
     void dialogOutputDevice(void);
     void dialogConfig(void);
+    void setPlaybackConsole(QString txt);
+    void setCaptureConsole(QString txt);
 public slots:
     void shutdown(void);
 

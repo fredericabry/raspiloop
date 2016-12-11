@@ -31,4 +31,6 @@ void fileSetControl(QString keyword, QStringList parameter);
 void fileRemoveControl(QString keyword);
 void fileGetControl(QString keyword, QStringList *control);
 bool fileIsControlDefined(QString keyword);
+void fileGetControlKeyList(QStringList *keyControl);
+
 #endif // CONFIG_FILE_H

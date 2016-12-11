@@ -16,8 +16,9 @@ class interfaceEvent_c;
 class click_c;
 class alsa_playback_device;
 class alsa_capture_device;
-class control;
+class control_c;
 class interface_c;
+class controlList_c;
 
 enum status_t {IDLE,//not playing : paused
                   PLAY,//Normal behavior
@@ -35,17 +36,19 @@ enum mixStrategies {AUTO,PRESET};
 
 
 
-enum type_e {VOID,INT,QSTRING};
+enum controlType_e {VOID,INT,QSTRING};
 
 
 
 struct controlId
 {
-    type_e type;
+    controlType_e type;
     QString key;
     void (interface_c::*exec_void)();
     void (interface_c::*exec_qstring)(QString);
     void (interface_c::*exec_int)(int);
+
+
 };
 
 
@@ -61,13 +64,16 @@ public:
     void run() Q_DECL_OVERRIDE;
 
     int generateNewId(void);//return an available id neither used by a capture nor a playback loop
+    bool isIdFree(int id);//check if id is currentyle used to play or record
     playback_loop_c* findPlayLoopById(int id);
+    capture_loop_c* findCaptureLoopById(int id);
     void init(void);
 
     playback_loop_c* firstPlayLoop; //first of the playback loops list
     playback_loop_c* findLastPlaybackLoop(void);
     int getPlayLoopsCount();
     void removeAllPlaybackLoops(void);
+
 
     capture_loop_c* firstCaptureLoop;//first of the capture loops list
     capture_loop_c* findLastCaptureLoop(void);
@@ -80,26 +86,20 @@ public:
 
     interfaceEvent_c *firstEvent;//first event registered, begining of the events list
     interfaceEvent_c* findLastEvent(void);//return a pointer to the last event registered
+    void removeRestartEvents(int id);//remove all events with id and envetType
     bool isEventValid(interfaceEvent_c* pEvent);
     int getEventsCount();
     void removeAllEvents();
+
 
     void destroy();
     void startRecord(std::vector<playback_port_c*>pPlayPorts, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
     void moveClick(std::vector<playback_port_c*> pPorts);
 
-    void createControls(void);
-    std::vector<controlId*> controlList;
+    capture_port_c* findCapturePortByChannel(int channel);
+    playback_port_c* findPlaybackPortByChannel(int channel);
 
-
-    void registerControl(QString key,void (interface_c::*function)());
-    void registerControl(QString key,void (interface_c::*function)(QString));
-    void registerControl(QString key,void (interface_c::*function)(int));
-
-
-
-
-
+    void updatePortsConsole(void);
 
 
     void showPlayLoops();
@@ -123,6 +123,8 @@ public:
     std::vector<alsa_playback_device*> playbackDevicesList;
     std::vector<playback_port_c*> playbackPortsList;
     std::vector<capture_port_c*> capturePortsList;
+    std::vector<playback_port_c*> selectedPlaybackPortsList;
+    std::vector<capture_port_c*> selectedCapturePortsList;
     unsigned int playbackPortsCount,capturePortsCount;
 
     mixStrategies getMixStrategy() const;
@@ -136,15 +138,16 @@ public:
 
 
 
-
-
  //functions defined in control.cpp
-    void createCapture(int desiredId);
+    void createCapture(int desiredId);//create capture loop
+    void createCaptureAndPlay(int desiredId);//create capture loop and autoplay loop when capture is stoped
     void stopCapture(int Id);
     void selectPlayback(int channel);
     void unselectPlayback(int channel);
+
     void selectCapture(int channel);
-    void unselectCapture(int channel);
+    void selectNextCapture(void);
+
     void startstopLoop(int id);
     void startLoop(int id);
     void stopLoop(int id);
@@ -153,17 +156,36 @@ public:
     void muteunmuteAllLoops(void);
     void unselectAllPlaybacks(void);
     void selectAllPlaybacks(void);
-    void unselectAllCaptures(void);
-    void selectAllCaptures(void);
-    void waitForNextControl(void);
 
 
+    void waitForNextKey(void);
+    void startstopClick(void);
+
+    void moveLoop(int);
+
+
+    void createControls(void);
+    std::vector<controlId*> controlList; //available control options
+    std::vector<controlList_c*> controlLists;//registered controls
+
+    void registerControl(QString key,void (interface_c::*function)());
+    void registerControl(QString key,void (interface_c::*function)(QString));
+    void registerControl(QString key,void (interface_c::*function)(int));
+    void makeActiveControlsList(void);
+    controlId *identifyControl(QString control);
+    int getControlParamInt(QString control);
+    QString getControlParamQString(QString control);
+    void activateControl(QString key);
+
+
+    bool getAllMute() const;
+    void setAllMute(bool value);
 
 private:
     //mix strategy:
     mixStrategies mixStrategy;
     unsigned int mixLoopNumber;
-
+    bool allMute;//true if all playloops are "hard" muted
 
 
 
@@ -179,6 +201,8 @@ private slots:
 signals:
     void setTempo(int);
     void loopList(QString);
+    void sendPlaybackConsole(QString txt);
+    void sendCaptureConsole(QString txt);
 
 
 

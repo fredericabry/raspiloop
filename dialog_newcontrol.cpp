@@ -118,6 +118,8 @@ void dialog_newcontrol::save(void)
 
     fileSetControl(keyword,controlList);
 
+    pInterface->makeActiveControlsList();
+
     deleteLater();
 
 }

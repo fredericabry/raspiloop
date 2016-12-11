@@ -5,6 +5,8 @@
 #include "config_file.h"
 #include "dialog_device.h"
 #include "dialog_newcontrol.h"
+#include "dialog_controllist.h"
+#include "dialog_keylist.h"
 
 
 dialog_parameters::dialog_parameters(QWidget *parent,interface_c *pInterface) :
@@ -21,6 +23,8 @@ dialog_parameters::dialog_parameters(QWidget *parent,interface_c *pInterface) :
     connect(this->ui->bCaptureDevice,SIGNAL(pressed()),this,SLOT(dialogInputDevice()));
     connect(this->ui->bPlaybackDevice,SIGNAL(pressed()),this,SLOT(dialogOutputDevice()));
     connect(this->ui->bNewControl,SIGNAL(pressed()),this,SLOT(newControl()));
+    connect(this->ui->bControlList,SIGNAL(pressed()),this,SLOT(showControlList()));
+
 
     setupCLickButtons();
 
@@ -80,6 +84,33 @@ dialog_parameters::dialog_parameters(QWidget *parent,interface_c *pInterface) :
 
 
 }
+
+
+
+
+
+void dialog_parameters::showControlList()
+{
+
+    this->setEnabled(false);
+    dialog_keylist *dialog = new dialog_keylist(this,pInterface);
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(20);
+    pos.setY(20);
+    dialog->move(pos);
+
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

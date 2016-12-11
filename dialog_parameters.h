@@ -36,6 +36,7 @@ public slots:
     void dialogInputDevice(void);
     void dialogOutputDevice(void);
     void newControl();
+    void showControlList();
 };
 
 #endif // dialog_parameters_H

@@ -34,6 +34,7 @@ public:
 
     short **playback_buf;
     QString deviceName;
+    interface_c *pInterface;
     ConsumerDevicePlayback *consumer;
     snd_pcm_t *playback_handle;
     snd_pcm_uframes_t playback_frames,playback_period_size,playback_hw_buffersize;

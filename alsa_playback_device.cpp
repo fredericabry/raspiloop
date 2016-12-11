@@ -5,7 +5,7 @@
 #include "alsa_util.h"
 
 
-alsa_playback_device::alsa_playback_device(QString device,  int channels, int rate, interface_c *interface):deviceName(device)
+alsa_playback_device::alsa_playback_device(QString device,  int channels, int rate, interface_c *interface):deviceName(device),pInterface(interface)
 {
 
      deviceDesc = getCardDescription(device,SND_PCM_STREAM_PLAYBACK);
@@ -230,7 +230,9 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 
     for(int i = 0;i<playback_channels;i++)
     {
-        port[i]->consumer->pullN(playback_frames);
+       port[i]->consumer->pullN(playback_frames);
+
+
 
     }
 

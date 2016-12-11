@@ -14,7 +14,7 @@
 #include "dialog_parameters.h"
 #include "dialog_newcontrol.h"
 #include "dialog_controllist.h"
-
+#include "dialog_keylist.h"
 #define LOOP_LENGTH 2000
 
 
@@ -35,9 +35,19 @@ interface_c *mainInterface;
 void MainWindow::setClickText(int tempo)
 {
     ui->lcdClick->display(tempo);
-
-
 }
+
+void MainWindow::setPlaybackConsole(QString txt)
+{
+    ui->consolePlayback->setText(txt);
+}
+
+void MainWindow::setCaptureConsole(QString txt)
+{
+    ui->consoleCapture->setText(txt);
+}
+
+
 
 
 void MainWindow::setClickButton(bool status)
@@ -79,13 +89,7 @@ void MainWindow::dialogInputDevice(void)
 }
 void MainWindow::dialogOutputDevice(void)
 {
-    this->setEnabled(false);
-    dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),mainInterface);
-    dialog->show();
-    QPoint pos = this->pos();
-    pos.setX(0);
-    pos.setY(0);
-    dialog->move(pos);
+
 
 }
 
@@ -175,10 +179,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
-
- //QTimer::singleShot(500,this,SLOT(dialogOutputDevice()));
-
-
 
 
 

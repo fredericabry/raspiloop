@@ -265,10 +265,22 @@ void playbackPortConsumer::update()
         pLoop->datarequest(frames,controler->channel,buf2,&nread);
         if(nread > datalength) datalength = nread; //keep the longest sample size
 
-        if(controler->interface->getMixStrategy() == AUTO)
-        for(int i = 0;i<nread;i++)  bufmix[i]+=buf2[i]/connected_loops;
-        else if(controler->interface->getMixStrategy() == PRESET)
-        for(int i = 0;i<nread;i++)  bufmix[i]+=buf2[i]/(short)controler->interface->getMixLoopNumber();
+        if(controler->interface->getAllMute())
+        {
+            for(int i = 0;i<nread;i++)
+                bufmix[i]=0;
+        }
+        else
+        {
+
+            if(controler->interface->getMixStrategy() == AUTO)
+                for(int i = 0;i<nread;i++)
+                    bufmix[i]+=buf2[i]/connected_loops;
+            else if(controler->interface->getMixStrategy() == PRESET)
+                for(int i = 0;i<nread;i++)
+                    bufmix[i]+=buf2[i]/(short)controler->interface->getMixLoopNumber();
+
+        }
     }
 
     pushN(bufmix,datalength);

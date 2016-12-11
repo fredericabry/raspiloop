@@ -274,6 +274,33 @@ void fileGetControl(QString keyword, QStringList *control)
     file.close();
 }
 
+void fileGetControlKeyList(QStringList *keyControl) // return all the keywords
+{
+    QFile file(FILEPATH_CONTROL);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug()<<"file"<<FILEPATH_CONTROL<<"opening error";
+        return;
+    }
+
+    keyControl->clear();
+
+    QTextStream in (&file);
+    QString line;
+
+
+    do {
+        line = in.readLine();
+        if (line.contains("KEY_", Qt::CaseSensitive))
+        {
+         keyControl->append(line);
+        }
+    } while (!line.isNull());
+
+    file.close();
+}
+
+
 bool fileIsControlDefined(QString keyword)
 {
 

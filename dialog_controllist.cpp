@@ -17,8 +17,12 @@ dialog_controllist::dialog_controllist(QWidget *parent,QMainWindow* mainwindow, 
     ui->setupUi(this);
 
 
+
+
     int x = 10;
     int y = 10;
+
+
 
     for(unsigned int i = 0;i<pInterface->controlList.size();i++)
     {
