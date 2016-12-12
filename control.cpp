@@ -61,7 +61,7 @@ void controlList_c::exec(void)
     for (i = nextAction;i<list.size();i++)
     {
         list[i]->exec();
-        if(list[i]->control=="Wait for next control") break;
+        if(list[i]->control.contains("Wait for next control")) break;
 
     }
 
@@ -85,7 +85,7 @@ void interface_c::registerControl(QString key,void (interface_c::*function)())
 {
     controlId *ctl = new controlId();
     ctl->exec_void=function;
-    ctl->key=key;
+    ctl->key="["+QString::number(controlList.size())+"]"+key;
     ctl->type=VOID;
     controlList.push_back(ctl);
 }
@@ -93,7 +93,7 @@ void interface_c::registerControl(QString key,void (interface_c::*function)(int 
 {
     controlId *ctl = new controlId();
     ctl->exec_int=function;
-    ctl->key=key;
+    ctl->key="["+QString::number(controlList.size())+"]"+key;
     ctl->type=INT;
     controlList.push_back(ctl);
 }
@@ -101,7 +101,7 @@ void interface_c::registerControl(QString key,void (interface_c::*function)(QStr
 {
     controlId *ctl = new controlId();
     ctl->exec_qstring=function;
-    ctl->key=key;
+    ctl->key="["+QString::number(controlList.size())+"]"+key;
     ctl->type=QSTRING;
     controlList.push_back(ctl);
 }
@@ -295,6 +295,7 @@ void interface_c::selectPlayback(int channel)
 
 void interface_c::selectCapture(int channel)
 {
+    qDebug()<<"select capture"<<channel;
     capture_port_c *pPort = findCapturePortByChannel(channel);
     if(!pPort)
         return;
@@ -344,11 +345,11 @@ void interface_c::selectNextCapture(void)
 
 void interface_c::createCapture(int desiredId)
 {
-
-if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
+    qDebug()<<"start capture"<<desiredId;
+    if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
 
     if(selectedCapturePortsList.size() == 0) {qDebug()<<"error: no capture port selected";return;}
-    if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
+   // if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
 
     if(synchroMode == CLICKSYNC)
     {
@@ -378,7 +379,9 @@ if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
 void interface_c::createCaptureAndPlay(int desiredId)
 {
 
-if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
+    qDebug()<<"captureandplay Id"<<desiredId;
+
+    if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
 
     if(selectedCapturePortsList.size() == 0) {qDebug()<<"error: no capture port selected";return;}
     if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
@@ -418,21 +421,33 @@ void interface_c::stopCapture(int id)
 
 void interface_c::startLoop(int id)
 {
+qDebug()<<"start loop"<<id;
 
     if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
 
     if(findPlayLoopById(id)) {qDebug()<<"error: loop already playing";return;}
 
 
-        if(synchroMode == NOSYNC)
+    if(synchroMode == NOSYNC)
+    {
+
+
+        //  pPlayLoop = new playback_loop_c(id,pPlayPorts,playPortsCount,-1,NOSYNC,IDLE,pPort->interface);//by default loop
+    }
+    else if(synchroMode == CLICKSYNC)
+    {
+
+
+
+
+        if(pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
         {
+          new playback_loop_c(id,selectedPlaybackPortsList,0,CLICKSYNC,PLAY,this,pClick->getTime());
 
-
-          //  pPlayLoop = new playback_loop_c(id,pPlayPorts,playPortsCount,-1,NOSYNC,IDLE,pPort->interface);//by default loop
         }
-        else if(synchroMode == CLICKSYNC)
-        {
 
+        else
+        {
 
 
             playData_s *param;
@@ -449,16 +464,16 @@ void interface_c::startLoop(int id)
 
 
         }
-
+    }
 
 
 
 }
 void interface_c::stopLoop(int id)
 {
-   playback_loop_c *pLoop = findPlayLoopById(id);
-   if(pLoop)
-       pLoop->destroy();
+    playback_loop_c *pLoop = findPlayLoopById(id);
+    if(pLoop)
+        pLoop->destroy();
 }
 
 
@@ -478,6 +493,8 @@ void interface_c::startstopLoop(int id)
 
 void interface_c::stopAllLoops(void)
 {
+    qDebug()<<"stop all loops";
+
     playback_loop_c *pLoop = firstPlayLoop;
     playback_loop_c *pLoop2 = NULL;
     while(pLoop != NULL)
@@ -500,26 +517,17 @@ void interface_c::muteunmuteLoop(int id)
     playback_loop_c *pLoop = findPlayLoopById(id);
     if(pLoop)
     {
-    if(pLoop->status==PLAY)
-        pLoop->pause();
-    else
-        pLoop->play();
+        if(pLoop->status==PLAY)
+            pLoop->pause();
+        else
+            pLoop->play();
     }
 }
 void interface_c::muteunmuteAllLoops(void)
 {
-   if(getAllMute()) setAllMute(false);
-   else setAllMute(true);
+    if(getAllMute()) setAllMute(false);
+    else setAllMute(true);
 }
-
-
-
-
-//TODO
-
-
-
-
 
 void interface_c::moveLoop(int id)
 {
@@ -531,24 +539,7 @@ void interface_c::moveLoop(int id)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//TODO
 
 
 

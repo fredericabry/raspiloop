@@ -21,6 +21,9 @@ dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,in
     connect(ui->bRemoveControl,SIGNAL(pressed()),this,SLOT(removeLastControl()));
     connect(ui->bKeyChoice,SIGNAL(pressed()),this,SLOT(keyChoice()));
     connect(ui->bSave,SIGNAL(pressed()),this,SLOT(save()));
+    connect(ui->bDown,SIGNAL(pressed()),this,SLOT(selectDown()));
+    connect(ui->bUp,SIGNAL(pressed()),this,SLOT(selectUp()));
+
 
     key.clear();
 }
@@ -30,14 +33,9 @@ dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,in
 
 void dialog_newcontrol::getKey(QKeyEvent *e)
 {
-    key = QString::number(e->key());
-    ui->consoleKey->setText(key);
+    setKey((QString)(QKeySequence(e->key()).toString()));
 
-    QTextCursor cursor = ui->consoleKey->textCursor();
-    QTextBlockFormat textBlockFormat = cursor.blockFormat();
-    textBlockFormat.setAlignment(Qt::AlignCenter);//or another alignment
-    cursor.mergeBlockFormat(textBlockFormat);
-    ui->consoleKey->setTextCursor(cursor);
+
 
 }
 
@@ -57,22 +55,81 @@ void dialog_newcontrol::openControlList(void)
 }
 
 
+
+void dialog_newcontrol::showActive(QStringList *txt)
+{
+
+    if(activeControl > controlList.size() -1) activeControl = controlList.size() -1;
+    if(activeControl<0) activeControl = 0;
+
+    if(controlList.size()<= 0) return;
+
+    *txt = controlList;
+
+    QString buf = "<font color=\"#ff4040\">"+controlList.at(activeControl)+"</font>";
+
+    txt->replace(activeControl,buf);
+}
+
+void dialog_newcontrol::setControlList(const QStringList &value)
+{
+    controlList = value;
+}
+
+void dialog_newcontrol::setKey(const QString value)
+{
+    key = value;
+
+    ui->consoleKey->setText(key);
+
+    QTextCursor cursor = ui->consoleKey->textCursor();
+    QTextBlockFormat textBlockFormat = cursor.blockFormat();
+    textBlockFormat.setAlignment(Qt::AlignCenter);//or another alignment
+    cursor.mergeBlockFormat(textBlockFormat);
+    ui->consoleKey->setTextCursor(cursor);
+}
+
+
 void dialog_newcontrol::getControl(QString txt)
 {
-    controlList.append(txt);
+    //controlList.append(txt);
+    controlList.insert(activeControl+1,txt);
+    activeControl ++;
     refreshConsole();
 }
 
 void dialog_newcontrol::removeLastControl()
 {
-    if(controlList.size()>0)
-    {
-        controlList.removeLast();
-        refreshConsole();
+    if(controlList.size()<=0) return;
 
-    }
+
+    controlList.removeAt(activeControl);
+    activeControl --;
+    if(activeControl<0) activeControl = 0;
+    refreshConsole();
+
+
 
 }
+
+void dialog_newcontrol::selectDown(void)
+{
+    if(controlList.size()<=0) return;
+
+    activeControl ++;
+    if(activeControl>controlList.size()-1) activeControl = 0;
+    refreshConsole();
+}
+
+void dialog_newcontrol::selectUp(void)
+{
+    if(controlList.size()<=0) return;
+
+    activeControl --;
+    if(activeControl<0) activeControl = controlList.size()-1;
+    refreshConsole();
+}
+
 
 void dialog_newcontrol::save(void)
 {
@@ -103,15 +160,15 @@ void dialog_newcontrol::save(void)
     {
         QMessageBox msgBox;
         msgBox.setText("Control already defined");
-        QAbstractButton *removeButton = msgBox.addButton(tr("Remove"), QMessageBox::ActionRole);
-          msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
-          QFont font = msgBox.font();
-          font.setPixelSize(20);
-          msgBox.setFont(font);
+        QAbstractButton *removeButton = msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+        msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
+        QFont font = msgBox.font();
+        font.setPixelSize(20);
+        msgBox.setFont(font);
         msgBox.exec();
         if (msgBox.clickedButton() != removeButton)
         {
-             return;
+            return;
         }
     }
 
@@ -130,8 +187,10 @@ void dialog_newcontrol::save(void)
 
 void dialog_newcontrol::refreshConsole(void)
 {
+    QStringList show;
+    showActive(&show);
 
-    ui->commandList->setText(controlList.join("\n"));
+    ui->commandList->setHtml(show.join("<br>"));
 
 
 }

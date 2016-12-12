@@ -3,13 +3,15 @@
 #include "alsa_util.h"
 
 
-alsa_capture_device::alsa_capture_device(QString device,int channels, int rate,interface_c *interface):deviceName(device)
+alsa_capture_device::alsa_capture_device(QString device,int channels, int rate,interface_c *interface,bool *success):deviceName(device)
 {
 
 
     deviceDesc = getCardDescription(device,SND_PCM_STREAM_CAPTURE);
 
+
     if (!alsa_open_device_capture(device)) return;
+
 
 
     alsa_init_capture(channels,rate,interface);
@@ -19,6 +21,8 @@ alsa_capture_device::alsa_capture_device(QString device,int channels, int rate,i
     alsa_begin_capture(main_buf_capture);
 
 
+    *success = true;
+
 }
 
 bool alsa_capture_device::alsa_open_device_capture(QString device)
@@ -26,6 +30,9 @@ bool alsa_capture_device::alsa_open_device_capture(QString device)
     int err;
     device = "plug"+device;//allows non interleaving
     if ((err = snd_pcm_open (&capture_handle,device.toStdString().c_str(), SND_PCM_STREAM_CAPTURE, 0)) < 0) {
+
+
+
 
         if(err == -EBUSY)
         {
@@ -37,11 +44,9 @@ bool alsa_capture_device::alsa_open_device_capture(QString device)
         {
 
 
-            fprintf (stderr, "cannot open audio device %s for capture (%s)\n",
-                     device.toStdString().c_str(),
-                     snd_strerror (err));
+          qDebug()<<"cannot open audio device"<<device.toStdString().c_str()<<"for capture"<<snd_strerror (err);
 
-            exit (1);
+          //  exit (1);
             return false;
         }
     }

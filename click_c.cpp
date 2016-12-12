@@ -78,14 +78,14 @@ void click_c::tick(void)
         emit firstBeat();
 
         if(status == PLAY)
-            new playback_loop_c(0,pPorts,0,NOSYNC,PLAY,interface);//once, autoplay
+            new playback_loop_c(0,pPorts,0,NOSYNC,PLAY,interface,0);//once, autoplay
 
         // qDebug()<<"first beat";
     }
     else
     {
         if(status == PLAY)
-            new playback_loop_c(1,pPorts,0,NOSYNC,PLAY,interface);//once, autoplay
+            new playback_loop_c(1,pPorts,0,NOSYNC,PLAY,interface,0);//once, autoplay
     }
 
 
@@ -111,7 +111,7 @@ void click_c::setTempo(int temp)
     long deltams = 60000/tempo; //time in ms between ticks
     timer.setInterval(deltams);
 
-    qDebug()<<"new tempo:"<<tempo;
+    //qDebug()<<"new tempo:"<<tempo;
 
 }
 

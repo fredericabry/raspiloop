@@ -133,7 +133,7 @@ void dialog_parameters::newControl()
 void dialog_parameters::dialogInputDevice(void)
 {
     this->setEnabled(false);
-    DialogDevice *dialog = new DialogDevice(this,((QMainWindow*)parent()),pInterface,1);
+    dialog_device *dialog = new dialog_device(this,((QMainWindow*)parent()),pInterface,1);
     dialog->show();
     QPoint pos = this->pos();
     pos.setX(20);
@@ -144,7 +144,7 @@ void dialog_parameters::dialogInputDevice(void)
 void dialog_parameters::dialogOutputDevice(void)
 {
     this->setEnabled(false);
-    DialogDevice *dialog = new DialogDevice(this,((QMainWindow*)parent()),pInterface,0);
+    dialog_device *dialog = new dialog_device(this,((QMainWindow*)parent()),pInterface,0);
     dialog->show();
     QPoint pos = this->pos();
     pos.setX(20);

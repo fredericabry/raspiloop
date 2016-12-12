@@ -24,7 +24,8 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>9</pointsize>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
     </font>
    </property>
    <property name="styleSheet">
@@ -32,6 +33,29 @@
    </property>
    <property name="text">
     <string>Close</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bRemove">
+   <property name="geometry">
+    <rect>
+     <x>650</x>
+     <y>310</y>
+     <width>99</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>Remove
+all</string>
    </property>
   </widget>
  </widget>

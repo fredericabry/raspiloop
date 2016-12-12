@@ -32,8 +32,8 @@
   <widget class="QTextBrowser" name="consoleKey">
    <property name="geometry">
     <rect>
-     <x>670</x>
-     <y>150</y>
+     <x>660</x>
+     <y>260</y>
      <width>100</width>
      <height>40</height>
     </rect>
@@ -56,7 +56,8 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>9</pointsize>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
     </font>
    </property>
    <property name="styleSheet">
@@ -116,7 +117,8 @@ last entry</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>9</pointsize>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
     </font>
    </property>
    <property name="styleSheet">
@@ -130,7 +132,7 @@ last entry</string>
    <property name="geometry">
     <rect>
      <x>530</x>
-     <y>140</y>
+     <y>250</y>
      <width>120</width>
      <height>60</height>
     </rect>
@@ -143,6 +145,44 @@ last entry</string>
    </property>
    <property name="text">
     <string>Key choice</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bUp">
+   <property name="geometry">
+    <rect>
+     <x>530</x>
+     <y>130</y>
+     <width>120</width>
+     <height>60</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>6</pointsize>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="text">
+    <string>up</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bDown">
+   <property name="geometry">
+    <rect>
+     <x>530</x>
+     <y>190</y>
+     <width>120</width>
+     <height>60</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>6</pointsize>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="text">
+    <string>down</string>
    </property>
   </widget>
  </widget>

@@ -1,7 +1,7 @@
 #include "dialog_key.h"
 #include "ui_dialog_key.h"
 
-
+#include "qdebug.h"
 
 dialog_key::dialog_key(QWidget *parent) :
     QDialog(parent),
@@ -24,6 +24,8 @@ void dialog_key::keyPressEvent(QKeyEvent *e)
         return;
 
     emit sendKey(e);
+
+
 
     deleteLater();
 }

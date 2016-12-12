@@ -12,10 +12,7 @@
 
 
 
-capture_port_c *pActiveRecPort;
-capture_loop_c *pActiveRecLoop;
-playback_port_c *pActivePlayPort;
-playback_loop_c *pActivePlayLoop;
+
 interfaceEvent_c *pActiveEvent;
 
 
@@ -363,7 +360,7 @@ void interface_c::removeAllPlaybackLoops(void)
         pLoop = pLoop2;
 
     }
-    pActivePlayLoop = NULL;
+
 
 }
 
@@ -447,7 +444,7 @@ QString interface_c::statusToString(status_t status)
     }
 }
 
-void interface_c::printLoopList(void)
+void interface_c::printPlaybackLoopList(void)
 {
     playback_loop_c *pLoop = this->firstPlayLoop;
     QString txt = "";
@@ -501,9 +498,70 @@ void interface_c::printLoopList(void)
         }
     }
 
-    emit loopList(txt);
+    emit playbackLoopList(txt);
 
 }
+
+
+
+void interface_c::printCaptureLoopList(void)
+{
+    capture_loop_c *pLoop = this->firstCaptureLoop;
+    QString txt = "";
+
+
+    if(getCaptureLoopsCount() <= 0) txt="no loop";
+    else
+    {
+
+        if(pLoop)
+        {
+            txt+="Loop #"+QString::number(pLoop->id);
+
+            if(pLoop->pPort)
+                txt+=" - port:" +QString::number(pLoop->pPort->channel)+"\n";
+            else
+            {
+              txt+=" - no port\n";
+            }
+
+
+
+
+        }
+
+        while(pLoop->pNextLoop)
+        {
+            pLoop = pLoop->pNextLoop;
+            if(pLoop)    {
+                txt+="Loop #"+QString::number(pLoop->id);
+
+                if(pLoop->pPort)
+                    txt+=" - port:" +QString::number(pLoop->pPort->channel)+"\n ";
+                else
+                {
+                  txt+=" - no port\n";
+                }
+
+
+
+            }
+
+        }
+    }
+
+    emit captureLoopList(txt);
+
+}
+
+
+
+
+
+
+
+
+
 
 bool interface_c::isCaptureLoopValid(capture_loop_c * pCapture)
 {
@@ -589,82 +647,46 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 }
 
 
-void interface_c::startRecord(std::vector<playback_port_c*> pPlayPorts,capture_port_c *pCapturePort,capture_loop_c **pCaptureLoop,long length)
-{
-    *pCaptureLoop = NULL;
-    //    playback_port_c **pPlayPorts = (playback_port_c **)malloc(sizeof(playback_port_c*));
-
-
-
-
-    if(synchroMode == CLICKSYNC)
-    {
-
-
-        if(pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
-        {
-            *pCaptureLoop = new capture_loop_c(generateNewId(),pCapturePort,length,true,pPlayPorts,pClick->getTime());
-
-        }
-
-        else
-        {
-
-            captureData_s *params = new captureData_s;
-            params->createPlayLoop = true;
-            params->length=length;
-            params->pPlayPorts = pPlayPorts;
-            params->pPort=pCapturePort;
-            params->pCaptureLoop = pCaptureLoop;
-            params->id = generateNewId();
-
-            createInterfaceEvent(pClick,SIGNAL(firstBeat()),EVENT_CAPTURE,(void*)params,false,&pActiveEvent);
-
-        }
-    }
-
-
-
-}
 
 
 void interface_c::init(void)
 {
 
 
-
-
-
-
     playbackPortsCount = 0;
     capturePortsCount = 0;
-
-
-
 
     QStringList device;
     extractParameter(KEYWORD_CAPTURE_LIST, &device);
 
     for(int i =0;i<device.size();i++)
     {
-        alsa_capture_device *pCaptureDevice = new alsa_capture_device(device[i],2,RATE,this);
+        bool deviceCreated = false;
+        alsa_capture_device *pCaptureDevice = new alsa_capture_device(device[i],2,RATE,this,&deviceCreated);
+        if(deviceCreated)
+        {
         captureDevicesList.push_back(pCaptureDevice);
         for(int j=0;j<pCaptureDevice->capture_channels;j++)
             capturePortsList.push_back(pCaptureDevice->alsa_capture_port_by_num(j));
+        }
     }
 
 
     extractParameter(KEYWORD_PLAYBACK_LIST, &device);
     for(int i =0;i<device.size();i++)
     {
-        alsa_playback_device *pPlaybackDevice = new alsa_playback_device(device[i],2,RATE,this);
+        bool deviceCreated = false;
+        alsa_playback_device *pPlaybackDevice = new alsa_playback_device(device[i],2,RATE,this,&deviceCreated);
+        if(deviceCreated)
+        {
         playbackDevicesList.push_back(pPlaybackDevice);
         for(int j=0;j<pPlaybackDevice->playback_channels;j++)
             playbackPortsList.push_back(pPlaybackDevice->alsa_playback_port_by_num(j));
+        }
     }
 
 
-    pActiveRecPort = NULL;
+
 
 
     synchroMode = CLICKSYNC;
@@ -731,7 +753,10 @@ void interface_c::init(void)
     pClick = new click_c(120,pClickPorts,IDLE,this,parent);
     clickStatus=false;
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
-    connect(this,SIGNAL(loopList(QString)),parent,SLOT(setLoopList(QString)));
+    connect(this,SIGNAL(playbackLoopList(QString)),parent,SLOT(setPlaybackLoopList(QString)));
+    connect(this,SIGNAL(captureLoopList(QString)),parent,SLOT(setCaptureLoopList(QString)));
+
+
     connect(this,SIGNAL(sendPlaybackConsole(QString)),parent,SLOT(setPlaybackConsole(QString)));
     connect(this,SIGNAL(sendCaptureConsole(QString)),parent,SLOT(setCaptureConsole(QString)));
 
@@ -742,8 +767,8 @@ void interface_c::init(void)
 
     telapsed.start();
     //connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
-    printLoopList();
-
+    printPlaybackLoopList();
+    printCaptureLoopList();
 
 
     createControls();
@@ -767,183 +792,9 @@ void interface_c::run()
 
 void interface_c::keyInput(QKeyEvent *e)
 {
-    static bool test = false;
 
 
-
-    activateControl("KEY_"+QString::number(e->key()));
-
-
-
-
-    return;
-    //  qDebug()<<e->key();
-    switch(e->key())
-    {
-
-
-    case Qt::Key_Period:
-        pActivePlayPort = playbackPortsList[0];
-        qDebug()<<"Output"<<pActivePlayPort->channel<<"selected";
-
-        break;
-
-    case Qt::Key_0:
-        pActivePlayPort = playbackPortsList[1];
-        qDebug()<<"Output"<<pActivePlayPort->channel<<"selected";
-        break;
-
-    case Qt::Key_1:
-        pActiveRecPort = capturePortsList[0];
-        qDebug()<<"Input"<<pActiveRecPort->channel<<"selected";
-
-        break;
-    case Qt::Key_2:
-    {
-        pActivePlayPort = playbackPortsList[0];
-        pActiveRecPort = capturePortsList[0];
-
-
-        std::vector<playback_port_c*> pPlayPorts2;
-        pPlayPorts2.push_back(playbackPortsList[0]);
-        pPlayPorts2.push_back(playbackPortsList[1]);
-
-
-
-
-        switch(getCaptureStatus(&pActiveRecLoop))
-        {
-        case 0:
-            startRecord(playbackPortsList,pActiveRecPort,&pActiveRecLoop,0);
-            break;
-        case 1:pActiveRecLoop->destroyLoop();break;
-        case 2:qDebug()<<"capture loop not created yet, event in progress";break;
-        default:break;
-
-        }
-        break;
-
-    }
-    case Qt::Key_3:
-        pActiveRecPort = capturePortsList[1];
-        qDebug()<<"Input"<<pActiveRecPort->channel<<"selected";
-        break;
-    case Qt::Key_4:
-        if(!pActivePlayLoop){ pActivePlayLoop = this->firstPlayLoop;}
-
-        if(pActivePlayLoop)
-        {
-            if(pActivePlayLoop->pPrevLoop) {pActivePlayLoop = pActivePlayLoop->pPrevLoop;}
-            else {
-                playbackListMutex.lock();
-                pActivePlayLoop = findLastPlaybackLoop();
-                playbackListMutex.unlock();
-            }
-        }
-
-        if(pActivePlayLoop) qDebug()<<"play loop #"<<pActivePlayLoop->id<<"selected";
-        else qDebug()<<"no play loop available";
-
-
-        break;//
-    case Qt::Key_5:
-        if(pActivePlayLoop)
-        {
-            if((pActivePlayLoop->status == IDLE)||(pActivePlayLoop->status == SILENT))  {pActivePlayLoop->play();qDebug()<<"loop"<<pActivePlayLoop->id<<"play";}
-            else if(pActivePlayLoop->status == PLAY) {pActivePlayLoop->pause();qDebug()<<"loop"<<pActivePlayLoop->id<<"paused";}
-
-        }
-        else
-            qDebug()<<"no playloop active";
-
-
-        break;
-    case Qt::Key_6:
-
-        if(!pActivePlayLoop) pActivePlayLoop = this->firstPlayLoop;
-
-        if(pActivePlayLoop)
-        {
-            if(pActivePlayLoop->pNextLoop) pActivePlayLoop = pActivePlayLoop->pNextLoop;
-            else pActivePlayLoop = firstPlayLoop;
-        }
-
-        if(pActivePlayLoop) qDebug()<<"play loop #"<<pActivePlayLoop->id<<"selected";
-        else qDebug()<<"no play loop available";
-
-
-
-        break;
-    case Qt::Key_7:
-    {
-        playback_loop_c *pLoop = findPlayLoopById(2);
-        if(pLoop)
-        {
-            if(test)
-            {
-                pLoop->addPort(playbackPortsList[1]);
-                test = false;
-            }
-            else
-            {
-                pLoop->removePort(playbackPortsList[1]);
-                test = true;
-
-            }
-        }
-
-
-        break;
-    }
-    case Qt::Key_8:
-    {
-        playback_loop_c *pLoop = findPlayLoopById(2);
-        if(pLoop)
-        {
-            std::vector<playback_port_c*> pPlayPorts2;
-            pPlayPorts2.push_back(playbackPortsList[0]);
-
-
-            pLoop->moveToPort(pPlayPorts2);
-
-        }
-
-
-        break;
-    }
-
-
-    case Qt::Key_9:qDebug()<<"Active playback loops count:"<<getPlayLoopsCount();
-        qDebug()<<"Active capture loops count:"<<getCaptureLoopsCount();
-        qDebug()<<"Active events count:"<<getEventsCount();
-        printLoopList();
-        break;
-    case Qt::Key_Enter:
-
-        parent->shutdown();
-
-
-        break;
-
-
-    case Qt::Key_Minus:emit setTempo(pClick->getTempo()-10);break;
-    case Qt::Key_Asterisk:emit setTempo(pClick->getTempo()+10);break;
-
-    case Qt::Key_Plus:showPlayLoops();break;
-
-    case Qt::Key_Backspace:
-
-        this->removeAllEvents();qDebug()<<"All events deleted";
-
-        this->removeAllPlaybackLoops();qDebug()<<"All playback loops deleted";
-
-
-        break;
-    case Qt::Key_Slash:
-        pClick->stopstart();
-
-        break;
-    }
+    activateControl("KEY_"+QKeySequence(e->key()).toString());
 
 
 }

@@ -30,7 +30,7 @@ class alsa_capture_device:public QObject
     Q_OBJECT
 
 public:
-    alsa_capture_device(QString device, int channels, int rate,interface_c *interface);
+    alsa_capture_device(QString device, int channels, int rate, interface_c *interface, bool *success);
     bool alsa_open_device_capture(QString device);
     void alsa_init_capture(int channels,int rate,interface_c *interface);
     void alsa_set_hw_parameters_capture(void);

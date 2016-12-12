@@ -6,7 +6,7 @@
 #include "click_c.h"
 #include "events.h"
 
-playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, long length,syncoptions syncMode,status_t status,interface_c *interface):id(id),pPorts(pPorts),syncMode(syncMode),status(status),interface(interface)
+playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, long length,syncoptions syncMode,status_t status,interface_c *interface, double delta):id(id),pPorts(pPorts),syncMode(syncMode),status(status),interface(interface)
 {
 
 
@@ -39,7 +39,7 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
     updateFrameToPlay(length);
 
-    if(syncMode == CLICKSYNC)
+    if((syncMode == CLICKSYNC)&&(!isClick))
     {
         restartplayData_s *restartplayData = new restartplayData_s;
         restartplayData->id = id;
@@ -47,12 +47,26 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
         restartplayData->skipevent=0;
         restartplayData->status=PLAY;
         makeInterfaceEvent(interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent);
+
+
+        if(delta > 0)
+        {
+            unsigned long offset = delta*RATE; //number of elements which we skip because loop was created too late
+            if(offset > RATE) {qDebug()<<"too late"; offset = RATE;}
+            framestoskip = offset;
+        }
+        else
+            framestoskip = 0;
+
+
     }
 
 
 
-    std::fill(framesCount.begin(),framesCount.end(),0);
+    //  std::fill(framesCount.begin(),framesCount.end(),0);
     isOutOfSample = false;
+
+
 
 
 
@@ -72,6 +86,12 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
         tails.push_back(head);
         framesCount.push_back(0);
         pPort->addloop(this);
+
+
+
+
+
+
 
     }
 
@@ -310,7 +330,7 @@ void playback_loop_c::play()
 {
     this->status = PLAY;
 
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
 }
 
 void playback_loop_c::pause()
@@ -322,7 +342,7 @@ void playback_loop_c::pause()
         this->status = IDLE;
 
 
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
 }
 
 void playback_loop_c::moveToPort(std::vector<playback_port_c *> pNuPorts)
@@ -350,17 +370,19 @@ void playback_loop_c::moveToPort(std::vector<playback_port_c *> pNuPorts)
     framesCount.clear();
     pPorts.clear();
 
+
     for (auto &pPort : pNuPorts)
     {
         portsChannel.push_back(pPort->channel);
         tails.push_back(old_tails);
         framesCount.push_back(old_frameCount);
         pPorts.push_back(pPort);
+
         pPort->addloop(this);
     }
 
 
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
 
 }
 
@@ -386,7 +408,8 @@ void playback_loop_c::addPort(playback_port_c * pNuPort)
     framesCount.push_back(old_frameCount);
     pPorts.push_back(pNuPort);
     pNuPort->addloop(this);
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
+
 
 }
 
@@ -402,10 +425,11 @@ void playback_loop_c::removePort(playback_port_c * pOldPort)
             tails.erase(tails.begin()+i);
             framesCount.erase(framesCount.begin()+i);
             portsChannel.erase(portsChannel.begin()+i);
+
         }
 
     }
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
 }
 
 void playback_loop_c::updateFrameToPlay(long length)
@@ -441,14 +465,14 @@ void playback_loop_c::updateFrameToPlay(long length)
 
         if(length>0)//length is given in bars
         {
-        barstoplay = length;
-        stop = false;
-        framestoplay = length*4*RATE*60/interface->pClick->getTempo();
+            barstoplay = length;
+            stop = false;
+            framestoplay = length*4*RATE*60/interface->pClick->getTempo();
         }
         else
         {
-        //we need to compute the lenght and frames to play
-        qDebug()<<"computing length";
+            //we need to compute the lenght and frames to play
+
             SF_INFO sf_info;
             QString filename2 = DIRECTORY+filename;
             SNDFILE *sf;
@@ -463,12 +487,15 @@ void playback_loop_c::updateFrameToPlay(long length)
 
 
             framestoplay = sf_info.frames;
-            barstoplay = framestoplay*interface->pClick->getTempo()/(4*RATE*60);
+            unsigned long beats = framestoplay*interface->pClick->getTempo()/(RATE*60);
+            barstoplay = beats/4;
 
+
+            if((beats%4)>= 2) barstoplay++; //if recording was stopped after the third beat we add an extra bar
             if(barstoplay < 1) barstoplay = 1;
 
-        sf_close(sf);
-        qDebug()<<"length computed"<<barstoplay;
+            sf_close(sf);
+
 
         }
 
@@ -477,7 +504,7 @@ void playback_loop_c::updateFrameToPlay(long length)
     }
 
 
- interface->printLoopList();
+    interface->printPlaybackLoopList();
 
 
 }
@@ -498,7 +525,7 @@ playback_loop_c::~playback_loop_c(void)
     free(ringbuf);
 
 
-  //    qDebug()<<"playback loop destroyed";
+    //    qDebug()<<"playback loop destroyed";
 }
 
 void playback_loop_c::rewind(void)
@@ -579,7 +606,7 @@ void playback_loop_c::addToList(void)
     }
     interface->playbackListMutex.unlock();
 
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
 
 
 
@@ -601,7 +628,7 @@ void playback_loop_c::removeFromList(void)
 
 
 
-    interface->printLoopList();
+    interface->printPlaybackLoopList();
 
 
 }
@@ -668,6 +695,19 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     if(nrequest > NFILE_PLAYBACK) nrequest = NFILE_PLAYBACK;
 
     t3.start();
+
+
+    if(controler->framestoskip>0)
+    {
+
+        sf_seek(controler->soundfile,(sf_count_t)(controler->framestoskip),SEEK_CUR|SFM_READ);
+        // qDebug()<<controler->framestoskip<<"samples skipped ("<<controler->framestoskip*1000/RATE<<"ms)";
+        controler->framestoskip = 0;
+
+    }
+
+
+
 
     if((nread = sf_readf_short(controler->soundfile,controler->buffile,nrequest))>0)
     {

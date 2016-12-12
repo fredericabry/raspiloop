@@ -5,10 +5,10 @@
 #include "alsa_util.h"
 
 
-alsa_playback_device::alsa_playback_device(QString device,  int channels, int rate, interface_c *interface):deviceName(device),pInterface(interface)
+alsa_playback_device::alsa_playback_device(QString device,  int channels, int rate, interface_c *interface,bool *success):deviceName(device),pInterface(interface)
 {
 
-     deviceDesc = getCardDescription(device,SND_PCM_STREAM_PLAYBACK);
+    deviceDesc = getCardDescription(device,SND_PCM_STREAM_PLAYBACK);
 
 
     if (!alsa_open_device_playback(device)) return;
@@ -22,6 +22,7 @@ alsa_playback_device::alsa_playback_device(QString device,  int channels, int ra
 
     alsa_begin_playback(main_buf_playback);
 
+    *success = true;
 }
 
 bool alsa_playback_device::alsa_open_device_playback(QString device)
@@ -39,12 +40,9 @@ bool alsa_playback_device::alsa_open_device_playback(QString device)
         else
         {
 
+            qDebug()<<"cannot open audio device"<<device.toStdString().c_str()<<"for capture"<<snd_strerror (err);
 
-            fprintf (stderr, "cannot open audio device %s (%s)\n",
-                     device.toStdString().c_str(),
-                     snd_strerror (err));
 
-            exit (1);
             return false;
         }
     }
@@ -205,7 +203,7 @@ void alsa_playback_device::alsa_begin_playback(playback_port_c **port)
     }
 
 
-   snd_pcm_start(playback_handle); //Start the device
+    snd_pcm_start(playback_handle); //Start the device
 
     //   snd_async_handler_t *pcm_callback;
     //   snd_async_add_pcm_handler(&pcm_callback,playback_handle,alsa_async_callback_playback,port);
@@ -230,7 +228,7 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 
     for(int i = 0;i<playback_channels;i++)
     {
-       port[i]->consumer->pullN(playback_frames);
+        port[i]->consumer->pullN(playback_frames);
 
 
 
@@ -343,7 +341,7 @@ void ConsumerDevicePlayback::write_and_poll_loop(playback_port_c **port)
     snd_pcm_uframes_t avail;
     avail = snd_pcm_avail_update(controler->playback_handle);
 
-   // qDebug()<<avail;
+    // qDebug()<<avail;
     while(avail >= controler->playback_frames)
     {
         controler->alsa_write_playback(port);

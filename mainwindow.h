@@ -55,7 +55,8 @@ private:
     Ui::MainWindow *ui;
 
 private slots:
-    void setLoopList(QString txt);
+    void setPlaybackLoopList(QString txt);
+    void setCaptureLoopList(QString txt);
     void dialogInputDevice(void);
     void dialogOutputDevice(void);
     void dialogConfig(void);

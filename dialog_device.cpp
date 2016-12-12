@@ -1,5 +1,5 @@
 #include "dialog_device.h"
-#include "ui_dialogdevice.h"
+#include "ui_dialog_device.h"
 #include "interface.h"
 #include "alsa_util.h"
 #include "qdebug.h"
@@ -7,10 +7,11 @@
 #include "config_file.h"
 
 
-DialogDevice::DialogDevice(QWidget *parent,QMainWindow* mainwindow, interface_c *pInterface,int type):
+dialog_device::dialog_device(QWidget *parent,QMainWindow* mainwindow, interface_c *pInterface,int type):
     QDialog(parent),
     mainwindow(mainwindow),
-    ui(new Ui::DialogDevice),
+    ui(new Ui::dialog_device),
+    type(type),
     pInterface(pInterface)
 {
     ui->setupUi(this);
@@ -19,10 +20,26 @@ DialogDevice::DialogDevice(QWidget *parent,QMainWindow* mainwindow, interface_c 
 
 
     connect(this->ui->bClose,SIGNAL(pressed()),this,SLOT(deleteLater()));
+    connect(this->ui->bRefresh,SIGNAL(pressed()),this,SLOT(refresh()));
+
+
+
+    draw();
+
+    //  connect(signalMapper, SIGNAL(mapped(QString)), this, SLOT(clicked(QString)));
+
+
+
+
+}
+
+
+
+
+void dialog_device::draw(void)
+{
 
     QStringList cardNamesFile;
-
-
 
     devicesCount = 0;
 
@@ -51,6 +68,7 @@ DialogDevice::DialogDevice(QWidget *parent,QMainWindow* mainwindow, interface_c 
     }
 
 
+
     extractParameter(keyWord, &cardNamesFile);
 
     for (unsigned int i = 0;i<devicesCount;i++)
@@ -71,28 +89,28 @@ DialogDevice::DialogDevice(QWidget *parent,QMainWindow* mainwindow, interface_c 
         if(cardNamesFile.contains(cardNames[i])) //device is in config file already
         {
             deviceButton->setChecked(true);
-
         }
 
-        //  connect(deviceButton, SIGNAL(pressed()), signalMapper, SLOT(map()));
-        //  signalMapper->setMapping(deviceButton, cardNames[i]);
 
-
+        deviceButton->show();
         buttonsList.push_back(deviceButton);
 
     }
 
-    //  connect(signalMapper, SIGNAL(mapped(QString)), this, SLOT(clicked(QString)));
-
-
-
-
 }
 
 
-void DialogDevice::clicked(const QString &text)
+
+
+
+void dialog_device::refresh()
 {
-    qDebug()<<(text);
+    for(auto pButton:buttonsList)
+        pButton->deleteLater();
+
+    buttonsList.clear();
+
+    draw();
 
 }
 
@@ -105,8 +123,7 @@ void DialogDevice::clicked(const QString &text)
 
 
 
-
-DialogDevice::~DialogDevice()
+dialog_device::~dialog_device()
 {
     ((QWidget*)parent())->setEnabled(true);
 
@@ -115,13 +132,14 @@ DialogDevice::~DialogDevice()
 
     for (unsigned int i = 0;i<devicesCount;i++)
     {
-        if(buttonsList[i]->isChecked())
-            nuParams.append(cardNames[i]);
+        if(buttonsList.size()>=i)
+            if(buttonsList[i]->isChecked())
+                nuParams.append(cardNames[i]);
 
 
     }
     if(cardNames.size()>0)
-    setParameter(keyWord,nuParams,true);
+        setParameter(keyWord,nuParams,true);
 
     delete ui;
 }

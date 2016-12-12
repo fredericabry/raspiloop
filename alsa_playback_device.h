@@ -30,7 +30,7 @@ class alsa_playback_device:public QObject
     Q_OBJECT
 
 public:
-    alsa_playback_device(QString device, int channels, int rate, interface_c *interface);
+    alsa_playback_device(QString device, int channels, int rate, interface_c *interface, bool *success);
 
     short **playback_buf;
     QString deviceName;

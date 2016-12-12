@@ -82,7 +82,8 @@ public:
     int getCaptureStatus(capture_loop_c **pCaptureLoop);//retur the stauts of a record loop pointer
 
     bool clickStatus;
-    void printLoopList(void);
+    void printPlaybackLoopList(void);
+    void printCaptureLoopList(void);
 
     interfaceEvent_c *firstEvent;//first event registered, begining of the events list
     interfaceEvent_c* findLastEvent(void);//return a pointer to the last event registered
@@ -93,7 +94,7 @@ public:
 
 
     void destroy();
-    void startRecord(std::vector<playback_port_c*>pPlayPorts, capture_port_c *pCapturePort, capture_loop_c **pCaptureLoop, long length);
+
     void moveClick(std::vector<playback_port_c*> pPorts);
 
     capture_port_c* findCapturePortByChannel(int channel);
@@ -200,7 +201,8 @@ private slots:
 
 signals:
     void setTempo(int);
-    void loopList(QString);
+    void playbackLoopList(QString);
+    void captureLoopList(QString);
     void sendPlaybackConsole(QString txt);
     void sendCaptureConsole(QString txt);
 

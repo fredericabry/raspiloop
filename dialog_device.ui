@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogDevice</class>
- <widget class="QDialog" name="DialogDevice">
+ <class>dialog_device</class>
+ <widget class="QDialog" name="dialog_device">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -31,7 +31,8 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>9</pointsize>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
     </font>
    </property>
    <property name="styleSheet">
@@ -60,25 +61,26 @@
     <string>text</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="bClose_2">
+  <widget class="QPushButton" name="bRefresh">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>0</y>
+     <x>550</x>
+     <y>370</y>
      <width>99</width>
      <height>61</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>9</pointsize>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
     </font>
    </property>
    <property name="styleSheet">
     <string notr="true"/>
    </property>
    <property name="text">
-    <string>Close</string>
+    <string>Refresh</string>
    </property>
   </widget>
  </widget>

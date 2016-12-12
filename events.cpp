@@ -163,7 +163,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
 
 
-            playback_loop_c *pLoop =  new playback_loop_c(playData->id,playData->pPlayPorts,playData->length,playData->syncMode,playData->status,interface);
+            playback_loop_c *pLoop =  new playback_loop_c(playData->id,playData->pPlayPorts,playData->length,playData->syncMode,playData->status,interface,0);
 
             if(playData->pCaptureLoop)
                 connect(playData->pCaptureLoop,SIGNAL(updatePlayLoopInfo(ulong)),pLoop,SLOT(infoFromCaptureLoop(ulong))); //used to update the playback loop with infos when the capture loop is destroyed

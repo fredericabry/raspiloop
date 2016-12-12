@@ -69,18 +69,20 @@ void MainWindow::shutdown()
 }
 
 
-void MainWindow::setLoopList(QString txt)
+void MainWindow::setPlaybackLoopList(QString txt)
 {
-    ui->loopList->setText(txt);
-
+    ui->playLoopList->setText(txt);
 }
-
+void MainWindow::setCaptureLoopList(QString txt)
+{
+    ui->captureLoopList->setText(txt);
+}
 
 
 void MainWindow::dialogInputDevice(void)
 {
     this->setEnabled(false);
-    DialogDevice *dialog = new DialogDevice(this,this,mainInterface,1);
+    dialog_device *dialog = new dialog_device(this,this,mainInterface,1);
     dialog->show();
     QPoint pos = this->pos();
     pos.setX(20);

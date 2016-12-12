@@ -82,7 +82,7 @@ int getCardListLength(snd_pcm_stream_t stream)
         sprintf(name,"hw:%d",card);
         if((err = snd_ctl_open(&handle,name,0))<0)
         {
-            qDebug()<<"control open (%i): %s";
+            qDebug()<<"unable to open"<<name<<"(getcardlistlength)";
             goto next_card;
         }
 
@@ -184,7 +184,7 @@ void getCardList(snd_pcm_stream_t stream,QStringList *CardName,QStringList *Card
         sprintf(name,"hw:%d",card);
         if((err = snd_ctl_open(&handle,name,0))<0)
         {
-            qDebug()<<"control open (%i): %s";
+            qDebug()<<"unable to open"<<name<<"(getCardList)";
             goto next_card;
         }
 
@@ -314,7 +314,7 @@ QString getCardDescription(QString cardName,snd_pcm_stream_t stream)
 
     if((err = snd_ctl_open(&handle,name.toStdString().c_str(),0))<0)
     {
-        qDebug()<<"control open (%i): %s";
+        qDebug()<<"cannot get card description, unable to open"<<name;
         return "";
     }
 

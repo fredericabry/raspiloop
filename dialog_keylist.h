@@ -23,6 +23,7 @@ private:
 
 public slots:
     void clickButton(void)    ;
+    void removeAll(void);
 };
 
 #endif // DIALOG_KEYLIST_H

@@ -23,11 +23,18 @@ public:
     ~dialog_newcontrol();
 
     void refreshConsole(void);
+    void showActive(QStringList *txt);
+
+
+    void setControlList(const QStringList &value);
+
+    void setKey(const QString value);
 
 private:
     Ui::dialog_newcontrol *ui;
     QStringList controlList;
     QString key;
+    int activeControl;
 
 public slots:
     void openControlList(void);
@@ -36,6 +43,8 @@ public slots:
     void keyChoice(void);
     void getKey(QKeyEvent *e);
     void save(void);
+    void selectUp(void);
+    void selectDown(void);
 
 };
 

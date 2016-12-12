@@ -20,11 +20,9 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
     connect(this,SIGNAL(makeInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)),pPort->interface,SLOT(createInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)));
 
-    long offset = delta*RATE; //number of elements recorded before we need to copy
-    //qDebug()<<"delta"<<delta<<"offset:"<<offset;
-    //tail = pPort->head ;
-    if(offset > RATE) {qDebug()<<"too late"; offset = RATE;}
 
+    long offset = delta*RATE; //number of elements recorded before we need to copy
+    if(offset > RATE) {qDebug()<<"too late"; offset = RATE;}
     long x = (signed long)pPort->head - offset;
     while(x < 0) x+=pPort->maxlength+1;
     tail = (long)x;
@@ -66,7 +64,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
         {
 
 
-          //  pPlayLoop = new playback_loop_c(id,pPlayPorts,playPortsCount,-1,NOSYNC,IDLE,pPort->interface);//by default loop
+            //  pPlayLoop = new playback_loop_c(id,pPlayPorts,playPortsCount,-1,NOSYNC,IDLE,pPort->interface);//by default loop
         }
         else if(pPort->interface->synchroMode == CLICKSYNC)
         {
@@ -93,7 +91,6 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
     }
     else pPlayLoop = NULL;
-
 
 
 
@@ -134,6 +131,8 @@ void capture_loop_c::addToList(void)
 
     pPort->interface->captureListMutex.unlock();
 
+    pPort->interface->printCaptureLoopList();
+
 }
 
 void capture_loop_c::removeFromList(void)
@@ -148,7 +147,7 @@ void capture_loop_c::removeFromList(void)
 
     pPort->interface->captureListMutex.unlock();
 
-
+    pPort->interface->printCaptureLoopList();
 }
 
 void capture_loop_c::destroyLoop()

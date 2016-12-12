@@ -35,7 +35,7 @@ class playback_loop_c:public QObject
     Q_OBJECT
 
 public:
-    playback_loop_c(const int id, std::vector<playback_port_c*>pPorts, long length, syncoptions syncMode, status_t status,interface_c *interface);
+    playback_loop_c(const int id, std::vector<playback_port_c*>pPorts, long length, syncoptions syncMode, status_t status, interface_c *interface, double delta);
     ~playback_loop_c();
 
     const int id;
@@ -66,6 +66,7 @@ public:
     unsigned long bufsize;//size of "buf" used for transfert
     bool isFileOpened;
     long framestoplay;
+    unsigned long framestoskip;//if the loop was created a bit too late, we might want to skip some frames to stay with the click
     unsigned long min_frame_request;
     int barstoplay;
     bool stop;

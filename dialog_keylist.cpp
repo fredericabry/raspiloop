@@ -3,6 +3,7 @@
 #include "config_file.h"
 #include "qdebug.h"
 #include "qmessagebox.h"
+#include "dialog_newcontrol.h"
 
 dialog_keylist::dialog_keylist(QWidget *parent,interface_c *pInterface) :
     QDialog(parent),
@@ -12,7 +13,7 @@ dialog_keylist::dialog_keylist(QWidget *parent,interface_c *pInterface) :
 {
     ui->setupUi(this);
     connect(ui->bClose,SIGNAL(pressed()),this,SLOT(deleteLater()));
-
+    connect(ui->bRemove,SIGNAL(pressed()),this,SLOT(removeAll()));
 
 
     draw();
@@ -61,7 +62,40 @@ void dialog_keylist::draw(void)
 
 
 
+void dialog_keylist::removeAll(void)
+{
+    QMessageBox msgBox;
+    msgBox.setText("Remove all key bindings?");
+    QAbstractButton *removeButton = msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
+      msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
+      QFont font = msgBox.font();
+      font.setPixelSize(20);
+      msgBox.setFont(font);
+    msgBox.exec();
+    if (msgBox.clickedButton() != removeButton)
+    {
+         return;
+    }
 
+
+//remove all bindings
+
+    QStringList keyList;
+
+    fileGetControlKeyList(&keyList);
+
+
+
+
+    for(int i = 0;i<keyList.size();i++)
+    {
+        fileRemoveControl(keyList[i]);
+
+    }
+
+    deleteLater();
+
+}
 
 
 
@@ -85,6 +119,7 @@ void dialog_keylist::clickButton(void)
 
 
         QAbstractButton *removeButton = msgBox.addButton(tr("Remove"), QMessageBox::ActionRole);
+        QAbstractButton *editButton = msgBox.addButton(tr("Edit"), QMessageBox::ActionRole);
         msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
         QFont font = msgBox.font();
         font.setPixelSize(15);
@@ -96,6 +131,21 @@ void dialog_keylist::clickButton(void)
              pButton->setVisible(false);
 
              pInterface->makeActiveControlsList();
+        }
+        else if(msgBox.clickedButton() == editButton)
+        {
+
+            this->setEnabled(false);
+            dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),pInterface);
+            dialog->setControlList(txtList);
+            dialog->refreshConsole();
+            dialog->setKey(key.right(key.size()-4));
+
+            dialog->show();
+            QPoint pos = this->pos();
+            pos.setX(0);
+            pos.setY(0);
+            dialog->move(pos);
         }
 
 
