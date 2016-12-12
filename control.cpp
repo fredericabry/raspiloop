@@ -349,7 +349,7 @@ void interface_c::createCapture(int desiredId)
     if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
 
     if(selectedCapturePortsList.size() == 0) {qDebug()<<"error: no capture port selected";return;}
-   // if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
+    // if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
 
     if(synchroMode == CLICKSYNC)
     {
@@ -421,7 +421,7 @@ void interface_c::stopCapture(int id)
 
 void interface_c::startLoop(int id)
 {
-qDebug()<<"start loop"<<id;
+    qDebug()<<"start loop"<<id;
 
     if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
 
@@ -442,7 +442,7 @@ qDebug()<<"start loop"<<id;
 
         if(pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
         {
-          new playback_loop_c(id,selectedPlaybackPortsList,0,CLICKSYNC,PLAY,this,pClick->getTime());
+            new playback_loop_c(id,selectedPlaybackPortsList,0,CLICKSYNC,PLAY,this,pClick->getTime());
 
         }
 
@@ -475,8 +475,6 @@ void interface_c::stopLoop(int id)
     if(pLoop)
         pLoop->destroy();
 }
-
-
 void interface_c::startstopLoop(int id)
 {
     playback_loop_c *pLoop = findPlayLoopById(id);
@@ -490,7 +488,6 @@ void interface_c::startstopLoop(int id)
 
     }
 }
-
 void interface_c::stopAllLoops(void)
 {
     qDebug()<<"stop all loops";
@@ -508,9 +505,15 @@ void interface_c::stopAllLoops(void)
 
     }
 }
+void interface_c::stopSelectedLoop(void)
+{
+    if(selectedPlayLoop)
+    {
+        selectedPlayLoop->destroy();
+    }
 
 
-
+}
 
 void interface_c::muteunmuteLoop(int id)
 {
@@ -537,7 +540,41 @@ void interface_c::moveLoop(int id)
         pLoop->moveToPort(selectedPlaybackPortsList);
 
 }
+void interface_c::moveSelectedLoop()
+{
+    if(selectedPlayLoop)
+        selectedPlayLoop->moveToPort(selectedPlaybackPortsList);
+}
 
+void interface_c::selectNextLoop(void)
+{
+    if(!selectedPlayLoop) selectedPlayLoop = firstPlayLoop;
+    else
+    {
+
+        if(selectedPlayLoop->pNextLoop)
+            selectedPlayLoop = selectedPlayLoop->pNextLoop;
+        else
+            selectedPlayLoop = firstPlayLoop;
+    }
+    printPlaybackLoopList();
+
+}
+void interface_c::selectPrevLoop(void)
+{
+    if(!selectedPlayLoop) selectedPlayLoop = firstPlayLoop;
+    else
+    {
+
+
+        if(selectedPlayLoop->pPrevLoop)
+            selectedPlayLoop = selectedPlayLoop->pPrevLoop;
+        else
+            selectedPlayLoop = findLastPlaybackLoop();
+
+    }
+    printPlaybackLoopList();
+}
 
 //TODO
 
@@ -568,9 +605,19 @@ void interface_c::createControls(void)
     registerControl("Start loop",&interface_c::startLoop);
     registerControl("Stop loop",&interface_c::stopLoop);
     registerControl("Stop all loops",&interface_c::stopAllLoops);
+
+
+
     registerControl("Mute/unmute all loops",&interface_c::muteunmuteAllLoops);
     registerControl("Mute/unmute loop",&interface_c::muteunmuteLoop);
     registerControl("Start/stop click",&interface_c::startstopClick);
+
+    registerControl("Select previous loop",&interface_c::selectPrevLoop);
+    registerControl("Select next loop",&interface_c::selectNextLoop);
+
+    registerControl("Stop selected loop",&interface_c::stopSelectedLoop);
+    registerControl("Move selected loop",&interface_c::moveSelectedLoop);
+
 
 }
 

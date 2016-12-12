@@ -16,11 +16,11 @@ dialog_controllist::dialog_controllist(QWidget *parent,QMainWindow* mainwindow, 
 {
     ui->setupUi(this);
 
-
+    connect(ui->bClose,SIGNAL(pressed()),this,SLOT(deleteLater()));
 
 
     int x = 10;
-    int y = 10;
+    int y = 20;
 
 
 
@@ -45,7 +45,7 @@ dialog_controllist::dialog_controllist(QWidget *parent,QMainWindow* mainwindow, 
         deviceButton->setGeometry(pos);
         x+=0;
         y+=40;
-        if(y>400) {y=10;x+=250;}
+        if(y>440) {y=20;x+=250;}
 
     }
 

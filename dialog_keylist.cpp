@@ -9,7 +9,6 @@ dialog_keylist::dialog_keylist(QWidget *parent,interface_c *pInterface) :
     QDialog(parent),
     ui(new Ui::dialog_keylist),
     pInterface(pInterface)
-
 {
     ui->setupUi(this);
     connect(ui->bClose,SIGNAL(pressed()),this,SLOT(deleteLater()));
@@ -61,7 +60,6 @@ void dialog_keylist::draw(void)
 }
 
 
-
 void dialog_keylist::removeAll(void)
 {
     QMessageBox msgBox;
@@ -96,10 +94,6 @@ void dialog_keylist::removeAll(void)
     deleteLater();
 
 }
-
-
-
-
 
 
 void dialog_keylist::clickButton(void)
@@ -152,9 +146,6 @@ void dialog_keylist::clickButton(void)
     }
 
 }
-
-
-
 
 
 dialog_keylist::~dialog_keylist()

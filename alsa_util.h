@@ -43,4 +43,16 @@ QString getCardDescription(QString, snd_pcm_stream_t stream);
 
 
 
+
+
+//midi
+int is_input(snd_ctl_t *ctl, int card, int device, int sub);
+int is_output(snd_ctl_t *ctl, int card, int device, int sub);
+
+void error(const char *format, ...) ;
+void list_subdevice_info(snd_ctl_t *ctl, int card, int device);
+
+
+
+
 #endif // ALSA_UTIL_H

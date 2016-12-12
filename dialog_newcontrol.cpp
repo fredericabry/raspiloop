@@ -48,8 +48,8 @@ void dialog_newcontrol::openControlList(void)
     connect(dialog,SIGNAL(sendText(QString)),this,SLOT(getControl(QString)));
     dialog->show();
     QPoint pos = this->pos();
-    pos.setX(20);
-    pos.setY(20);
+    pos.setX(0);
+    pos.setY(0);
     dialog->move(pos);
 
 }

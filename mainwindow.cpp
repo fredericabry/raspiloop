@@ -19,7 +19,7 @@
 
 
 
-
+#include "alsa_midi.h"
 
 
 
@@ -39,7 +39,7 @@ void MainWindow::setClickText(int tempo)
 
 void MainWindow::setPlaybackConsole(QString txt)
 {
-    ui->consolePlayback->setText(txt);
+    ui->consolePlayback->setHtml(txt);
 }
 
 void MainWindow::setCaptureConsole(QString txt)
@@ -183,7 +183,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
 
-
+    alsa_findMidiDevices();
 
 
 

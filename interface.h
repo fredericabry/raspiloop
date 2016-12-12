@@ -135,7 +135,7 @@ public:
     void setMixLoopNumber(unsigned int value);
 
 
-
+    playback_loop_c *selectedPlayLoop;//selected play loop highlighted in the interface
 
 
 
@@ -157,12 +157,18 @@ public:
     void muteunmuteAllLoops(void);
     void unselectAllPlaybacks(void);
     void selectAllPlaybacks(void);
-
+    void stopSelectedLoop(void);
 
     void waitForNextKey(void);
     void startstopClick(void);
 
     void moveLoop(int);
+    void moveSelectedLoop();
+
+    void selectNextLoop(void);
+    void selectPrevLoop(void);
+
+
 
 
     void createControls(void);
@@ -177,6 +183,9 @@ public:
     int getControlParamInt(QString control);
     QString getControlParamQString(QString control);
     void activateControl(QString key);
+
+
+
 
 
     bool getAllMute() const;

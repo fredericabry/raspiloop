@@ -233,7 +233,7 @@ bool interface_c::isIdFree(int id)
             }
             else if(pEvent->eventType==EVENT_CAPTURE)
             {
-                if(pEvent->playData->id == id) {eventListMutex.unlock();return false;}
+                if(pEvent->captureData->id == id) {eventListMutex.unlock();return false;}
             }
         }
 
@@ -347,6 +347,7 @@ void interface_c::showPlayLoops()
 
 void interface_c::removeAllPlaybackLoops(void)
 {
+    selectedPlayLoop = NULL;
 
     playback_loop_c *pLoop = firstPlayLoop;
     playback_loop_c *pLoop2 = NULL;
@@ -360,6 +361,8 @@ void interface_c::removeAllPlaybackLoops(void)
         pLoop = pLoop2;
 
     }
+
+    printPlaybackLoopList();
 
 
 }
@@ -451,11 +454,15 @@ void interface_c::printPlaybackLoopList(void)
 
 
     if(getPlayLoopsCount() <= 0) txt="no loop";
-    else
-    {
+
+
+    do{
 
         if(pLoop)
         {
+
+            if(pLoop==selectedPlayLoop) txt+= "<font color=\"#ff4040\">";
+
             txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status);
 
             if(pLoop->pPorts.size()==0)
@@ -470,33 +477,16 @@ void interface_c::printPlaybackLoopList(void)
             }
 
 
-            txt+=" - length:"+QString::number(pLoop->barstoplay)+"bars"+"\n";
+            txt+=" - ["+QString::number(pLoop->barstoplay)+" bars]"+"<br>";
+            if(pLoop==selectedPlayLoop) txt+="</font>";
 
+             pLoop = pLoop->pNextLoop;
         }
 
-        while(pLoop->pNextLoop)
-        {
-            pLoop = pLoop->pNextLoop;
-            if(pLoop)    {
-                txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status);
-
-                if(pLoop->pPorts.size()==0)
-                    txt+=" - no port";
-                else if(pLoop->pPorts.size()==1)
-                    txt+=" - port:" +QString::number(pLoop->pPorts[0]->channel);
-                else
-                {
-                    txt+=" - ports:";
-                    for (auto &pPort : pLoop->pPorts) txt+= QString::number(pPort->channel)+" ";
-
-                }
+    }while(pLoop);
 
 
-                txt+=" - length:"+QString::number(pLoop->barstoplay)+"bars"+"\n";
-            }
 
-        }
-    }
 
     emit playbackLoopList(txt);
 
@@ -742,7 +732,7 @@ void interface_c::init(void)
 
 
 
-
+    selectedPlayLoop = NULL;
 
 
 

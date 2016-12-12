@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     control.cpp \
     dialog_numeric.cpp \
     dialog_key.cpp \
-    dialog_keylist.cpp
+    dialog_keylist.cpp \
+    alsa_midi.cpp
 
 HEADERS  += mainwindow.h \
     alsa_util.h \
@@ -56,7 +57,8 @@ HEADERS  += mainwindow.h \
     control.h \
     dialog_numeric.h \
     dialog_key.h \
-    dialog_keylist.h
+    dialog_keylist.h \
+    alsa_midi.h
 
 FORMS    += mainwindow.ui \
     dialog_newcontrol.ui \

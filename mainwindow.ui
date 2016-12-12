@@ -32,26 +32,33 @@
    <widget class="QTextBrowser" name="playLoopList">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>50</y>
-      <width>451</width>
+      <x>10</x>
+      <y>100</y>
+      <width>521</width>
       <height>220</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>7</pointsize>
+      <pointsize>9</pointsize>
+      <italic>false</italic>
      </font>
     </property>
    </widget>
    <widget class="QPushButton" name="bstop">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>370</y>
-      <width>181</width>
-      <height>101</height>
+      <x>710</x>
+      <y>0</y>
+      <width>90</width>
+      <height>50</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>true</italic>
+     </font>
     </property>
     <property name="text">
      <string>STOP</string>
@@ -60,20 +67,20 @@
    <widget class="QLCDNumber" name="lcdClick">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>91</width>
-      <height>51</height>
+      <x>0</x>
+      <y>0</y>
+      <width>90</width>
+      <height>50</height>
      </rect>
     </property>
    </widget>
    <widget class="QPushButton" name="bClickUp">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>120</y>
+      <x>180</x>
+      <y>0</y>
       <width>90</width>
-      <height>51</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
@@ -89,10 +96,10 @@
    <widget class="QPushButton" name="bClickDown">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>170</y>
+      <x>270</x>
+      <y>0</y>
       <width>90</width>
-      <height>51</height>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
@@ -108,10 +115,10 @@
    <widget class="QPushButton" name="bClick">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>70</y>
-      <width>91</width>
-      <height>51</height>
+      <x>90</x>
+      <y>0</y>
+      <width>90</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
@@ -129,10 +136,10 @@
    <widget class="QPushButton" name="bConfig">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>420</y>
-      <width>99</width>
-      <height>51</height>
+      <x>600</x>
+      <y>0</y>
+      <width>90</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
@@ -148,7 +155,7 @@
    <widget class="QTextBrowser" name="consolePlayback">
     <property name="geometry">
      <rect>
-      <x>240</x>
+      <x>180</x>
       <y>420</y>
       <width>151</width>
       <height>40</height>
@@ -156,39 +163,39 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>7</pointsize>
-      <italic>true</italic>
+      <pointsize>9</pointsize>
+      <italic>false</italic>
      </font>
     </property>
    </widget>
    <widget class="QTextBrowser" name="consoleCapture">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>710</x>
       <y>420</y>
-      <width>151</width>
+      <width>81</width>
       <height>40</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>7</pointsize>
-      <italic>true</italic>
+      <pointsize>9</pointsize>
+      <italic>false</italic>
      </font>
     </property>
    </widget>
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>350</y>
-      <width>131</width>
+      <x>10</x>
+      <y>410</y>
+      <width>171</width>
       <height>61</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>7</pointsize>
+      <pointsize>8</pointsize>
       <italic>true</italic>
      </font>
     </property>
@@ -200,15 +207,15 @@ playback ports</string>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>440</x>
-      <y>350</y>
+      <x>550</x>
+      <y>410</y>
       <width>131</width>
       <height>61</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>7</pointsize>
+      <pointsize>8</pointsize>
       <italic>true</italic>
      </font>
     </property>
@@ -220,23 +227,24 @@ capture ports</string>
    <widget class="QTextBrowser" name="captureLoopList">
     <property name="geometry">
      <rect>
-      <x>599</x>
-      <y>50</y>
-      <width>180</width>
+      <x>540</x>
+      <y>100</y>
+      <width>251</width>
       <height>220</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>7</pointsize>
+      <pointsize>9</pointsize>
+      <italic>false</italic>
      </font>
     </property>
    </widget>
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>10</y>
+      <x>10</x>
+      <y>60</y>
       <width>141</width>
       <height>31</height>
      </rect>
@@ -254,8 +262,8 @@ capture ports</string>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>10</y>
+      <x>541</x>
+      <y>60</y>
       <width>141</width>
       <height>31</height>
      </rect>

@@ -606,6 +606,8 @@ void playback_loop_c::addToList(void)
     }
     interface->playbackListMutex.unlock();
 
+    interface->selectedPlayLoop = this;
+
     interface->printPlaybackLoopList();
 
 
@@ -616,6 +618,10 @@ void playback_loop_c::addToList(void)
 void playback_loop_c::removeFromList(void)
 {
     if(isClick) return;//this is the click, we don't keep it in the loops list
+
+    if(pPrevLoop)
+    interface->selectedPlayLoop = pPrevLoop;
+    else interface->selectedPlayLoop = pNextLoop;
 
 
     interface->playbackListMutex.lock();
