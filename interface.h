@@ -195,8 +195,8 @@ public:
     controlId *identifyControl(QString control);
     int getControlParamInt(QString control);
     QString getControlParamQString(QString control);
-    void activateControl(QString key);
-
+    bool activateControl(QString key);
+    bool activateMidi(QString midiMsg);
 
 
 
@@ -209,13 +209,15 @@ private:
     mixStrategies mixStrategy;
     unsigned int mixLoopNumber;
     bool allMute;//true if all playloops are "hard" muted
-
+    QStringList midiBuffer;
+    unsigned int midiIndex;
 
 
 
 
 public slots:
     void clickPlayStop(void);
+    void checkMidiMsg(QString);
 
 private slots:
     void keyInput(QKeyEvent *e);

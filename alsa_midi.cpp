@@ -183,6 +183,7 @@ alsa_midi_capture_device::alsa_midi_capture_device(QString device, interface_c *
 
     *success = true;
     connect(this,SIGNAL(sendMidiMsg(QString)),pInterface,SIGNAL(getMidiMsg(QString)));
+    connect(this,SIGNAL(sendMidiMsg(QString)),pInterface,SLOT(checkMidiMsg(QString)));
     alsa_midi_start_capture();
 
 }
@@ -236,7 +237,6 @@ void alsa_midi_capture_device::cleanup()
 
 }
 
-
 void alsa_midi_capture_device_consumer::run()
 {
     unsigned char ch;
@@ -249,7 +249,7 @@ void alsa_midi_capture_device_consumer::run()
         {
 
             QString txt = midiInterpreter(ch);
-            if(txt.size()>0) qDebug()<<txt;
+            if(txt.size()>0) emit controler->sendMidiMsg(txt);
 
 
         }

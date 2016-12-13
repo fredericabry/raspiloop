@@ -23,6 +23,7 @@ dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,in
     connect(ui->bSave,SIGNAL(pressed()),this,SLOT(save()));
     connect(ui->bDown,SIGNAL(pressed()),this,SLOT(selectDown()));
     connect(ui->bUp,SIGNAL(pressed()),this,SLOT(selectUp()));
+    connect(ui->bMidiChoice,SIGNAL(pressed()),this,SLOT(midiChoice()));
 
 
     key.clear();
@@ -33,16 +34,36 @@ dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,in
 
 void dialog_newcontrol::getKey(QKeyEvent *e)
 {
+
     setKey((QString)(QKeySequence(e->key()).toString()));
 
+}
+
+void dialog_newcontrol::getMidiMsg(QString msg)
+{
+
+    midi = msg;
+
+}
 
 
+
+void dialog_newcontrol::midiChoice()
+{
+    this->setEnabled(false);
+    dialog_key *dialog = new dialog_key(this,1);
+    connect(dialog,SIGNAL(sendMidi(QString)),this,SLOT(getMidiMsg(QString)));
+    connect(pInterface,SIGNAL(getMidiMsg(QString)),dialog,SLOT(getMidiMsg(QString)));
+    dialog->show();
+    QPoint pos = this->pos();
+    pos.setX(300);
+    pos.setY(100);
+    dialog->move(pos);
 }
 
 
 void dialog_newcontrol::openControlList(void)
 {
-
     this->setEnabled(false);
     dialog_controllist *dialog = new dialog_controllist(this,((QMainWindow*)parent()),pInterface);
     connect(dialog,SIGNAL(sendText(QString)),this,SLOT(getControl(QString)));
@@ -51,14 +72,12 @@ void dialog_newcontrol::openControlList(void)
     pos.setX(0);
     pos.setY(0);
     dialog->move(pos);
-
 }
 
 
 
 void dialog_newcontrol::showActive(QStringList *txt)
 {
-
     if(activeControl > controlList.size() -1) activeControl = controlList.size() -1;
     if(activeControl<0) activeControl = 0;
 
@@ -133,7 +152,7 @@ void dialog_newcontrol::selectUp(void)
 
 void dialog_newcontrol::save(void)
 {
-    if(key.size()==0)
+    if((key.size()==0)&&(midi.size() == 0))
     {
         QMessageBox msgBox;
         msgBox.setText("Error: no key or midi control set");
@@ -153,6 +172,9 @@ void dialog_newcontrol::save(void)
         msgBox.exec();
         return;
     }
+
+    if(key.size()>0)
+    {
 
     QString keyword = "KEY_"+key;
 
@@ -175,7 +197,39 @@ void dialog_newcontrol::save(void)
 
     fileSetControl(keyword,controlList);
 
+    }
+    if(midi.size()>0)
+    {
+
+        QString keyword = "MIDI_"+midi;
+
+        if(fileIsControlDefined(keyword))
+        {
+            QMessageBox msgBox;
+            msgBox.setText("Control already defined");
+            QAbstractButton *removeButton = msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+            msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
+            QFont font = msgBox.font();
+            font.setPixelSize(20);
+            msgBox.setFont(font);
+            msgBox.exec();
+            if (msgBox.clickedButton() != removeButton)
+            {
+                return;
+            }
+        }
+
+
+        fileSetControl(keyword,controlList);
+
+
+
+    }
+
+
     pInterface->makeActiveControlsList();
+
+
 
     deleteLater();
 
@@ -201,7 +255,7 @@ void dialog_newcontrol::keyChoice(void)
 {
 
     this->setEnabled(false);
-    dialog_key *dialog = new dialog_key(this);
+    dialog_key *dialog = new dialog_key(this,0);
     connect(dialog,SIGNAL(sendKey(QKeyEvent*)),this,SLOT(getKey(QKeyEvent*)));
     dialog->show();
     QPoint pos = this->pos();

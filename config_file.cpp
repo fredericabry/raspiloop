@@ -291,7 +291,8 @@ void fileGetControlKeyList(QStringList *keyControl) // return all the keywords
 
     do {
         line = in.readLine();
-        if (line.contains("KEY_", Qt::CaseSensitive))
+        if ((line.contains("KEY_", Qt::CaseSensitive))
+                ||(line.contains("MIDI_", Qt::CaseSensitive)))
         {
          keyControl->append(line);
         }

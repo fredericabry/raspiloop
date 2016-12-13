@@ -33,7 +33,8 @@ public:
 private:
     Ui::dialog_newcontrol *ui;
     QStringList controlList;
-    QString key;
+    QString key;   
+    QString midi;
     int activeControl;
 
 public slots:
@@ -45,6 +46,8 @@ public slots:
     void save(void);
     void selectUp(void);
     void selectDown(void);
+    void midiChoice(void);
+    void getMidiMsg(QString msg);
 
 };
 

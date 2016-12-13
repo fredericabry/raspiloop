@@ -229,18 +229,34 @@ void interface_c::makeActiveControlsList(void)
 
 }
 
-void interface_c::activateControl(QString key)
+bool interface_c::activateControl(QString key)
 {
     for (auto &pControls : controlLists)
     {
         if(pControls->getKey() == key)
         {
             pControls->exec();
+            return true;
         }
     }
+    return false;
 }
 
 
+bool interface_c::activateMidi(QString midiMsg)
+{
+    for (auto &pControls : controlLists)
+    {
+
+       if(midiMsg.contains(pControls->getKey()))
+        {
+           //qDebug()<<"match"<<midiMsg;
+            pControls->exec();
+            return true;
+        }
+    }
+    return false;
+}
 
 
 
@@ -248,7 +264,7 @@ void interface_c::activateControl(QString key)
 
 void interface_c::waitForNextKey(void)
 {
-    // qDebug()<<"wait For next key";
+     qDebug()<<"wait For next key";
 }
 
 void interface_c::startstopClick(void)
@@ -265,6 +281,7 @@ void interface_c::unselectAllPlaybacks()
 }
 void interface_c::selectAllPlaybacks()
 {
+    qDebug()<<"select all";
     selectedPlaybackPortsList = playbackPortsList;
     updatePortsConsole();
 }

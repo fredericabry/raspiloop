@@ -480,7 +480,7 @@ void interface_c::printPlaybackLoopList(void)
             txt+=" - ["+QString::number(pLoop->barstoplay)+" bars]"+"<br>";
             if(pLoop==selectedPlayLoop) txt+="</font>";
 
-             pLoop = pLoop->pNextLoop;
+            pLoop = pLoop->pNextLoop;
         }
 
     }while(pLoop);
@@ -512,7 +512,7 @@ void interface_c::printCaptureLoopList(void)
                 txt+=" - port:" +QString::number(pLoop->pPort->channel)+"\n";
             else
             {
-              txt+=" - no port\n";
+                txt+=" - no port\n";
             }
 
 
@@ -530,7 +530,7 @@ void interface_c::printCaptureLoopList(void)
                     txt+=" - port:" +QString::number(pLoop->pPort->channel)+"\n ";
                 else
                 {
-                  txt+=" - no port\n";
+                    txt+=" - no port\n";
                 }
 
 
@@ -638,6 +638,8 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 
 
 
+
+
 void interface_c::init(void)
 {
 
@@ -654,9 +656,9 @@ void interface_c::init(void)
         alsa_capture_device *pCaptureDevice = new alsa_capture_device(device[i],2,RATE,this,&deviceCreated);
         if(deviceCreated)
         {
-        captureDevicesList.push_back(pCaptureDevice);
-        for(int j=0;j<pCaptureDevice->capture_channels;j++)
-            capturePortsList.push_back(pCaptureDevice->alsa_capture_port_by_num(j));
+            captureDevicesList.push_back(pCaptureDevice);
+            for(int j=0;j<pCaptureDevice->capture_channels;j++)
+                capturePortsList.push_back(pCaptureDevice->alsa_capture_port_by_num(j));
         }
     }
 
@@ -668,9 +670,9 @@ void interface_c::init(void)
         alsa_playback_device *pPlaybackDevice = new alsa_playback_device(device[i],2,RATE,this,&deviceCreated);
         if(deviceCreated)
         {
-        playbackDevicesList.push_back(pPlaybackDevice);
-        for(int j=0;j<pPlaybackDevice->playback_channels;j++)
-            playbackPortsList.push_back(pPlaybackDevice->alsa_playback_port_by_num(j));
+            playbackDevicesList.push_back(pPlaybackDevice);
+            for(int j=0;j<pPlaybackDevice->playback_channels;j++)
+                playbackPortsList.push_back(pPlaybackDevice->alsa_playback_port_by_num(j));
         }
     }
 
@@ -681,7 +683,7 @@ void interface_c::init(void)
         bool deviceCreated = false;
         alsa_midi_capture_device *pMidiCaptureDevice = new alsa_midi_capture_device(device[i],this,&deviceCreated);
         if(deviceCreated)
-                midiCaptureDevicesList.push_back(pMidiCaptureDevice);
+            midiCaptureDevicesList.push_back(pMidiCaptureDevice);
 
     }
 
@@ -796,6 +798,68 @@ void interface_c::run()
     init();
     exec();
 }
+
+
+
+void interface_c::checkMidiMsg(QString msg)
+{
+
+    qDebug()<<msg;
+
+    QElapsedTimer t1;
+    t1.start();
+
+
+    //update the midi ringbuffer
+    if(midiBuffer.size()<MIDI_MAX_LENGTH)
+    {
+        midiIndex=midiBuffer.size();
+        midiBuffer.append(msg);
+    }
+    else
+    {
+        if(midiIndex == MIDI_MAX_LENGTH-1)//pos 0
+        {
+            midiBuffer.replace(0,msg);
+            midiIndex = 0;
+        }
+        else
+        {
+
+            midiIndex++;
+            midiBuffer.replace(midiIndex,msg);
+        }
+
+    }
+
+    //order the midi message from oldest to newest
+    QStringList buffer;
+    if((midiIndex == MIDI_MAX_LENGTH-1)||(midiBuffer.size()<MIDI_MAX_LENGTH-1))//already in order..
+        buffer = midiBuffer;
+    else
+    {
+        buffer=midiBuffer.mid(midiIndex+1);
+        buffer+=midiBuffer.mid(0,MIDI_MAX_LENGTH-1-buffer.size());
+    }
+
+
+    for(int i =1;i<=buffer.size();i++)
+    {
+        QString buf =  buffer.mid(i).join(";");
+
+        if(activateMidi("MIDI_"+buf))
+        {
+            midiBuffer.clear();
+            midiIndex = 0;
+           // qDebug()<<t1.elapsed();
+            return;
+        }
+    }
+
+
+
+}
+
 
 void interface_c::keyInput(QKeyEvent *e)
 {

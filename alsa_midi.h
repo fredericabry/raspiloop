@@ -6,7 +6,7 @@
 #include "qobject.h"
 #include "qthread.h"
 
-
+#define MIDI_MAX_LENGTH 7 //maximum length of a midi sequence used for control
 
 #define MIDI_ACTIVE_SENSING 254
 
