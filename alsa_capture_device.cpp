@@ -244,11 +244,8 @@ capture_port_c* alsa_capture_device::alsa_capture_port_by_num(int channel)   {re
 void alsa_capture_device::alsa_cleanup_capture()
 {
     consumer->recording = false;
-    QThread::msleep(100); //give some time to the consumer thread to stop quietly
-    consumer->quit();
-    snd_pcm_close(capture_handle);
-    free(capture_buf);
-    free(main_buf_capture);
+
+
 
 }
 
@@ -354,6 +351,13 @@ void ConsumerDeviceCapture::run()
         QThread::usleep(CAPTURE_READBUF_SLEEP);
 
     }
+
+    snd_pcm_close(controler->capture_handle);
+    free(controler->capture_buf);
+    free(controler->main_buf_capture);
+    controler->deleteLater();
+
+
 
 }
 

@@ -20,7 +20,7 @@
 
 
 #include "alsa_midi.h"
-
+#include "qstringlist.h"
 
 
 
@@ -183,7 +183,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this,SIGNAL(sendKey(QKeyEvent*)),mainInterface,SLOT(keyInput(QKeyEvent*)));
 
 
-    alsa_findMidiDevices();
+
 
 
 

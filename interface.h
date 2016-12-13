@@ -19,6 +19,7 @@ class alsa_capture_device;
 class control_c;
 class interface_c;
 class controlList_c;
+class alsa_midi_capture_device;
 
 enum status_t {IDLE,//not playing : paused
                   PLAY,//Normal behavior
@@ -120,12 +121,24 @@ public:
     QElapsedTimer telapsed;
 
 
+
+
+
+
     std::vector<alsa_capture_device*> captureDevicesList;
     std::vector<alsa_playback_device*> playbackDevicesList;
+    std::vector<alsa_midi_capture_device*> midiCaptureDevicesList;
+    //std::vector<alsa_midi_playback_device*> playbackDevicesList;
+
+
+
+
     std::vector<playback_port_c*> playbackPortsList;
     std::vector<capture_port_c*> capturePortsList;
     std::vector<playback_port_c*> selectedPlaybackPortsList;
     std::vector<capture_port_c*> selectedCapturePortsList;
+
+
     unsigned int playbackPortsCount,capturePortsCount;
 
     mixStrategies getMixStrategy() const;
@@ -214,6 +227,7 @@ signals:
     void captureLoopList(QString);
     void sendPlaybackConsole(QString txt);
     void sendCaptureConsole(QString txt);
+    void getMidiMsg(QString msg);
 
 
 

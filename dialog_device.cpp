@@ -5,7 +5,7 @@
 #include "qdebug.h"
 #include "dialog_parameters.h"
 #include "config_file.h"
-
+#include "alsa_midi.h"
 
 dialog_device::dialog_device(QWidget *parent,QMainWindow* mainwindow, interface_c *pInterface,int type):
     QDialog(parent),
@@ -56,7 +56,7 @@ void dialog_device::draw(void)
 
     }
 
-    else
+    else if(type == 1)
     {
 
         this->ui->labelTitle->setText("Available capture devices");
@@ -64,6 +64,17 @@ void dialog_device::draw(void)
         getCardList(SND_PCM_STREAM_CAPTURE,&cardNames,&cardLongNames);
         if(devicesCount>6) {qDebug()<<"bug: too many devices";devicesCount = 6;}
         keyWord = KEYWORD_CAPTURE_LIST;
+
+    }
+    else if(type == 2)
+    {
+
+        this->ui->labelTitle->setText("Available MIDI capture devices");
+
+        alsa_findMidiDevices(SND_RAWMIDI_STREAM_INPUT,&cardLongNames,&cardNames);
+        devicesCount = cardLongNames.size();
+        if(devicesCount>6) {qDebug()<<"bug: too many devices";devicesCount = 6;}
+        keyWord = KEYWORD_MIDI_CAPTURE_LIST;
 
     }
 

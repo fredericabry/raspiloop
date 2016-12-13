@@ -279,14 +279,6 @@ void alsa_playback_device::alsa_cleanup_playback()
 
 
 
-
-    QThread::msleep(100); //give some time to the consumer thread to stop quietly
-    consumer->quit();
-    snd_pcm_close(playback_handle);
-    free(playback_buf);
-    free(main_buf_playback);
-
-    //qDebug()<<"cleaning up";
 }
 
 int ConsumerDevicePlayback::wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
@@ -358,6 +350,18 @@ void ConsumerDevicePlayback::run()
         write_and_poll_loop(port);
         QThread::usleep(PLAYBACK_READBUF_SLEEP);
     }
+
+
+    snd_pcm_close(controler->playback_handle);
+    free(controler->playback_buf);
+    free(controler->main_buf_playback);
+    controler->deleteLater();
+
+
+
+
+
+
 }
 
 

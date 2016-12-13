@@ -9,7 +9,7 @@
 #include "config_file.h"
 #include "dialog_newcontrol.h"
 #include "control.h"
-
+#include "alsa_midi.h"
 
 
 
@@ -638,7 +638,6 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 
 
 
-
 void interface_c::init(void)
 {
 
@@ -674,6 +673,24 @@ void interface_c::init(void)
             playbackPortsList.push_back(pPlaybackDevice->alsa_playback_port_by_num(j));
         }
     }
+
+
+    extractParameter(KEYWORD_MIDI_CAPTURE_LIST, &device);
+    for(int i =0;i<device.size();i++)
+    {
+        bool deviceCreated = false;
+        alsa_midi_capture_device *pMidiCaptureDevice = new alsa_midi_capture_device(device[i],this,&deviceCreated);
+        if(deviceCreated)
+                midiCaptureDevicesList.push_back(pMidiCaptureDevice);
+
+    }
+
+
+
+
+
+
+
 
 
 
@@ -883,6 +900,7 @@ void interface_c::destroy(void)
     for (auto &pPlaybackDevice : playbackDevicesList) pPlaybackDevice->alsa_cleanup_playback();
     for (auto &pCaptureDevice : captureDevicesList) pCaptureDevice->alsa_cleanup_capture();
     for (auto &pControl : controlLists) delete pControl;
+
 
 
 }

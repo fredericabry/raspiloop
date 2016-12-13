@@ -35,6 +35,7 @@ public slots:
     void bMixPresetMinus(void);
     void dialogInputDevice(void);
     void dialogOutputDevice(void);
+    void dialogMidiDevice(void);
     void newControl();
     void showControlList();
 };

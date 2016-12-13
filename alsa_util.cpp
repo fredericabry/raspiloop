@@ -1,7 +1,7 @@
 #include "alsa_util.h"
 #include "qdebug.h"
 
-#include "alsa_mid_util.h"
+
 
 
 
@@ -578,14 +578,18 @@ void list_subdevice_info(snd_ctl_t *ctl, int card, int device) {
    int status;
 
    snd_rawmidi_info_alloca(&info);
+
    snd_rawmidi_info_set_device(info, device);
 
    snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
    snd_ctl_rawmidi_info(ctl, info);
    subs_in = snd_rawmidi_info_get_subdevices_count(info);
+
+
    snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_OUTPUT);
    snd_ctl_rawmidi_info(ctl, info);
    subs_out = snd_rawmidi_info_get_subdevices_count(info);
+
    subs = subs_in > subs_out ? subs_in : subs_out;
 
    sub = 0;
