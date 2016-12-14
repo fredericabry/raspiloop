@@ -14,7 +14,6 @@
 
 void alsa_findMidiDevices(snd_rawmidi_stream_t stream, QStringList *longNames, QStringList *names);
 
-
 class alsa_midi_capture_device;
 class interface_c;
 
@@ -46,8 +45,10 @@ public:
     void alsa_midi_start_capture();
     snd_rawmidi_t *handle;
     alsa_midi_capture_device_consumer * consumer;
+    void midiInterpreter(unsigned char c);
 
 private:
+    QStringList msgList;
     interface_c *pInterface;
 
 signals:

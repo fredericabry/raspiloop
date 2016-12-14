@@ -14,6 +14,8 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
     filename = QString::number(id)+".wav";
 
+    framesCount = 0;
+    barCount = oldBarCount = 0;
     //pPort->interface->listMutex.lock();
     addToList();
     //pPort->interface->listMutex.unlock();
@@ -45,7 +47,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
     }
 
-    framesCount = beatsCount = 0;
+
 
 
     consumer = new captureLoopConsumer();
@@ -77,7 +79,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
             param->length = 1;//one bar
             param->pPlayPorts = pPlayPorts;
             param->skipevent = 0;
-            param->status = SILENT;
+            param->status = HIDDEN;
             param->syncMode = CLICKSYNC;
             param->pCaptureLoop = this;
 
@@ -348,6 +350,16 @@ void captureLoopConsumer::update(void)
         // if (t1 > 2) qDebug()<<"save delay: "<<t1<<"ms max : "<<tmax<<" ms"<<nread;
 
         controler->framesCount += nread;//let's keep track of how many frames have been read
+
+       controler->barCount =controler->pPort->interface->pClick->getTempo()*controler->framesCount/(RATE*60*4);
+
+       if(controler->barCount!=controler->oldBarCount)
+       {
+        controler->oldBarCount = controler->barCount;
+        controler->pPort->interface->printCaptureLoopList();
+
+       }
+
 
     }
 

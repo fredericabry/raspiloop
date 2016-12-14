@@ -7,7 +7,7 @@
 #include "dialog_newcontrol.h"
 #include "dialog_controllist.h"
 #include "dialog_keylist.h"
-
+#include "qtimer.h"
 
 dialog_parameters::dialog_parameters(QWidget *parent,interface_c *pInterface) :
     QDialog(parent),
@@ -25,6 +25,7 @@ dialog_parameters::dialog_parameters(QWidget *parent,interface_c *pInterface) :
     connect(this->ui->bMidiDevice,SIGNAL(pressed()),this,SLOT(dialogMidiDevice()));
     connect(this->ui->bNewControl,SIGNAL(pressed()),this,SLOT(newControl()));
     connect(this->ui->bControlList,SIGNAL(pressed()),this,SLOT(showControlList()));
+    connect(ui->bRestart,SIGNAL(pressed()),this,SLOT(deviceRestart()));
 
 
     setupCLickButtons();
@@ -173,6 +174,19 @@ void dialog_parameters::dialogMidiDevice(void)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 void dialog_parameters::setupCLickButtons(void)
 {
 
@@ -298,3 +312,16 @@ dialog_parameters::~dialog_parameters()
 
 
 
+
+void dialog_parameters::deviceRestart()
+{
+
+    qDebug()<<"restarting";
+
+
+    pInterface->parent->restart();
+
+
+
+
+}

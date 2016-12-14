@@ -23,7 +23,8 @@ class alsa_midi_capture_device;
 
 enum status_t {IDLE,//not playing : paused
                   PLAY,//Normal behavior
-                  SILENT};//playing muted
+                  SILENT,//playing muted
+                  HIDDEN};//playing muted and not shown in the list (created by capture loop but not played yet)
 
 
 
@@ -94,7 +95,7 @@ public:
     void removeAllEvents();
 
 
-    void destroy();
+    void alsaDestroy();
 
     void moveClick(std::vector<playback_port_c*> pPorts);
 
@@ -121,7 +122,7 @@ public:
     QElapsedTimer telapsed;
 
 
-
+    QTimer *updateTimer;//used to sync all playports
 
 
 

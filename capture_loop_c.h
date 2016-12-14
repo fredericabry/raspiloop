@@ -51,8 +51,9 @@ public:
     interfaceEvent_c *pEvent;
 
     unsigned long framesCount; //number of frames recorded so far
-    unsigned int beatsCount;//number of beats recorderd, deduced from framesCount
 
+    unsigned int oldBarCount;
+    unsigned int barCount;
     const int id;
     QString filename;
     capture_port_c *pPort;

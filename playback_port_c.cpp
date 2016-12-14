@@ -218,9 +218,10 @@ void playbackPortConsumer::run()
     head = 0;
 
 
-    QTimer updateTimer;
-    connect(&updateTimer,SIGNAL(timeout()),this,SLOT(update()));
-    updateTimer.start(10);
+    //QTimer updateTimer;
+    //updateTimer.start(PLAYBACK_MIX_SLEEP);
+    connect(controler->interface->updateTimer,SIGNAL(timeout()),this,SLOT(update()));
+
 
     exec();
 }
@@ -232,6 +233,7 @@ void playbackPortConsumer::update()
     short connected_loops;//nbr of loops connected to this ringbuffer
 
     unsigned long frames = freespace();
+
 
 
     if((wait_for_data))
@@ -262,7 +264,9 @@ void playbackPortConsumer::update()
     for (auto &pLoop : controler->pConnectedLoops)
     {
         memset(buf2,0,sizeof(short)*PLAYBACK_BUFSIZE);
+
         pLoop->datarequest(frames,controler->channel,buf2,&nread);
+
         if(nread > datalength) datalength = nread; //keep the longest sample size
 
         if(controler->interface->getAllMute())

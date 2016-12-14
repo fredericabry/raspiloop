@@ -47,6 +47,7 @@ public:
     ~MainWindow();
 
     void keyPressEvent(QKeyEvent *e);
+    void restart();
 
 private:
 

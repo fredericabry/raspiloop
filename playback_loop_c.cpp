@@ -583,7 +583,10 @@ void playback_loop_c::datarequest(unsigned long frames,int channel,short *buf2,i
 
     framesCount[portNumber]+=*nread;
 
-    if(status == SILENT) memset(buf2,0,*nread*sizeof(short));
+    if((status == SILENT)
+            ||(status == HIDDEN))
+        memset(buf2,0,*nread*sizeof(short));
+
 
 }
 
@@ -620,7 +623,7 @@ void playback_loop_c::removeFromList(void)
     if(isClick) return;//this is the click, we don't keep it in the loops list
 
     if(pPrevLoop)
-    interface->selectedPlayLoop = pPrevLoop;
+        interface->selectedPlayLoop = pPrevLoop;
     else interface->selectedPlayLoop = pNextLoop;
 
 

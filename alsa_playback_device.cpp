@@ -321,7 +321,11 @@ void ConsumerDevicePlayback::write_and_poll_loop(playback_port_c **port)
 
     while (playing) {
         err = wait_for_poll(controler->playback_handle, ufds, count);
-        if (err < 0) {qDebug()<<"playback polling error";return;}
+        if (err < 0) {
+
+            qDebug()<<"playback polling error";
+            controler->pInterface->alsaDestroy();
+            return;}
         else
         {
             break;

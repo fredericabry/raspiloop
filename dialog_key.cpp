@@ -20,7 +20,6 @@ dialog_key::dialog_key(QWidget *parent,int type):
         ui->bDone->setVisible(false);
         ui->consoleMidi->setVisible(false);
         ui->label->setText("Press any key");
-        geo.setHeight(150);
         this->setGeometry(geo);
 
     }
@@ -45,9 +44,9 @@ dialog_key::~dialog_key()
 
 void dialog_key::getMidiMsg(QString msg)
 {
-    midiMsg.append(msg);
+    midiMsg = msg;
 
-    if(midiMsg.size()>MIDI_MAX_LENGTH)
+  /*  if(midiMsg.size()>MIDI_MAX_LENGTH)
     {
         QMessageBox msgBox;
         msgBox.setText("Too many controls in midi sequence (max: "+QString::number(MIDI_MAX_LENGTH)+"7)");
@@ -57,15 +56,15 @@ void dialog_key::getMidiMsg(QString msg)
         msgBox.setFont(font);
         msgBox.exec();
         midiMsg.clear();
-    }
+    }*/
 
 
-    ui->consoleMidi->setText(midiMsg.join("\n"));
+    ui->consoleMidi->setText(midiMsg);
 }
 void dialog_key::doneMidi()
 {
 
-    emit sendMidi(midiMsg.join(";"));
+    emit sendMidi(midiMsg);
     deleteLater();
 
 }

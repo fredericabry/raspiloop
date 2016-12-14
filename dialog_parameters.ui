@@ -343,6 +343,28 @@ playback
 devices</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="bRestart">
+   <property name="geometry">
+    <rect>
+     <x>650</x>
+     <y>220</y>
+     <width>99</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>Restart</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

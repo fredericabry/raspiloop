@@ -28,6 +28,7 @@
 #define NFILE_PLAYBACK PLAYBACK_CHANNEL_WIDTH*10 //file reading buffer size
 #define PLAYBACK_READBUF_SLEEP 5000 //usec
 #define RINGBUFSIZE_PLAYBACK 2000 //size of the playback ringbuffer
+#define PLAYBACK_MIX_SLEEP 5 //ms
 
 #define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
 #define PLAYBACK_AVAIL_MIN                   2*PLAYBACK_HW_BUFFER_SIZE/10  //when the device buffer data is smaller than this limit, an interrupt is issued

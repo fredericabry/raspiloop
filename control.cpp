@@ -248,9 +248,8 @@ bool interface_c::activateMidi(QString midiMsg)
     for (auto &pControls : controlLists)
     {
 
-       if(midiMsg.contains(pControls->getKey()))
+       if(midiMsg == pControls->getKey())
         {
-           //qDebug()<<"match"<<midiMsg;
             pControls->exec();
             return true;
         }
@@ -264,7 +263,7 @@ bool interface_c::activateMidi(QString midiMsg)
 
 void interface_c::waitForNextKey(void)
 {
-     qDebug()<<"wait For next key";
+  //   qDebug()<<"wait For next key";
 }
 
 void interface_c::startstopClick(void)
@@ -281,7 +280,7 @@ void interface_c::unselectAllPlaybacks()
 }
 void interface_c::selectAllPlaybacks()
 {
-    qDebug()<<"select all";
+//    qDebug()<<"select all";
     selectedPlaybackPortsList = playbackPortsList;
     updatePortsConsole();
 }
@@ -312,7 +311,7 @@ void interface_c::selectPlayback(int channel)
 
 void interface_c::selectCapture(int channel)
 {
-    qDebug()<<"select capture"<<channel;
+
     capture_port_c *pPort = findCapturePortByChannel(channel);
     if(!pPort)
         return;
@@ -362,7 +361,7 @@ void interface_c::selectNextCapture(void)
 
 void interface_c::createCapture(int desiredId)
 {
-    qDebug()<<"start capture"<<desiredId;
+   // qDebug()<<"start capture"<<desiredId;
     if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
 
     if(selectedCapturePortsList.size() == 0) {qDebug()<<"error: no capture port selected";return;}
@@ -396,7 +395,7 @@ void interface_c::createCapture(int desiredId)
 void interface_c::createCaptureAndPlay(int desiredId)
 {
 
-    qDebug()<<"captureandplay Id"<<desiredId;
+  //  qDebug()<<"captureandplay Id"<<desiredId;
 
     if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
 
@@ -438,7 +437,7 @@ void interface_c::stopCapture(int id)
 
 void interface_c::startLoop(int id)
 {
-    qDebug()<<"start loop"<<id;
+  //  qDebug()<<"start loop"<<id;
 
     if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
 
@@ -507,7 +506,7 @@ void interface_c::startstopLoop(int id)
 }
 void interface_c::stopAllLoops(void)
 {
-    qDebug()<<"stop all loops";
+ //   qDebug()<<"stop all loops";
 
     playback_loop_c *pLoop = firstPlayLoop;
     playback_loop_c *pLoop2 = NULL;
@@ -593,7 +592,6 @@ void interface_c::selectPrevLoop(void)
     printPlaybackLoopList();
 }
 
-//TODO
 
 
 

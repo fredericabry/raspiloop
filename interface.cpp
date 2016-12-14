@@ -443,6 +443,7 @@ QString interface_c::statusToString(status_t status)
     case IDLE:return "stopped";break;
     case PLAY:return "playing";break;
     case SILENT:return "silent";break;
+    case HIDDEN:return "hidden";break;//should not happen
     default:return "unknown";break;
     }
 }
@@ -453,33 +454,34 @@ void interface_c::printPlaybackLoopList(void)
     QString txt = "";
 
 
-    if(getPlayLoopsCount() <= 0) txt="no loop";
+    //if(getPlayLoopsCount() <= 0) txt="no loop";
 
 
     do{
 
         if(pLoop)
         {
-
-            if(pLoop==selectedPlayLoop) txt+= "<font color=\"#ff4040\">";
-
-            txt+="Loop #"+QString::number(pLoop->id)+":"+statusToString(pLoop->status);
-
-            if(pLoop->pPorts.size()==0)
-                txt+=" - no port";
-            else if(pLoop->pPorts.size()==1)
-                txt+=" - port:" +QString::number(pLoop->pPorts[0]->channel);
-            else
+            if(pLoop->status!=HIDDEN)
             {
-                txt+=" - ports:";
-                for (auto &pPort : pLoop->pPorts) txt+= QString::number(pPort->channel)+" ";
+                if(pLoop==selectedPlayLoop) txt+= "<font color=\"#ff4040\">";
 
+                txt+="#"+QString::number(pLoop->id)+" - "+statusToString(pLoop->status);
+
+                if(pLoop->pPorts.size()==0)
+                    txt+=" - no port";
+                else if(pLoop->pPorts.size()==1)
+                    txt+=" - port:" +QString::number(pLoop->pPorts[0]->channel);
+                else
+                {
+                    txt+=" - ports:";
+                    for (auto &pPort : pLoop->pPorts) txt+= QString::number(pPort->channel)+" ";
+
+                }
+
+
+                txt+=" - ["+QString::number(pLoop->barstoplay)+" bars]"+"<br>";
+                if(pLoop==selectedPlayLoop) txt+="</font>";
             }
-
-
-            txt+=" - ["+QString::number(pLoop->barstoplay)+" bars]"+"<br>";
-            if(pLoop==selectedPlayLoop) txt+="</font>";
-
             pLoop = pLoop->pNextLoop;
         }
 
@@ -500,24 +502,22 @@ void interface_c::printCaptureLoopList(void)
     QString txt = "";
 
 
-    if(getCaptureLoopsCount() <= 0) txt="no loop";
+    if(getCaptureLoopsCount() <= 0) { /*txt="no loop";*/ }
     else
     {
 
         if(pLoop)
         {
-            txt+="Loop #"+QString::number(pLoop->id);
+            txt+="#"+QString::number(pLoop->id);
 
             if(pLoop->pPort)
-                txt+=" - port:" +QString::number(pLoop->pPort->channel)+"\n";
+                txt+=" - port:" +QString::number(pLoop->pPort->channel);
             else
             {
-                txt+=" - no port\n";
+                txt+=" - no port";
             }
 
-
-
-
+            txt+=" - ["+QString::number(pLoop->barCount)+" bars]";
         }
 
         while(pLoop->pNextLoop)
@@ -649,6 +649,10 @@ void interface_c::init(void)
 
     QStringList device;
     extractParameter(KEYWORD_CAPTURE_LIST, &device);
+
+
+    updateTimer = new QTimer;
+    updateTimer->start(PLAYBACK_MIX_SLEEP);
 
     for(int i =0;i<device.size();i++)
     {
@@ -804,57 +808,11 @@ void interface_c::run()
 void interface_c::checkMidiMsg(QString msg)
 {
 
-    qDebug()<<msg;
+    //qDebug()<<msg;
 
-    QElapsedTimer t1;
-    t1.start();
-
-
-    //update the midi ringbuffer
-    if(midiBuffer.size()<MIDI_MAX_LENGTH)
-    {
-        midiIndex=midiBuffer.size();
-        midiBuffer.append(msg);
-    }
-    else
-    {
-        if(midiIndex == MIDI_MAX_LENGTH-1)//pos 0
-        {
-            midiBuffer.replace(0,msg);
-            midiIndex = 0;
-        }
-        else
-        {
-
-            midiIndex++;
-            midiBuffer.replace(midiIndex,msg);
-        }
-
-    }
-
-    //order the midi message from oldest to newest
-    QStringList buffer;
-    if((midiIndex == MIDI_MAX_LENGTH-1)||(midiBuffer.size()<MIDI_MAX_LENGTH-1))//already in order..
-        buffer = midiBuffer;
-    else
-    {
-        buffer=midiBuffer.mid(midiIndex+1);
-        buffer+=midiBuffer.mid(0,MIDI_MAX_LENGTH-1-buffer.size());
-    }
+    activateMidi("MIDI_"+msg);
 
 
-    for(int i =1;i<=buffer.size();i++)
-    {
-        QString buf =  buffer.mid(i).join(";");
-
-        if(activateMidi("MIDI_"+buf))
-        {
-            midiBuffer.clear();
-            midiIndex = 0;
-           // qDebug()<<t1.elapsed();
-            return;
-        }
-    }
 
 
 
@@ -959,7 +917,7 @@ void interface_c::updatePortsConsole(void)
 }
 
 
-void interface_c::destroy(void)
+void interface_c::alsaDestroy(void)
 {
     for (auto &pPlaybackDevice : playbackDevicesList) pPlaybackDevice->alsa_cleanup_playback();
     for (auto &pCaptureDevice : captureDevicesList) pCaptureDevice->alsa_cleanup_capture();

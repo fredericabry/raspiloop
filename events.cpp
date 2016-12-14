@@ -52,6 +52,7 @@ interfaceEvent_c::interfaceEvent_c(const QObject * sender,const char * signal,co
         break;
 
     case EVENT_PLAY_RESTART:
+        count = 0;
         restartplayData = new(restartplayData_s);
         *restartplayData = *((restartplayData_s*)param);
         delete ((restartplayData_s*)param);
@@ -194,6 +195,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
                 restartplayData->pLoop ->rewind();
 
             }
+            else qDebug()<<"failed to restart";
 
 
             killEvent = true;

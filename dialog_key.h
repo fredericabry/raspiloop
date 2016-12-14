@@ -22,7 +22,7 @@ public:
 private:
     Ui::dialog_key *ui;
     int type;
-    QStringList midiMsg;
+    QString midiMsg;
 
 signals:
     void sendKey(QKeyEvent *e);

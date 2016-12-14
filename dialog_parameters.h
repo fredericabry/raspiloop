@@ -38,6 +38,7 @@ public slots:
     void dialogMidiDevice(void);
     void newControl();
     void showControlList();
+    void deviceRestart();
 };
 
 #endif // dialog_parameters_H

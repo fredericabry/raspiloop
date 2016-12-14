@@ -110,7 +110,7 @@ void alsa_findMidiDevices(snd_rawmidi_stream_t stream,QStringList *longNames,QSt
 }
 
 
-QString midiInterpreter(unsigned char c)
+void alsa_midi_capture_device::midiInterpreter(unsigned char c)
 {
     QStringList noteList;
     noteList <<"C"<<"C#"<<"D"<<"D#"<<"E"<<"F"<<"F#"<<"G"<<"G#"<<"A"<<"A#"<<"B";
@@ -120,7 +120,7 @@ QString midiInterpreter(unsigned char c)
 
     int cmd = c;
 
-    if(cmd ==MIDI_ACTIVE_SENSING) return txt;
+    if(cmd ==MIDI_ACTIVE_SENSING) return;
 
     if((cmd>=0)&&(cmd<=127))
     {
@@ -169,8 +169,64 @@ QString midiInterpreter(unsigned char c)
         txt = QString::number(cmd);
 
 
+    //qDebug()<<txt;
 
-    return txt;
+
+    if(txt.left(2) == "PC")
+    {
+        if(msgList.size()==0)
+        {
+            msgList.push_back(txt);
+        }
+
+        else
+        {
+            qDebug()<<"error midi msg PC"<<msgList.size();
+        }
+    }
+    else if(txt.left(2) == "CC")
+    {
+        if(msgList.size()==0)
+        {
+            msgList.push_back(txt);
+        }
+        else
+        {
+            qDebug()<<"error midi msg CC"<<msgList.size();
+        }
+    }
+    else if(txt.left(4) == "note")
+    {
+        if(msgList.size()==1)
+        {
+            if(txt.left(4) == "note")
+            {
+                msgList.push_back(txt);
+                if(msgList[0].left(2) == "PC")
+                {
+                    emit sendMidiMsg(msgList.join(";"));
+                    // qDebug()<<msgList.join(";");
+                    msgList.clear();
+                }
+            }
+            else
+                qDebug()<<"error midi msg note"<<msgList.size();
+        }
+        else if (msgList.size()==2)
+        {
+            if(msgList[0].left(2) == "CC")
+            {
+                msgList.push_back(txt);
+                // qDebug()<<msgList.join(";");
+                emit sendMidiMsg(msgList.join(";"));
+                msgList.clear();
+            }
+            else qDebug()<<"error midi msg note"<<msgList.size();
+        }
+    }
+
+
+    // if(txt.size()>0) emit sendMidiMsg(txt);
 
 }
 
@@ -248,8 +304,9 @@ void alsa_midi_capture_device_consumer::run()
         if(ch)
         {
 
-            QString txt = midiInterpreter(ch);
-            if(txt.size()>0) emit controler->sendMidiMsg(txt);
+            controler->midiInterpreter(ch);
+
+
 
 
         }
