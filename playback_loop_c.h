@@ -7,6 +7,7 @@
 #include "QThread"
 #include "qmutex.h"
 #include "interface.h"
+#include "qelapsedtimer.h"
 
 
 
@@ -24,6 +25,7 @@ public:
     bool active;//consumer active as long as this is true
     void update(void);
     void stop(void);
+    bool consumerReady;
 protected:
     void destroyloop(void);
 };
@@ -54,7 +56,7 @@ public:
 
     QString filename;
 
-    bool loopReadyToStop;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
+    bool fileReadingOver;//all file data has been transfered by the consumer to the ringbuffer. When the latter is empty we can destroy the loop.
     SNDFILE *soundfile;
     bool isFinished(void);
 
@@ -93,7 +95,7 @@ public:
     void updateFrameToPlay(long length);
     void addToList(void);
     void removeFromList(void);
-
+    void consumerReady();
 
 
     unsigned long freespace();

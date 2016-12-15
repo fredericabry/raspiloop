@@ -4,6 +4,8 @@
 #include "parameters.h"
 #include "interface.h"
 #include "qtimer.h"
+#include "qthread.h"
+#include "QElapsedTimer"
 
 playback_port_c::playback_port_c(const unsigned long maxlength,  const int channel,QString deviceName,interface_c *interface):channel(channel),deviceName(deviceName),interface(interface)
 {
@@ -12,8 +14,9 @@ playback_port_c::playback_port_c(const unsigned long maxlength,  const int chann
 
     consumer = new playbackPortConsumer(maxlength,PLAYBACK_BUFSIZE);
     consumer->controler = this;
-
+    consumer->running = true;
     consumer->start();
+
     interface->Afficher("playback port "+QString::number(channel)+" created on "+deviceName);
 
 
@@ -36,8 +39,7 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
     pConnectedLoops.push_back(pLoop);
 
 
-    if((pConnectedLoops.size())==1)
-        consumer->wait_for_data = false;//unblock the port
+    // if(pLoop->isClick) qDebug()<<"click added";
 
     consumer->loop_lock.unlock();
 
@@ -47,8 +49,19 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
 {
     consumer->loop_lock.lock();
     pConnectedLoops.erase(std::remove(pConnectedLoops.begin(), pConnectedLoops.end(), pLoop), pConnectedLoops.end());
+
+    //if(pLoop->isClick) qDebug()<<"click removed";
+
+
     consumer->loop_lock.unlock();
 }
+
+void playback_port_c::destroy()
+{
+    consumer->quit();
+    consumer->running = false;
+}
+
 
 
 QString playback_port_c::getDeviceName(void)
@@ -137,7 +150,7 @@ int playbackPortConsumer::pullN(unsigned long N)
     unsigned long N0=0;
     unsigned long length = this->length();
     if(N > length) {
-        /*qDebug()<<"not enough elements"; */
+      //  qDebug()<<controler->channel<<"not enough elements";
         N0 = N - length;
         N = length;
     }
@@ -182,7 +195,7 @@ int playbackPortConsumer::pullN(unsigned long N)
         if(!controler->fg_empty)
         {
 
-            //qDebug()<<channel<<"zeros";
+              //qDebug()<<controler->channel<<N0<<"zeros";
             controler->fg_empty=true;
         }
 
@@ -213,43 +226,39 @@ void playbackPortConsumer::run()
 {
 
 
-    wait_for_data = false;
+
     tail = 0;
     head = 0;
 
 
-    //QTimer updateTimer;
-    //updateTimer.start(PLAYBACK_MIX_SLEEP);
-    connect(controler->interface->updateTimer,SIGNAL(timeout()),this,SLOT(update()));
 
+    /*while(running)
+    {
+        update();
+        QThread::usleep(PLAYBACK_MIX_SLEEP);
+    }*/
 
+    connect(controler->interface->timerMix,SIGNAL(timeout()),this,SLOT(update()));
     exec();
+
+    controler->deleteLater();
 }
 
 void playbackPortConsumer::update()
 {
     loop_lock.lock();
+    controler->mixOver = false;
     int nread;
     short connected_loops;//nbr of loops connected to this ringbuffer
 
     unsigned long frames = freespace();
 
 
-
-    if((wait_for_data))
-    {
-        qDebug()<<"WAIT";
-        loop_lock.unlock();
-        return;
-    }
-
-
     connected_loops = controler->pConnectedLoops.size();
 
+    if(connected_loops==0) { loop_lock.unlock();controler->mixOver = true;return;} //still zero ? return
 
-    if(connected_loops==0) { loop_lock.unlock();return;} //still zero ? return
 
-    wait_for_data = true;
 
 
     memset(bufmix,0,bufsize*sizeof(short));
@@ -259,11 +268,15 @@ void playbackPortConsumer::update()
     datalength=0;
 
 
+    QElapsedTimer telaps;
+    telaps.start();
+
+
     //implement mix strategies here
 
     for (auto &pLoop : controler->pConnectedLoops)
     {
-        memset(buf2,0,sizeof(short)*PLAYBACK_BUFSIZE);
+
 
         pLoop->datarequest(frames,controler->channel,buf2,&nread);
 
@@ -287,12 +300,30 @@ void playbackPortConsumer::update()
         }
     }
 
+
+
+    //sync all playports here
+
+    controler->mixOver = true;
+
+  // while(!controler->interface->isMixOver()){}
+
+   // qDebug()<<controler->channel<<datalength<<telaps.nsecsElapsed()/1000;*/
+
     pushN(bufmix,datalength);
-    datalength=0;
-    wait_for_data = false;
+
+
+
+
     delete buf2;
 
+
+
     loop_lock.unlock();
+
+
+
+
 
 }
 

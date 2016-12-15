@@ -43,6 +43,7 @@ public:
     void destroyLoop(void);
     void openfile(QString filename);
     void closefile(void);
+    void preDestroy(void);
     int pullN(unsigned long N);
     unsigned long length(void);
     void removeFromList(void);
@@ -57,7 +58,8 @@ public:
     const int id;
     QString filename;
     capture_port_c *pPort;
-
+    bool createPlayLoop;//auto create playloop when closing capture loop
+    std::vector<playback_port_c *> pPlayPorts;//if playloop is created it will be on these play ports
     //used to keep track of every capture loops
     capture_loop_c *pNextLoop;
     capture_loop_c *pPrevLoop;

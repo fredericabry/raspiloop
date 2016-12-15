@@ -7,7 +7,7 @@
 #include "click_c.h"
 
 
-capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop,std::vector<playback_port_c*>pPlayPorts, double delta):id(id),pPort(pPort)
+capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length, bool createPlayLoop,std::vector<playback_port_c*>pPlayPorts, double delta):id(id),pPort(pPort),createPlayLoop(createPlayLoop),pPlayPorts(pPlayPorts)
 {
 
 
@@ -73,7 +73,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
 
 
-            playData_s *param;
+          /*  playData_s *param;
             param = new playData_s;
             param->id = id;
             param->length = 1;//one bar
@@ -85,7 +85,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
             emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,&pEvent);
 
-
+        */
         }
 
 
@@ -152,61 +152,14 @@ void capture_loop_c::removeFromList(void)
     pPort->interface->printCaptureLoopList();
 }
 
+
+
+
+
 void capture_loop_c::destroyLoop()
 {
 
 
-
-
-    if(pPort->interface->synchroMode == NOSYNC)
-    {
-
-        if(pPlayLoop != NULL)
-            pPlayLoop->play();//start
-
-    }
-    else if((pPort->interface->synchroMode == CLICKSYNC))
-    {
-
-        //we need to compute the length of the loop in beats,
-        double beatsCountf = (double)pPort->interface->pClick->getTempo()*framesCount/(RATE*60);
-        long beatsCount = (long)beatsCountf;
-        int nbeats,nbars;
-        nbeats=nbars = 0;
-
-        while(nbeats<beatsCount) nbeats+=4;
-        nbeats-=4;
-
-        if(beatsCount-nbeats >= 2) //recording was stopped up to 2 beats too early, let us make the recording one bar longer
-            nbeats+=4;
-
-        nbars = nbeats/4;
-
-        if(nbars==0) nbars = 1;//length was smaller than 1 bar, let's not ignore what has been recorded
-
-
-        qDebug()<<beatsCountf<<"beats -"<<nbars<<"bars";
-
-        if(pPlayLoop != NULL)
-        {
-
-            pPlayLoop->updateFrameToPlay(nbars);
-            pPlayLoop->play();
-
-        }
-        else
-        {
-
-            if((pEvent)&&(pPort->interface->isEventValid(pEvent))) {pEvent->playData->status=PLAY;pEvent->playData->pCaptureLoop=NULL;} // we need to update the event infos
-            else  emit updatePlayLoopInfo(nbars);//event already created the loop, let us provide the infos directly to the loop
-
-
-        }
-
-
-
-
-    }
 
     //this loop needs to get out of the list:
 
@@ -315,6 +268,80 @@ void capture_loop_c::openfile(QString filename)
 
 }
 
+
+void capture_loop_c::preDestroy()
+{
+    if(pPort->interface->synchroMode == NOSYNC)
+    {
+        if(pPlayLoop != NULL)
+            pPlayLoop->play();//start
+    }
+    else if((pPort->interface->synchroMode == CLICKSYNC))
+    {
+
+        //we need to compute the length of the loop in beats,
+        double beatsCountf = (double)pPort->interface->pClick->getTempo()*framesCount/(RATE*60);
+        long beatsCount = (long)beatsCountf;
+        int nbeats,nbars;
+        nbeats=nbars = 0;
+
+        while(nbeats<beatsCount) nbeats+=4;
+        nbeats-=4;
+
+        if(beatsCount-nbeats >= 2) //recording was stopped up to 2 beats too early, let us make the recording one bar longer
+            nbeats+=4;
+
+        nbars = nbeats/4;
+
+        if(nbars==0) nbars = 1;//length was smaller than 1 bar, let's not ignore what has been recorded
+
+        qDebug()<<beatsCountf<<"beats -"<<nbars<<"bars";
+
+
+
+
+
+
+    }
+
+    if(createPlayLoop)
+    {
+        qDebug()<<"create loop";
+        if(pPort->interface->pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
+        {
+            new playback_loop_c(id,pPlayPorts,0,CLICKSYNC,PLAY,pPort->interface,pPort->interface->pClick->getTime());
+
+        }
+
+        else
+        {
+
+
+            playData_s *param;
+            param = new playData_s;
+            param->id = id;
+            param->length = 0;
+            param->pPlayPorts = pPlayPorts;
+            param->skipevent = 0;
+            param->status = PLAY;
+            param->syncMode = CLICKSYNC;
+            param->pCaptureLoop = NULL;
+
+            emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,NULL);
+
+
+        }
+
+
+    }
+}
+
+
+
+
+
+
+
 void capture_loop_c::closefile()
 {
     int err;
@@ -343,6 +370,8 @@ void captureLoopConsumer::update(void)
 
         telapsed.start();
         if ((err = sf_writef_short (controler->soundfile, controler->buffile,  nread) ) != nread)   qDebug()<< "cannot write sndfile"<<err;
+
+
 
         t1 = telapsed.elapsed();
         if(t1 > tmax) {tmax = t1; qDebug()<<"new save delay max : "<<tmax<<" ms";}
@@ -392,6 +421,7 @@ void captureLoopConsumer::run()
     }
 
     controler->closefile();
+    controler->preDestroy();
     //delete controler;
     controler->deleteLater();
     //   qDebug()<<"capture loop consumer destroyed";

@@ -226,6 +226,8 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 
 
 
+
+
     for(int i = 0;i<playback_channels;i++)
     {
         port[i]->consumer->pullN(playback_frames);

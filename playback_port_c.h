@@ -4,7 +4,7 @@
 #include <sndfile.h>
 #include <qthread.h>
 #include <qmutex.h>
-
+#include "qelapsedtimer.h"
 
 class interface_c;
 class playback_loop_c;
@@ -29,7 +29,7 @@ public:
     QMutex ring_lock;
     QMutex loop_lock;
     short *buf;//small buffer for transfert
-    bool wait_for_data;
+    bool running;
 
 public slots:
     void update(void);
@@ -52,9 +52,12 @@ class playback_port_c : public QObject
     Q_OBJECT
 
 public:
+
     playback_port_c(unsigned long maxlength, const int channel,const QString deviceName, interface_c *interface);
     ~playback_port_c();
 
+
+    void destroy();
     int const channel;
     const QString deviceName;
     interface_c *interface;
@@ -64,6 +67,7 @@ public:
     void removeloop(playback_loop_c *pLoop);
     QString getDeviceName(void);
     std::vector<playback_loop_c*>pConnectedLoops;
+    bool mixOver; //check is mix is over
 
 };
 

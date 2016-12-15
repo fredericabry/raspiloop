@@ -506,42 +506,26 @@ void interface_c::printCaptureLoopList(void)
     else
     {
 
-        if(pLoop)
-        {
-            txt+="#"+QString::number(pLoop->id);
-
-            if(pLoop->pPort)
-                txt+=" - port:" +QString::number(pLoop->pPort->channel);
-            else
+        do{
+            if(pLoop)
             {
-                txt+=" - no port";
-            }
-
-            txt+=" - ["+QString::number(pLoop->barCount)+" bars]";
-        }
-
-        while(pLoop->pNextLoop)
-        {
-            pLoop = pLoop->pNextLoop;
-            if(pLoop)    {
-                txt+="Loop #"+QString::number(pLoop->id);
+                txt+="#"+QString::number(pLoop->id);
 
                 if(pLoop->pPort)
-                    txt+=" - port:" +QString::number(pLoop->pPort->channel)+"\n ";
+                    txt+=" - port:" +QString::number(pLoop->pPort->channel);
                 else
                 {
-                    txt+=" - no port\n";
+                    txt+=" - no port";
                 }
 
-
-
+                txt+=" - ["+QString::number(pLoop->barCount)+" bars]\n";
+                pLoop = pLoop->pNextLoop;
             }
 
-        }
+        }while(pLoop);
+
     }
-
     emit captureLoopList(txt);
-
 }
 
 
@@ -639,6 +623,30 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 
 
 
+bool interface_c::isMixOver(void)
+{
+
+    for (auto pPort : playbackPortsList)
+    {
+       if(!pPort->mixOver) return false;
+
+
+    }
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void interface_c::init(void)
 {
@@ -651,8 +659,10 @@ void interface_c::init(void)
     extractParameter(KEYWORD_CAPTURE_LIST, &device);
 
 
-    updateTimer = new QTimer;
-    updateTimer->start(PLAYBACK_MIX_SLEEP);
+    timerMix = new QTimer;
+    timerMix->start(PLAYBACK_MIX_SLEEP);
+
+
 
     for(int i =0;i<device.size();i++)
     {
@@ -778,7 +788,7 @@ void interface_c::init(void)
 
 
 
-    telapsed.start();
+
     //connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
     printPlaybackLoopList();
     printCaptureLoopList();

@@ -10,6 +10,15 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 {
 
 
+    buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
+    memset(buffile,0,sizeof(short)*NFILE_PLAYBACK);
+    maxlength=RINGBUFSIZE_PLAYBACK;
+    ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
+    memset(ringbuf,0,(maxlength+1)*sizeof(short));
+    bufsize = PLAYBACK_BUFSIZE;
+    head = 0;
+
+
     if((id == 0) || (id==1)) isClick = true;
     else isClick = false;
 
@@ -21,21 +30,34 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
     connect(this,SIGNAL(makeInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)),interface,SLOT(createInterfaceEvent(const QObject*,const char*,int,void*,bool,interfaceEvent_c**)));
 
+
+    fileReadingOver = false;
+
+
+    for (auto &pPort : pPorts)
+    {
+
+        portsChannel.push_back(pPort->channel);
+        tails.push_back(head);
+        framesCount.push_back(0);
+
+    }
+
+
     consumer = new playbackLoopConsumer;
     consumer->controler = this;
     consumer->active = true;
-
-    loopReadyToStop = false;
-
-    buffile = (short*)malloc(sizeof(short)*NFILE_PLAYBACK);
-    memset(buffile,0,sizeof(short)*NFILE_PLAYBACK);
-    maxlength=RINGBUFSIZE_PLAYBACK;
-    ringbuf = (short*)malloc((maxlength+1)*sizeof(short));
-    memset(ringbuf,0,(maxlength+1)*sizeof(short));
-    bufsize = PLAYBACK_BUFSIZE;
+    consumer->consumerReady = false;
+    consumer->start();
 
 
-    head = 0;
+
+
+
+
+
+
+
 
     updateFrameToPlay(length);
 
@@ -52,7 +74,6 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
         if(delta > 0)
         {
             unsigned long offset = delta*RATE; //number of elements which we skip because loop was created too late
-            if(offset > RATE) {qDebug()<<"too late"; offset = RATE;}
             framestoskip = offset;
         }
         else
@@ -79,28 +100,27 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
 
 
-    for (auto &pPort : pPorts)
-    {
-
-        portsChannel.push_back(pPort->channel);
-        tails.push_back(head);
-        framesCount.push_back(0);
-        pPort->addloop(this);
 
 
 
 
 
 
-
-    }
 
 
     addToList();
 
 
-    consumer->start();
 
+}
+
+
+void playback_loop_c::consumerReady()
+{
+    for (auto &pPort : pPorts)
+    {
+        pPort->addloop(this);
+    }
 
 }
 
@@ -114,17 +134,17 @@ void playback_loop_c::openFile()
 
     isFileOpened = false;
 
-    if ((this->soundfile = sf_open (filename2.toStdString().c_str(), SFM_RDWR, &sf_info)) == NULL) {
+    if ((this->soundfile = sf_open (filename2.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
         char errstr[256];
         sf_error_str (0, errstr, sizeof (errstr) - 1);
-        fprintf (stderr, "cannot open sndfile \"%s\" for output (%s)\n",filename.toStdString().c_str(), errstr);
-
-
+        qDebug()<< "cannot open sndfile"<< filename.toStdString().c_str()<<"for output"<<errstr;
         destroy();
         return;
     }
 
+
     isFileOpened = true;
+
     //   qDebug()<<"created 2 "<<id;
 
 
@@ -151,8 +171,6 @@ void playback_loop_c::openFile()
         return;
     }
 
-    /* if(id>1)
-      qDebug()<<framestoplay<<sf_info.frames;*/
 
 
 
@@ -259,13 +277,13 @@ int playback_loop_c::pullN(unsigned long N,int portNumber,short **buf)
 
     unsigned long length = this->length(tails[portNumber]);
 
-    if((length == 0)&&(loopReadyToStop)) {consumer->stop();playloop_mutex.unlock();return 0;} //file is empty, ringbuffer is empty, we can start destroying the loop
+    if((length == 0)&&(fileReadingOver)) { consumer->stop();playloop_mutex.unlock();return 0;} //file is empty, ringbuffer is empty, we can start destroying the loop
 
 
 
 
     if(N > length) {
-        qDebug()<<"not enough elements";
+        if(!fileReadingOver) qDebug()<<"not enough elements"<<N<<length;
         N = length;
     }
 
@@ -572,14 +590,16 @@ void playback_loop_c::datarequest(unsigned long frames,int channel,short *buf2,i
 
     }
 
-    unsigned long ringbuflength = length(tails[portNumber]);
+    /* unsigned long ringbuflength = length(tails[portNumber]);
 
     if(frames > ringbuflength) frames = ringbuflength; //limit data transfert to what is available in the ringbuffer
-
+*/
 
     *nread = pullN(frames,portNumber,&buf2);
 
-    if (*nread != (signed long)frames) qDebug()<<"error pulling from ringbuf";
+
+
+    //  if (*nread != (signed long)frames) qDebug()<<"error pulling from ringbuf";
 
     framesCount[portNumber]+=*nread;
 
@@ -686,7 +706,9 @@ QElapsedTimer t3;
 void playbackLoopConsumer::update() //constantly fill the ringbuffer with data from the opened file
 {
 
-    if(controler->loopReadyToStop) return;//we don't need more data
+
+
+    if(controler->fileReadingOver) return;//we don't need more data
 
     // qDebug()<<"upd";
     update_lock = true;
@@ -694,17 +716,12 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     static int tmax = 0;
 
 
-    sf_command (controler->soundfile, SFC_UPDATE_HEADER_NOW, NULL, 0) ; //update the file length, we might be writing on it in some other thread
-
-
-
+    //only work with RDWR or WRITE opening file, and RDWR is buggy so we can't really use that
+    // sf_command (controler->soundfile, SFC_UPDATE_HEADER_NOW, NULL, 0) ; //update the file length, we might be writing on it in some other thread
 
     nrequest =controler->freespace();
-
     if(nrequest > NFILE_PLAYBACK) nrequest = NFILE_PLAYBACK;
-
     t3.start();
-
 
     if(controler->framestoskip>0)
     {
@@ -717,37 +734,35 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
 
 
 
-
     if((nread = sf_readf_short(controler->soundfile,controler->buffile,nrequest))>0)
     {
-
-
         controler->pushN(controler->buffile,nread);
-
     }
+ //   qDebug()<<"nread"<<nread;
+
 
 
     //qDebug()<<controler->stop<<controler->framestoplay;
 
     if(controler->syncMode == NOSYNC)
     {
-
         if((controler->stop&&(controler->isFinished()))
                 ||((nread <= 0)&&(nrequest!=0)))
         {
-
+            //if((controler->stop&&(controler->isFinished()))) qDebug()<<"stop1";
+            //if((nread <= 0)&&(nrequest!=0)) qDebug()<<"stop2"<<nread<<nrequest;
 
             if(controler->repeat)
             {
-                for (auto &pPort : controler->pPorts)
-                    pPort->removeloop(controler);
+                // for (auto &pPort : controler->pPorts)
+                //   pPort->removeloop(controler);
                 sf_seek(controler->soundfile,0,SFM_READ);
 
             }
             else
             {
 
-                controler->loopReadyToStop = true;
+                controler->fileReadingOver = true;
 
 
             }
@@ -766,7 +781,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
         {
 
             if(!controler->stop)controler->isOutOfSample = true;//we are not stopping yet so we just need to freeze data transfert
-            else  controler->loopReadyToStop = true;
+            else  controler->fileReadingOver = true;
 
 
 
@@ -787,6 +802,13 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     update_lock = false;
 
 
+    if(!consumerReady)
+    {   consumerReady = true;
+        controler->consumerReady();
+    }
+
+
+
 }
 
 void playbackLoopConsumer::stop(void)
@@ -798,10 +820,16 @@ void playbackLoopConsumer::stop(void)
 
 void playbackLoopConsumer::destroyloop()
 {
+
+
+
+
+
     if (controler->isFileOpened)
     {
 
         sf_close(controler->soundfile);
+        //qDebug()<<"file close";
 
 
         for (auto &pPort : controler->pPorts)

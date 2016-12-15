@@ -6,6 +6,7 @@
 #include "QKeyEvent"
 #include "qmutex.h"
 #include "qelapsedtimer.h"
+#include "qtimer.h"
 
 
 class playback_loop_c;
@@ -93,8 +94,6 @@ public:
     bool isEventValid(interfaceEvent_c* pEvent);
     int getEventsCount();
     void removeAllEvents();
-
-
     void alsaDestroy();
 
     void moveClick(std::vector<playback_port_c*> pPorts);
@@ -104,6 +103,7 @@ public:
 
     void updatePortsConsole(void);
 
+    bool isMixOver(void);//test if mix is done in every playback port for sync
 
     void showPlayLoops();
     click_c *pClick;
@@ -119,10 +119,9 @@ public:
     QMutex eventListMutex;
 
 
-    QElapsedTimer telapsed;
+    QTimer *timerMix;
 
 
-    QTimer *updateTimer;//used to sync all playports
 
 
 
