@@ -144,7 +144,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
 
         // qDebug()<<"capture id"<<id;
         if(captureData->pCaptureLoop)
-        *(captureData->pCaptureLoop) = new capture_loop_c(captureData->id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,0);
+            *(captureData->pCaptureLoop) = new capture_loop_c(captureData->id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,0);
         else new capture_loop_c(captureData->id,captureData->pPort,captureData->length,captureData->createPlayLoop,captureData->pPlayPorts,0);
         killEvent = true;
 
@@ -161,14 +161,7 @@ void interfaceEvent_c::eventProcess() //launch the actual event
         else
         {
 
-
-
-
-            playback_loop_c *pLoop =  new playback_loop_c(playData->id,playData->pPlayPorts,playData->length,playData->syncMode,playData->status,interface,0);
-
-            if(playData->pCaptureLoop)
-                connect(playData->pCaptureLoop,SIGNAL(updatePlayLoopInfo(ulong)),pLoop,SLOT(infoFromCaptureLoop(ulong))); //used to update the playback loop with infos when the capture loop is destroyed
-
+            new playback_loop_c(playData->id,playData->pPlayPorts,playData->length,playData->syncMode,playData->status,interface,0);
             killEvent = true;
         }
 

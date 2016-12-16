@@ -15,7 +15,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     filename = QString::number(id)+".wav";
 
     framesCount = 0;
-    barCount = oldBarCount = 0;
+
     //pPort->interface->listMutex.lock();
     addToList();
     //pPort->interface->listMutex.unlock();
@@ -44,11 +44,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     else
     {
         stop = false;
-
     }
-
-
-
 
     consumer = new captureLoopConsumer();
     consumer->controler = this;
@@ -56,43 +52,8 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
     consumer->start();
 
 
-    pPlayLoop = NULL;
-
-    if(createPlayLoop)
-    {
-        //we need to create an associated playbackloop, which will be ready
-
-        if(pPort->interface->synchroMode == NOSYNC)
-        {
 
 
-            //  pPlayLoop = new playback_loop_c(id,pPlayPorts,playPortsCount,-1,NOSYNC,IDLE,pPort->interface);//by default loop
-        }
-        else if(pPort->interface->synchroMode == CLICKSYNC)
-        {
-
-
-
-            /*  playData_s *param;
-            param = new playData_s;
-            param->id = id;
-            param->length = 1;//one bar
-            param->pPlayPorts = pPlayPorts;
-            param->skipevent = 0;
-            param->status = HIDDEN;
-            param->syncMode = CLICKSYNC;
-            param->pCaptureLoop = this;
-
-            emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,&pEvent);
-
-        */
-        }
-
-
-
-
-    }
-    else pPlayLoop = NULL;
 
 
 
@@ -273,8 +234,7 @@ void capture_loop_c::preDestroy()
 {
     if(pPort->interface->synchroMode == NOSYNC)
     {
-        if(pPlayLoop != NULL)
-            pPlayLoop->play();//start
+
     }
     else if((pPort->interface->synchroMode == CLICKSYNC))
     {
@@ -380,14 +340,12 @@ void captureLoopConsumer::update(void)
 
         controler->framesCount += nread;//let's keep track of how many frames have been read
 
+        unsigned int oldBarCount = controler->barCount;
         controler->barCount =controler->pPort->interface->pClick->getTempo()*controler->framesCount/(RATE*60*4);
 
-        if(controler->barCount!=controler->oldBarCount)
-        {
-            controler->oldBarCount = controler->barCount;
+        if(controler->barCount!=oldBarCount)
             controler->pPort->interface->printCaptureLoopList();
 
-        }
 
 
     }

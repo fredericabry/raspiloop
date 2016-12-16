@@ -48,25 +48,6 @@ playback_loop_c* interface_c::findLastPlaybackLoop(void) //return a pointer to t
 
 }
 
-int interface_c::getPlayLoopsCount()
-{
-    int i = 0;
-    playbackListMutex.lock();
-    playback_loop_c *pLoop = firstPlayLoop;
-
-
-    if(pLoop == NULL) {playbackListMutex.unlock();return 0;}
-    else
-    {
-        i=1;
-        while(pLoop->pNextLoop!=NULL) {pLoop=pLoop->pNextLoop;i++;}
-    }
-    playbackListMutex.unlock();
-    return i;
-
-
-}
-
 capture_loop_c* interface_c::findLastCaptureLoop(void) //return a pointer to the last playloop
 {
     //no mutex here, used inside a mutex
@@ -117,7 +98,7 @@ int interface_c::getCaptureLoopsCount()
 
 int interface_c::generateNewId()
 {
-    int id = 2; //id = 0 and id =1 are reserved for the click
+    int id = 0;
 
 
     playbackListMutex.lock();
@@ -247,7 +228,6 @@ bool interface_c::isIdFree(int id)
     return true;
 }
 
-
 playback_loop_c* interface_c::findPlayLoopById(int id)
 {
     playbackListMutex.lock();
@@ -273,7 +253,6 @@ capture_loop_c* interface_c::findCaptureLoopById(int id)
     captureListMutex.unlock();
     return NULL;
 }
-
 
 int interface_c::getEventsCount()
 {
@@ -325,45 +304,6 @@ void interface_c::removeRestartEvents(int id)
         pEvent->destroy();
 
     eventsToDestroy.clear();
-
-}
-
-void interface_c::showPlayLoops()
-{
-    playback_loop_c *pLoop = firstPlayLoop;
-    while(pLoop != NULL)
-    {
-        qDebug()<<"loop" <<pLoop->id;
-        if(pLoop->pPrevLoop)qDebug()<<"prev"<<pLoop->pPrevLoop->id;
-        if(pLoop->pNextLoop)qDebug()<<"next"<<pLoop->pNextLoop->id;
-
-        qDebug()<<"\n";
-        pLoop = pLoop->pNextLoop;
-
-    }
-
-
-}
-
-void interface_c::removeAllPlaybackLoops(void)
-{
-    selectedPlayLoop = NULL;
-
-    playback_loop_c *pLoop = firstPlayLoop;
-    playback_loop_c *pLoop2 = NULL;
-    while(pLoop != NULL)
-    {
-
-        pLoop2 = pLoop->pNextLoop;
-
-        pLoop->destroy();
-
-        pLoop = pLoop2;
-
-    }
-
-    printPlaybackLoopList();
-
 
 }
 
@@ -443,7 +383,6 @@ QString interface_c::statusToString(status_t status)
     case IDLE:return "stopped";break;
     case PLAY:return "playing";break;
     case SILENT:return "silent";break;
-    case HIDDEN:return "hidden";break;//should not happen
     default:return "unknown";break;
     }
 }
@@ -461,8 +400,7 @@ void interface_c::printPlaybackLoopList(void)
 
         if(pLoop)
         {
-            if(pLoop->status!=HIDDEN)
-            {
+
                 if(pLoop==selectedPlayLoop) txt+= "<font color=\"#ff4040\">";
 
                 txt+="#"+QString::number(pLoop->id)+" - "+statusToString(pLoop->status);
@@ -481,7 +419,7 @@ void interface_c::printPlaybackLoopList(void)
 
                 txt+=" - ["+QString::number(pLoop->barstoplay)+" bars]"+"<br>";
                 if(pLoop==selectedPlayLoop) txt+="</font>";
-            }
+
             pLoop = pLoop->pNextLoop;
         }
 
@@ -623,19 +561,6 @@ int interface_c::getCaptureStatus(capture_loop_c **pCaptureLoop)
 
 
 
-bool interface_c::isMixOver(void)
-{
-
-    for (auto pPort : playbackPortsList)
-    {
-       if(!pPort->mixOver) return false;
-
-
-    }
-    return true;
-}
-
-
 
 
 
@@ -702,20 +627,7 @@ void interface_c::init(void)
     }
 
 
-
-
-
-
-
-
-
-
-
-
     synchroMode = CLICKSYNC;
-
-    isRecording = false;
-
 
 
     QStringList portNamesFile;
@@ -774,7 +686,7 @@ void interface_c::init(void)
 
 
     pClick = new click_c(120,pClickPorts,IDLE,this,parent);
-    clickStatus=false;
+
     connect(this,SIGNAL(setTempo(int)),pClick,SLOT(setTempo(int)));
     connect(this,SIGNAL(playbackLoopList(QString)),parent,SLOT(setPlaybackLoopList(QString)));
     connect(this,SIGNAL(captureLoopList(QString)),parent,SLOT(setCaptureLoopList(QString)));
@@ -931,8 +843,12 @@ void interface_c::updatePortsConsole(void)
 
 void interface_c::alsaDestroy(void)
 {
+
+
     for (auto &pPlaybackDevice : playbackDevicesList) pPlaybackDevice->alsa_cleanup_playback();
     for (auto &pCaptureDevice : captureDevicesList) pCaptureDevice->alsa_cleanup_capture();
+
+
     for (auto &pControl : controlLists) delete pControl;
 
 

@@ -21,7 +21,7 @@ public:
     playbackPortConsumer(const unsigned maxlength,const unsigned long bufsize);
     playback_port_c* controler;
     int datalength;
-    void data_available(short *buf, int nread);
+
     int pullN(unsigned long N);
     void pushN(short *buf_in, unsigned long N);
     unsigned long length();
@@ -58,7 +58,7 @@ public:
     ~playback_port_c();
 
 
-    void destroy();
+
     int const channel;
     const QString deviceName;
     interface_c *interface;
@@ -68,7 +68,7 @@ public:
     void removeloop(playback_loop_c *pLoop);
     QString getDeviceName(void);
     std::vector<playback_loop_c*>pConnectedLoops;
-    bool mixOver; //check is mix is over
+
     unsigned long clickDataToPlay0;
     unsigned long clickDataToPlay1;
 

@@ -39,7 +39,7 @@ void playback_port_c::addloop(playback_loop_c *pLoop)
     pConnectedLoops.push_back(pLoop);
 
 
-    // if(pLoop->isClick) qDebug()<<"click added";
+
 
     consumer->loop_lock.unlock();
 
@@ -50,17 +50,9 @@ void playback_port_c::removeloop(playback_loop_c *pLoop)
     consumer->loop_lock.lock();
     pConnectedLoops.erase(std::remove(pConnectedLoops.begin(), pConnectedLoops.end(), pLoop), pConnectedLoops.end());
 
-    //if(pLoop->isClick) qDebug()<<"click removed";
-
-
     consumer->loop_lock.unlock();
 }
 
-void playback_port_c::destroy()
-{
-    consumer->quit();
-    consumer->running = false;
-}
 
 
 
@@ -150,7 +142,7 @@ int playbackPortConsumer::pullN(unsigned long N)
     unsigned long N0=0;
     unsigned long length = this->length();
     if(N > length) {
-      //  qDebug()<<controler->channel<<"not enough elements";
+        //  qDebug()<<controler->channel<<"not enough elements";
         N0 = N - length;
         N = length;
     }
@@ -195,7 +187,7 @@ int playbackPortConsumer::pullN(unsigned long N)
         if(!controler->fg_empty)
         {
 
-              //qDebug()<<controler->channel<<N0<<"zeros";
+            //qDebug()<<controler->channel<<N0<<"zeros";
             controler->fg_empty=true;
         }
 
@@ -247,7 +239,7 @@ void playbackPortConsumer::run()
 void playbackPortConsumer::update()
 {
     loop_lock.lock();
-    controler->mixOver = false;
+
     int nread;
     short connected_loops;//nbr of loops connected to this ringbuffer
 
@@ -256,7 +248,7 @@ void playbackPortConsumer::update()
 
     connected_loops = controler->pConnectedLoops.size();
 
-    if(connected_loops==0) { loop_lock.unlock();controler->mixOver = true;return;} //still zero ? return
+    if(connected_loops==0) { loop_lock.unlock();return;} //still zero ? return
 
 
 
@@ -268,8 +260,7 @@ void playbackPortConsumer::update()
     datalength=0;
 
 
-    QElapsedTimer telaps;
-    telaps.start();
+
 
 
     //implement mix strategies here
@@ -302,13 +293,8 @@ void playbackPortConsumer::update()
 
 
 
-    //sync all playports here
 
-    controler->mixOver = true;
 
-  // while(!controler->interface->isMixOver()){}
-
-   // qDebug()<<controler->channel<<datalength<<telaps.nsecsElapsed()/1000;*/
 
     pushN(bufmix,datalength);
 

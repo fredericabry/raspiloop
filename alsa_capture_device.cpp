@@ -74,7 +74,7 @@ void alsa_capture_device::alsa_init_capture(int channels,int rate,interface_c *i
     for(int i =0;i<channels;i++)
     {
         interface->capturePortsCount++;
-        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames,rate, interface->capturePortsCount,deviceDesc,interface);
+        main_buf_capture[i] = new capture_port_c(RINGBUFSIZE_CAPTURE,capture_frames, interface->capturePortsCount,deviceDesc,interface);
         capture_buf[i] = main_buf_capture[i]->bufin;
     }
 

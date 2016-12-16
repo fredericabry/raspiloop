@@ -60,14 +60,14 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
     updateFrameToPlay(length);
 
-    if((syncMode == CLICKSYNC)/*&&(!isClick)*/)
+    if((syncMode == CLICKSYNC))
     {
         restartplayData_s *restartplayData = new restartplayData_s;
         restartplayData->id = id;
         restartplayData->pLoop = this;
         restartplayData->skipevent=0;
         restartplayData->status=PLAY;
-        makeInterfaceEvent(interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent);
+        emit makeInterfaceEvent(interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent);
 
 
         if(delta > 0)
@@ -81,12 +81,7 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
     }
 
-
-
-    //  std::fill(framesCount.begin(),framesCount.end(),0);
     isOutOfSample = false;
-
-
 
     addToList();
 
@@ -384,52 +379,6 @@ void playback_loop_c::moveToPort(std::vector<playback_port_c *> pNuPorts)
 
 }
 
-void playback_loop_c::addPort(playback_port_c * pNuPort)
-{
-    unsigned long old_tails,old_frameCount;
-    if(pPorts.size()>0)
-    {
-        old_tails = tails[0];
-        old_frameCount = framesCount[0];
-    }
-    else
-    {
-        old_frameCount = 0;
-        old_tails = head;
-    }
-    if(std::find(pPorts.begin(), pPorts.end(), pNuPort) != pPorts.end()) {
-        qDebug()<<"error: loop already connected to port";
-        return;
-    }
-    portsChannel.push_back(pNuPort->channel);
-    tails.push_back(old_tails);
-    framesCount.push_back(old_frameCount);
-    pPorts.push_back(pNuPort);
-    pNuPort->addloop(this);
-    interface->printPlaybackLoopList();
-
-
-}
-
-void playback_loop_c::removePort(playback_port_c * pOldPort)
-{
-
-    for (unsigned int i=0;i<pPorts.size();i++)
-    {
-        if(pPorts[i] == pOldPort)
-        {
-            pOldPort->removeloop(this);
-            pPorts.erase(pPorts.begin()+i);
-            tails.erase(tails.begin()+i);
-            framesCount.erase(framesCount.begin()+i);
-            portsChannel.erase(portsChannel.begin()+i);
-
-        }
-
-    }
-    interface->printPlaybackLoopList();
-}
-
 void playback_loop_c::updateFrameToPlay(long length)
 {
 
@@ -507,14 +456,7 @@ void playback_loop_c::updateFrameToPlay(long length)
 
 }
 
-void playback_loop_c::infoFromCaptureLoop(unsigned long length)
-{
 
-    updateFrameToPlay(length);
-    play();
-
-
-}
 
 playback_loop_c::~playback_loop_c(void)
 {
@@ -587,8 +529,7 @@ void playback_loop_c::datarequest(unsigned long frames,int channel,short *buf2,i
 
     framesCount[portNumber]+=*nread;
 
-    if((status == SILENT)
-            ||(status == HIDDEN))
+    if(status == SILENT)
         memset(buf2,0,*nread*sizeof(short));
 
 
@@ -738,7 +679,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
             else
             {
                 controler->fileReadingOver = true;
-              //  if(controler->isClick)qDebug()<<"click over";
+
             }
         }
     }
