@@ -143,6 +143,8 @@ void setParameter(QString keyword, QStringList parameter, bool reset)
 
 }
 
+
+//define a control in file
 void fileSetControl(QString keyword, QStringList controls)
 {
 
@@ -159,6 +161,7 @@ void fileSetControl(QString keyword, QStringList controls)
     QTextStream in (&file);
     buf=in.readAll();
 
+    //character # is added to avoid ambiguity
     buf.append(keyword+"\n"+controls.join("\n")+"\n"+KEYWORD_CONTROL_END);
 
     //clean up the file
@@ -171,6 +174,8 @@ void fileSetControl(QString keyword, QStringList controls)
 
 }
 
+
+//remove one control already defined
 void fileRemoveControl(QString keyword)
 {
 
@@ -223,6 +228,8 @@ void fileRemoveControl(QString keyword)
     file.close();
 }
 
+
+//return the control binded to a keyword
 void fileGetControl(QString keyword, QStringList *control)
 {
 
@@ -254,6 +261,7 @@ void fileGetControl(QString keyword, QStringList *control)
             {
                 //we are between keyword and KEYWORD_CONTROL_END, let us copy
                 if(line!="")
+
                 control->append(line);
             }
         }
@@ -274,6 +282,8 @@ void fileGetControl(QString keyword, QStringList *control)
     file.close();
 }
 
+
+//return the list of every key defined in file
 void fileGetControlKeyList(QStringList *keyControl) // return all the keywords
 {
     QFile file(FILEPATH_CONTROL);
@@ -302,6 +312,7 @@ void fileGetControlKeyList(QStringList *keyControl) // return all the keywords
 }
 
 
+//check if control is defined in file
 bool fileIsControlDefined(QString keyword)
 {
 

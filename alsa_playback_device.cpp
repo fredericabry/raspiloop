@@ -3,7 +3,7 @@
 #include "qthread.h"
 #include "parameters.h"
 #include "alsa_util.h"
-
+#include "click_c.h"
 
 alsa_playback_device::alsa_playback_device(QString device,  int channels, int rate, interface_c *interface,bool *success):deviceName(device),pInterface(interface)
 {
@@ -230,11 +230,67 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 
     for(int i = 0;i<playback_channels;i++)
     {
+
+
         port[i]->consumer->pullN(playback_frames);
 
+    }
+
+
+
+
+
+
+    if(pInterface->pClick)
+    {
+
+
+
+        for(int i = 0;i<playback_channels;i++)
+        {
+            if(port[i]->clickDataToPlay0>0)
+            {
+
+            for(unsigned int j = 0;j<playback_frames;j++)
+            {
+                if(port[i]->clickDataToPlay0<1)
+                    break;
+                port[i]->consumer->buf[j]+=pInterface->pClick->bufClick0[pInterface->pClick->bufClick0_L-port[i]->clickDataToPlay0]/5;
+                port[i]->clickDataToPlay0--;
+            }
+
+            }
+
+
+
+            if(port[i]->clickDataToPlay1>0)
+            {
+
+            for(unsigned int j = 0;j<playback_frames;j++)
+            {
+                if(port[i]->clickDataToPlay1<1)
+                    break;
+                port[i]->consumer->buf[j]+=pInterface->pClick->bufClick1[pInterface->pClick->bufClick1_L-port[i]->clickDataToPlay1]/5;
+                port[i]->clickDataToPlay1--;
+            }
+
+            }
+
+
+
+
+
+
+        }
 
 
     }
+
+
+
+
+
+
 
 
 

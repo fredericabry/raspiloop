@@ -4,6 +4,10 @@
 #include "qdebug.h"
 #include "interface.h"
 
+
+
+#define CONTROL_MARKER "_"
+
 class interface_c;
 
 

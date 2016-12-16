@@ -168,6 +168,7 @@ public:
     void stopAllLoops(void);
     void muteunmuteLoop(int id);
     void muteunmuteAllLoops(void);
+    void muteunmuteSelectedLoop(void);
     void unselectAllPlaybacks(void);
     void selectAllPlaybacks(void);
     void stopSelectedLoop(void);

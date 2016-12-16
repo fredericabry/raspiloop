@@ -7,6 +7,7 @@
 #include "dialog_key.h"
 #include "qmessagebox.h"
 #include "config_file.h"
+#include "control.h"
 
 dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,interface_c *pInterface) :
     QDialog(parent),
@@ -34,6 +35,7 @@ dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,in
 
 void dialog_newcontrol::getKey(QKeyEvent *e)
 {
+
 
     setKey((QString)(QKeySequence(e->key()).toString()));
 
@@ -244,7 +246,9 @@ void dialog_newcontrol::refreshConsole(void)
     QStringList show;
     showActive(&show);
 
-    ui->commandList->setHtml(show.join("<br>"));
+    QString cmdTxt = show.join("<br>");
+    cmdTxt.replace(CONTROL_MARKER," ");
+    ui->commandList->setHtml(cmdTxt);
 
 
 }

@@ -31,6 +31,7 @@ public:
     short *buf;//small buffer for transfert
     bool running;
 
+
 public slots:
     void update(void);
 
@@ -68,6 +69,8 @@ public:
     QString getDeviceName(void);
     std::vector<playback_loop_c*>pConnectedLoops;
     bool mixOver; //check is mix is over
+    unsigned long clickDataToPlay0;
+    unsigned long clickDataToPlay1;
 
 };
 

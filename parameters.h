@@ -30,10 +30,10 @@
 #define RINGBUFSIZE_PLAYBACK 2000 //size of the playback ringbuffer
 #define PLAYBACK_MIX_SLEEP 1 //ms
 
-#define PLAYBACK_HW_BUFFER_SIZE             4*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
-#define PLAYBACK_AVAIL_MIN                   0*PLAYBACK_HW_BUFFER_SIZE/10  //when the device buffer data is smaller than this limit, an interrupt is issued
+#define PLAYBACK_HW_BUFFER_SIZE             3*PLAYBACK_CHANNEL_WIDTH  //alsa playback buffer size for ONE channel
+#define PLAYBACK_AVAIL_MIN                   1*PLAYBACK_HW_BUFFER_SIZE/10  //when the device buffer data is smaller than this limit, an interrupt is issued
 #define PLAYBACK_BUFSIZE    PLAYBACK_CHANNEL_WIDTH
-#define CAPTURE_READFILE_SLEEP (unsigned long)300 //us
+#define CAPTURE_READFILE_SLEEP (unsigned long)1000 //us
 
 
 

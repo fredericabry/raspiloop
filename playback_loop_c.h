@@ -74,7 +74,7 @@ public:
     bool stop;
     bool repeat;
     bool isOutOfSample;
-    bool isClick;//is it used for the click ?
+
     playbackLoopConsumer *consumer;
 
     interfaceEvent_c *pEvent;

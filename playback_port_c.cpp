@@ -19,7 +19,7 @@ playback_port_c::playback_port_c(const unsigned long maxlength,  const int chann
 
     interface->Afficher("playback port "+QString::number(channel)+" created on "+deviceName);
 
-
+    clickDataToPlay0 = clickDataToPlay1 = 0;//
 
 }
 

@@ -6,7 +6,7 @@
 #include "qobject.h"
 #include "qdebug.h"
 #include "dialog_numeric.h"
-
+#include "control.h"
 
 dialog_controllist::dialog_controllist(QWidget *parent,QMainWindow* mainwindow, interface_c *pInterface):
     QDialog(parent),
@@ -68,7 +68,7 @@ void dialog_controllist::openNumeric(void)
 
 void dialog_controllist::getNumericData(int data)
 {
-    output+=" "+QString::number(data);
+    output+=CONTROL_MARKER+QString::number(data);
     emit sendText(output);
     deleteLater();
 }
@@ -100,7 +100,7 @@ void dialog_controllist::pushButton(void)
     if(pButton)
 
     {
-        emit sendText(pButton->text());
+        emit sendText(pButton->text()+CONTROL_MARKER);
         deleteLater();
     }
 

@@ -3,7 +3,7 @@
 #include "qmessagebox.h"
 #include "alsa_midi.h"
 #include "qdebug.h"
-
+#include "control.h"
 dialog_key::dialog_key(QWidget *parent,int type):
     QDialog(parent),
     ui(new Ui::dialog_key),

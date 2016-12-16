@@ -85,7 +85,7 @@ void interface_c::registerControl(QString key,void (interface_c::*function)())
 {
     controlId *ctl = new controlId();
     ctl->exec_void=function;
-    ctl->key="["+QString::number(controlList.size())+"]"+key;
+    ctl->key=/*"["+QString::number(controlList.size())+"]"+*/key;
     ctl->type=VOID;
     controlList.push_back(ctl);
 }
@@ -93,7 +93,7 @@ void interface_c::registerControl(QString key,void (interface_c::*function)(int 
 {
     controlId *ctl = new controlId();
     ctl->exec_int=function;
-    ctl->key="["+QString::number(controlList.size())+"]"+key;
+    ctl->key=/*"["+QString::number(controlList.size())+"]"+*/key;
     ctl->type=INT;
     controlList.push_back(ctl);
 }
@@ -101,7 +101,7 @@ void interface_c::registerControl(QString key,void (interface_c::*function)(QStr
 {
     controlId *ctl = new controlId();
     ctl->exec_qstring=function;
-    ctl->key="["+QString::number(controlList.size())+"]"+key;
+    ctl->key=/*"["+QString::number(controlList.size())+"]"+*/key;
     ctl->type=QSTRING;
     controlList.push_back(ctl);
 }
@@ -110,7 +110,8 @@ controlId* interface_c::identifyControl(QString control)
 {
     for (auto &pControl : controlList)
     {
-        if(control.contains(pControl->key, Qt::CaseSensitive))
+        if(control.section("_",0,0) == pControl->key)
+        //if(control.contains(pControl->key, Qt::CaseSensitive))
         {
             return pControl;
             break;
@@ -126,9 +127,12 @@ int interface_c::getControlParamInt(QString control)
 {
     for (auto &pControl : controlList)
     {
-        if(control.contains(pControl->key, Qt::CaseSensitive))
+
+        if(control.section("_",0,0) == pControl->key)
+        //if(control.contains(pControl->key, Qt::CaseSensitive))
         {
             control.remove(pControl->key);
+            control.remove("_");
             control.remove(" ");
             bool test= true;
             int result = control.toInt(&test);
@@ -149,8 +153,10 @@ QString interface_c::getControlParamQString(QString control)
 {
     for (auto &pControl : controlList)
     {
-        if(control.contains(pControl->key, Qt::CaseSensitive))
+        if(control.section("_",0,0) == pControl->key)
+        //if(control.contains(pControl->key, Qt::CaseSensitive))
         {
+            control.remove("_");
             control.remove(pControl->key);
             control.remove(" ");
             return control;
@@ -241,6 +247,7 @@ bool interface_c::activateControl(QString key)
     }
     return false;
 }
+
 
 
 bool interface_c::activateMidi(QString midiMsg)
@@ -520,6 +527,9 @@ void interface_c::stopAllLoops(void)
         pLoop = pLoop2;
 
     }
+
+    printPlaybackLoopList();
+
 }
 void interface_c::stopSelectedLoop(void)
 {
@@ -547,6 +557,21 @@ void interface_c::muteunmuteAllLoops(void)
     if(getAllMute()) setAllMute(false);
     else setAllMute(true);
 }
+
+void interface_c::muteunmuteSelectedLoop(void)
+{
+
+     if(selectedPlayLoop)
+    {
+        if(selectedPlayLoop->status==PLAY)
+            selectedPlayLoop->pause();
+        else
+            selectedPlayLoop->play();
+    }
+}
+
+
+
 
 void interface_c::moveLoop(int id)
 {
@@ -625,6 +650,7 @@ void interface_c::createControls(void)
 
     registerControl("Mute/unmute all loops",&interface_c::muteunmuteAllLoops);
     registerControl("Mute/unmute loop",&interface_c::muteunmuteLoop);
+    registerControl("Mute/unmute selected loop",&interface_c::muteunmuteSelectedLoop);
     registerControl("Start/stop click",&interface_c::startstopClick);
 
     registerControl("Select previous loop",&interface_c::selectPrevLoop);

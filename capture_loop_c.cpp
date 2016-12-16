@@ -73,7 +73,7 @@ capture_loop_c::capture_loop_c(const int id, capture_port_c *pPort,  long length
 
 
 
-          /*  playData_s *param;
+            /*  playData_s *param;
             param = new playData_s;
             param->id = id;
             param->length = 1;//one bar
@@ -102,7 +102,7 @@ capture_loop_c::~capture_loop_c()
 {
     free(buffile);
 
-
+    pPort->interface->printPlaybackLoopList();
 
 }
 
@@ -306,7 +306,7 @@ void capture_loop_c::preDestroy()
 
     if(createPlayLoop)
     {
-        qDebug()<<"create loop";
+
         if(pPort->interface->pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
         {
             new playback_loop_c(id,pPlayPorts,0,CLICKSYNC,PLAY,pPort->interface,pPort->interface->pClick->getTime());
@@ -380,14 +380,14 @@ void captureLoopConsumer::update(void)
 
         controler->framesCount += nread;//let's keep track of how many frames have been read
 
-       controler->barCount =controler->pPort->interface->pClick->getTempo()*controler->framesCount/(RATE*60*4);
+        controler->barCount =controler->pPort->interface->pClick->getTempo()*controler->framesCount/(RATE*60*4);
 
-       if(controler->barCount!=controler->oldBarCount)
-       {
-        controler->oldBarCount = controler->barCount;
-        controler->pPort->interface->printCaptureLoopList();
+        if(controler->barCount!=controler->oldBarCount)
+        {
+            controler->oldBarCount = controler->barCount;
+            controler->pPort->interface->printCaptureLoopList();
 
-       }
+        }
 
 
     }

@@ -17,7 +17,16 @@ private:
 public:
     click_c(int tempo, std::vector<playback_port_c *> pPorts, status_t status, interface_c *interface, MainWindow *parent);
 
+    void preload(void);
+
     std::vector<playback_port_c*> pPorts;
+
+    //std::vector<short> bufClick0,bufClick1;
+    unsigned long bufClick0_L;
+    short *bufClick0;
+    unsigned long bufClick1_L;
+    short *bufClick1;
+
     int status;
     double getBeat(void);//time elapsed since the begining of bar in beats
     double getTime(void);//time elapsed since the begining of bar in s;
@@ -33,6 +42,8 @@ public:
     bool isActive(void);
     void stop(void);
     void start(void);
+
+    unsigned long dataToPlay;
 
 
 

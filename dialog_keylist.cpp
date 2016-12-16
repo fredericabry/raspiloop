@@ -4,6 +4,7 @@
 #include "qdebug.h"
 #include "qmessagebox.h"
 #include "dialog_newcontrol.h"
+#include "control.h"
 
 dialog_keylist::dialog_keylist(QWidget *parent,interface_c *pInterface) :
     QDialog(parent),
@@ -107,8 +108,14 @@ void dialog_keylist::clickButton(void)
         fileGetControl(key,&txtList);
 
 
+
+
         QMessageBox msgBox;
-        msgBox.setText("Control "+key+"\n\n"+txtList.join("\n"));
+
+
+
+
+        msgBox.setText("Control "+key+"\n\n"+txtList.join("\n").replace(CONTROL_MARKER," "));
 
 
 
@@ -128,9 +135,11 @@ void dialog_keylist::clickButton(void)
         }
         else if(msgBox.clickedButton() == editButton)
         {
+            fileRemoveControl(key);
 
-            this->setEnabled(false);
-            dialog_newcontrol *dialog = new dialog_newcontrol(this,((QMainWindow*)parent()),pInterface);
+            //this->setEnabled(false);
+            this->deleteLater();
+            dialog_newcontrol *dialog = new dialog_newcontrol(((QMainWindow*)parent()),((QMainWindow*)parent()),pInterface);
             dialog->setControlList(txtList);
             dialog->refreshConsole();
             dialog->setKey(key.right(key.size()-4));

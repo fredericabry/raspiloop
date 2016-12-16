@@ -654,7 +654,7 @@ void interface_c::init(void)
 
     playbackPortsCount = 0;
     capturePortsCount = 0;
-
+    pClick = NULL;
     QStringList device;
     extractParameter(KEYWORD_CAPTURE_LIST, &device);
 
@@ -804,6 +804,8 @@ void interface_c::init(void)
 
     setAllMute(false);
 
+
+ //   new playback_loop_c(1,playbackPortsList,0,CLICKSYNC,PLAY,this,0);//once, autoplay
 
 }
 

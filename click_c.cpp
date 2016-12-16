@@ -3,19 +3,23 @@
 #include "playback_loop_c.h"
 #include "playback_port_c.h"
 #include "parameters.h"
+#include <sndfile.h>
 
 
 
-
-click_c::click_c(int tempo, std::vector<playback_port_c*> pPorts, status_t status, interface_c *interface, MainWindow *parent):pPorts(pPorts),status(status),interface(interface),parent(parent)
+click_c::click_c(int nuTempo, std::vector<playback_port_c*> pPorts, status_t status, interface_c *interface, MainWindow *parent):pPorts(pPorts),status(status),interface(interface),parent(parent)
 {
-    if(tempo<=0) {qDebug()<<"invalid tempo";delete this;return;}
+    if(nuTempo<=0) {qDebug()<<"invalid tempo";delete this;return;}
     t1 = new QElapsedTimer;
+    setTempo(nuTempo);
+    beat = 1;
 
 
 
+    preload();
 
-    long deltams = 60000/tempo; //time in ms between ticks
+
+    long deltams = 60000/nuTempo; //time in ms between ticks
 
     QObject::connect(&timer,SIGNAL(timeout()),this,SLOT(tick()));
     timer.start(deltams);
@@ -25,11 +29,77 @@ click_c::click_c(int tempo, std::vector<playback_port_c*> pPorts, status_t statu
     connect(parent,SIGNAL(clickDown()),this,SLOT(clickDown()));
 
 
-    setTempo(tempo);
-    beat = 1;
+
+
+    //  new playback_loop_c(1,pPorts,0,CLICKSYNC,PLAY,interface,0);//once, autoplay
+}
+
+
+
+void click_c::preload()
+{
+
+    SF_INFO sf_info;
+    SNDFILE *soundfile;
+    QString filename = (QString)DIRECTORY+"click0.wav";
+    if ((soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
+        char errstr[256];
+        sf_error_str (0, errstr, sizeof (errstr) - 1);
+        qDebug()<< "cannot open sndfile"<< filename.toStdString().c_str()<<"for output"<<errstr;
+        return;
+    }
+    int short_mask = SF_FORMAT_PCM_16;
+    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
+    {
+       qDebug()<<"format de fichier incorrect\n";
+       return;
+    }
+
+    if(sf_info.channels != 1)
+    {
+        qDebug()<<"chan nbr incorrect\n";
+        return;
+    }
+
+    long nrequest = sf_info.frames;
+    bufClick0 = new short[nrequest];
+    bufClick0_L = nrequest;
+    sf_readf_short(soundfile,bufClick0,nrequest);
+    sf_close(soundfile);
+
+
+    filename = (QString)DIRECTORY+"click1.wav";
+    if ((soundfile = sf_open (filename.toStdString().c_str(), SFM_READ, &sf_info)) == NULL) {
+        char errstr[256];
+        sf_error_str (0, errstr, sizeof (errstr) - 1);
+        qDebug()<< "cannot open sndfile"<< filename.toStdString().c_str()<<"for output"<<errstr;
+        return;
+    }
+
+    if(sf_info.format != (SF_FORMAT_WAV|short_mask))
+    {
+       qDebug()<<"format de fichier incorrect\n";
+       return;
+    }
+
+    if(sf_info.channels != 1)
+    {
+        qDebug()<<"chan nbr incorrect\n";
+        return;
+    }
+
+    nrequest = sf_info.frames;
+    bufClick1 = new short[nrequest];
+    bufClick1_L = nrequest;
+    sf_readf_short(soundfile,bufClick1,nrequest);
+    sf_close(soundfile);
+
 
 
 }
+
+
+
 
 double click_c::getBeat(void)
 {
@@ -66,27 +136,37 @@ void click_c::clickUp()
 
 void click_c::tick(void)
 {
-
-
-
-
     t1->start();
+
+
+
     beat ++;
     if(beat>4) beat = 1;
     if(beat == 1)
-    {
+    {if(status == PLAY)
+        {
+            for(auto pPort : pPorts)
+            {
+                pPort->clickDataToPlay0 =  bufClick0_L;
+            }
+        }
+
         emit firstBeat();
 
-        if(status == PLAY)
-            new playback_loop_c(0,pPorts,0,NOSYNC,PLAY,interface,0);//once, autoplay
 
-        // qDebug()<<"first beat";
     }
     else
     {
+
         if(status == PLAY)
-            new playback_loop_c(1,pPorts,0,NOSYNC,PLAY,interface,0);//once, autoplay
+        {
+            for(auto pPort : pPorts)
+            {
+                pPort->clickDataToPlay1 =  bufClick1_L;
+            }
+        }
     }
+
 
 
 }

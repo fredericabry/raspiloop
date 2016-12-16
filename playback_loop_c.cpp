@@ -19,8 +19,7 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
     head = 0;
 
 
-    if((id == 0) || (id==1)) isClick = true;
-    else isClick = false;
+
 
 
     pPrevLoop = pNextLoop = NULL;
@@ -56,12 +55,12 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
 
 
-
+    framestoskip = 0;
 
 
     updateFrameToPlay(length);
 
-    if((syncMode == CLICKSYNC)&&(!isClick))
+    if((syncMode == CLICKSYNC)/*&&(!isClick)*/)
     {
         restartplayData_s *restartplayData = new restartplayData_s;
         restartplayData->id = id;
@@ -86,25 +85,6 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
 
     //  std::fill(framesCount.begin(),framesCount.end(),0);
     isOutOfSample = false;
-
-
-
-
-
-
-
-
-    //qDebug()<<"size:"<<pPorts.size();
-
-    //multi port support : each playback port to which the loop is connected has its own tail and framescount
-
-
-
-
-
-
-
-
 
 
 
@@ -283,7 +263,7 @@ int playback_loop_c::pullN(unsigned long N,int portNumber,short **buf)
 
 
     if(N > length) {
-        if(!fileReadingOver) qDebug()<<"not enough elements"<<N<<length;
+       // if(!fileReadingOver) qDebug()<<"not enough elements"<<N<<length;
         N = length;
     }
 
@@ -542,9 +522,13 @@ playback_loop_c::~playback_loop_c(void)
     free(buffile);
     free(ringbuf);
 
+     interface->printPlaybackLoopList();
 
     //    qDebug()<<"playback loop destroyed";
 }
+
+
+
 
 void playback_loop_c::rewind(void)
 {
@@ -613,7 +597,7 @@ void playback_loop_c::datarequest(unsigned long frames,int channel,short *buf2,i
 void playback_loop_c::addToList(void)
 {
 
-    if(isClick) return;//this is the click, we don't keep it in the loops list
+
     interface->playbackListMutex.lock();
 
 
@@ -640,7 +624,6 @@ void playback_loop_c::addToList(void)
 
 void playback_loop_c::removeFromList(void)
 {
-    if(isClick) return;//this is the click, we don't keep it in the loops list
 
     if(pPrevLoop)
         interface->selectedPlayLoop = pPrevLoop;
@@ -667,10 +650,7 @@ bool playback_loop_c::isFinished(void)
 
     for (unsigned int i = 0;i<framesCount.size();i++)
     {
-
-
         if((signed)framesCount[i]>=framestoplay) return true;
-
     }
     return false;
 }
@@ -738,7 +718,7 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
     {
         controler->pushN(controler->buffile,nread);
     }
- //   qDebug()<<"nread"<<nread;
+    //   qDebug()<<"nread"<<nread;
 
 
 
@@ -751,46 +731,25 @@ void playbackLoopConsumer::update() //constantly fill the ringbuffer with data f
         {
             //if((controler->stop&&(controler->isFinished()))) qDebug()<<"stop1";
             //if((nread <= 0)&&(nrequest!=0)) qDebug()<<"stop2"<<nread<<nrequest;
-
             if(controler->repeat)
             {
-                // for (auto &pPort : controler->pPorts)
-                //   pPort->removeloop(controler);
                 sf_seek(controler->soundfile,0,SFM_READ);
-
             }
             else
             {
-
                 controler->fileReadingOver = true;
-
-
+              //  if(controler->isClick)qDebug()<<"click over";
             }
-
-
-
         }
-
-
     }
     else if(controler->syncMode == CLICKSYNC)
     {
 
         if(      ( (controler->isFinished()) ||((nread <= 0)&&(nrequest!=0)) ))
-
         {
-
             if(!controler->stop)controler->isOutOfSample = true;//we are not stopping yet so we just need to freeze data transfert
             else  controler->fileReadingOver = true;
-
-
-
-
-
         }
-
-
-
     }
 
 
@@ -831,12 +790,14 @@ void playbackLoopConsumer::destroyloop()
         sf_close(controler->soundfile);
         //qDebug()<<"file close";
 
-
-        for (auto &pPort : controler->pPorts)
-            pPort->removeloop(controler);
-
-        controler->removeFromList();
     }
+    for (auto &pPort : controler->pPorts)
+        pPort->removeloop(controler);
+
+    controler->removeFromList();
+
+
+
     controler->deleteLater();
 
 }
