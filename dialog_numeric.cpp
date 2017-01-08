@@ -18,6 +18,7 @@ dialog_numeric::dialog_numeric(QWidget *parent) :
     connect(ui->b8,SIGNAL(pressed()),this,SLOT(b8()));
     connect(ui->b9,SIGNAL(pressed()),this,SLOT(b9()));
     connect(ui->bC,SIGNAL(pressed()),this,SLOT(bC()));
+    connect(ui->bCC,SIGNAL(pressed()),this,SLOT(bCC()));
 
     text="";
     ui->console->setText(text);
@@ -94,6 +95,7 @@ void dialog_numeric::b8(void)
 }
 void dialog_numeric::b9(void)
 {
+
     if(text.size()<3)
         text.append("9");
     ui->console->setText(text);
@@ -103,4 +105,12 @@ void dialog_numeric::bC()
     if(text.size()>0)
         text.remove(text.length()-1,1);
     ui->console->setText(text);
+}
+
+void dialog_numeric::bCC()
+{
+
+    text = "-1";
+    ui->console->setText("midi CC");
+    deleteLater();
 }

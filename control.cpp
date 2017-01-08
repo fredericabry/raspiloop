@@ -36,7 +36,7 @@ void control_c::exec()
     switch(type)
     {
     case VOID:(interface->*(exec_void))();break;
-    case INT: (interface->*(exec_int))(param_int);break;
+    case INT: if(param_int>=0) (interface->*(exec_int))(param_int);break;
     case QSTRING: (interface->*(exec_qstring))(param_qstring);break;
     }
 }
@@ -49,6 +49,7 @@ void control_c::exec()
 controlList_c::controlList_c(QString key):key(key)
 {
     nextAction = 0;
+    CCvalue = -1;
 }
 
 void controlList_c::addElement(control_c* pNuControl)
@@ -60,6 +61,11 @@ void controlList_c::exec(void)
     unsigned int i;
     for (i = nextAction;i<list.size();i++)
     {
+        if((this->CCvalue>=0)&&(list[i]->param_int == -1)) //we have a cc parameter, let us use it
+            list[i]->param_int = CCvalue;
+
+
+
         list[i]->exec();
         if(list[i]->control.contains("Wait for next control")) break;
 
@@ -239,6 +245,8 @@ bool interface_c::activateControl(QString key)
 {
     for (auto &pControls : controlLists)
     {
+
+
         if(pControls->getKey() == key)
         {
             pControls->exec();
@@ -250,13 +258,18 @@ bool interface_c::activateControl(QString key)
 
 
 
-bool interface_c::activateMidi(QString midiMsg)
+bool interface_c::activateMidi(QString midiMsg,int value)
 {
     for (auto &pControls : controlLists)
     {
 
+
        if(midiMsg == pControls->getKey())
         {
+
+           pControls->CCvalue = value;
+
+
             pControls->exec();
             return true;
         }
@@ -293,6 +306,7 @@ void interface_c::selectAllPlaybacks()
 }
 void interface_c::unselectPlayback(int channel)
 {
+    qDebug()<<"select playback"<<channel;
     playback_port_c *pPort = findPlaybackPortByChannel(channel);
     if(!pPort) return;
 
@@ -300,6 +314,9 @@ void interface_c::unselectPlayback(int channel)
     if(entry != selectedPlaybackPortsList.end())
         selectedPlaybackPortsList.erase(entry);
     updatePortsConsole();
+
+
+
 }
 void interface_c::selectPlayback(int channel)
 {
@@ -394,7 +411,7 @@ void interface_c::createCapture(int desiredId)
             params->pCaptureLoop = NULL;
             params->id = desiredId;
 
-            createInterfaceEvent(pClick,SIGNAL(firstBeat()),EVENT_CAPTURE,(void*)params,false,NULL);
+            createInterfaceEvent(pClick,SIGNAL(firstBeatCapture()),EVENT_CAPTURE,(void*)params,false,NULL);
         }
     }
 
@@ -429,11 +446,60 @@ void interface_c::createCaptureAndPlay(int desiredId)
             params->pCaptureLoop = NULL;
             params->id = desiredId;
 
-            createInterfaceEvent(pClick,SIGNAL(firstBeat()),EVENT_CAPTURE,(void*)params,false,NULL);
+            createInterfaceEvent(pClick,SIGNAL(firstBeatCapture()),EVENT_CAPTURE,(void*)params,false,NULL);
         }
     }
 
 }
+
+
+
+void interface_c::createCaptureAndPlayNoId(void)
+{
+
+  int desiredId = generateNewId();
+
+    if(!isIdFree(desiredId)) {qDebug()<<"Id"<<desiredId<<"already busy";return;}
+
+    if(selectedCapturePortsList.size() == 0) {qDebug()<<"error: no capture port selected";return;}
+    if(selectedPlaybackPortsList.size() == 0) {qDebug()<<"error: no playback port selected";return;}
+
+    if(synchroMode == CLICKSYNC)
+    {
+
+        if(pClick->getBeat()<1) //capture was launched less than a beat too late, we are not going to wait till the next bar...
+        {
+            new capture_loop_c(desiredId,selectedCapturePortsList[0],0,true,selectedPlaybackPortsList,pClick->getTime());
+
+        }
+
+        else
+        {
+
+            captureData_s *params = new captureData_s;
+            params->createPlayLoop = true;
+            params->length=0;
+            params->pPlayPorts = selectedPlaybackPortsList;
+            params->pPort=selectedCapturePortsList[0];
+            params->pCaptureLoop = NULL;
+            params->id = desiredId;
+
+            createInterfaceEvent(pClick,SIGNAL(firstBeatCapture()),EVENT_CAPTURE,(void*)params,false,NULL);
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
 void interface_c::stopCapture(int id)
 {
     capture_loop_c *pLoop = findCaptureLoopById(id);
@@ -483,7 +549,7 @@ void interface_c::startLoop(int id)
             param->syncMode = CLICKSYNC;
             param->pCaptureLoop = NULL;
 
-            emit createInterfaceEvent(pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,NULL);
+            emit createInterfaceEvent(pClick,SIGNAL(firstBeatPlay()),EVENT_CREATE_PLAY,(void*)param,false,NULL);
 
 
         }
@@ -627,6 +693,7 @@ void interface_c::createControls(void)
 
     registerControl("Start capture",&interface_c::createCapture);
     registerControl("Start capture autoplay",&interface_c::createCaptureAndPlay);
+
     registerControl("Move loop to ports",&interface_c::moveLoop);
 
     registerControl("Stop capture",&interface_c::stopCapture);

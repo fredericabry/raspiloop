@@ -19,6 +19,7 @@ public:
 
     void preload(void);
 
+
     std::vector<playback_port_c*> pPorts;
 
     //std::vector<short> bufClick0,bufClick1;
@@ -57,10 +58,13 @@ public slots:
     void setTempo(int);
     void clickUp(void);
     void clickDown(void);
+    void beep(void);
+    void firstBeep(void);
 
 signals:
     void firstBeat(void);//signal the first beat of the bar
-
+    void firstBeatCapture(void);//signal the first beat of the bar with record latency compensation
+    void firstBeatPlay(void);//signal the first beat of the bar with play latency compensation
 
 };
 

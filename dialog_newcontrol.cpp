@@ -15,8 +15,10 @@ dialog_newcontrol::dialog_newcontrol(QWidget *parent, QMainWindow *mainwindow,in
     pInterface(pInterface),
     ui(new Ui::dialog_newcontrol)
 {
-    ui->setupUi(this);
 
+    ui->setupUi(this);
+    oldKey="";
+    oldMidi="";
     connect(this->ui->bClose,SIGNAL(pressed()),this,SLOT(deleteLater()));
     connect(ui->bAddControl,SIGNAL(pressed()),this,SLOT(openControlList()));
     connect(ui->bRemoveControl,SIGNAL(pressed()),this,SLOT(removeLastControl()));
@@ -44,7 +46,7 @@ void dialog_newcontrol::getKey(QKeyEvent *e)
 void dialog_newcontrol::getMidiMsg(QString msg)
 {
 
-    midi = msg;
+    setMidi(msg);
 
 }
 
@@ -56,6 +58,7 @@ void dialog_newcontrol::midiChoice()
     dialog_key *dialog = new dialog_key(this,1);
     connect(dialog,SIGNAL(sendMidi(QString)),this,SLOT(getMidiMsg(QString)));
     connect(pInterface,SIGNAL(getMidiMsg(QString)),dialog,SLOT(getMidiMsg(QString)));
+    connect(pInterface,SIGNAL(getMidiCC(QString,int)),dialog,SLOT(getMidiCC(QString,int)));
     dialog->show();
     QPoint pos = this->pos();
     pos.setX(300);
@@ -95,6 +98,8 @@ void dialog_newcontrol::showActive(QStringList *txt)
 void dialog_newcontrol::setControlList(const QStringList &value)
 {
     controlList = value;
+
+
 }
 
 void dialog_newcontrol::setKey(const QString value)
@@ -108,6 +113,21 @@ void dialog_newcontrol::setKey(const QString value)
     textBlockFormat.setAlignment(Qt::AlignCenter);//or another alignment
     cursor.mergeBlockFormat(textBlockFormat);
     ui->consoleKey->setTextCursor(cursor);
+}
+
+void dialog_newcontrol::setMidi(const QString &value)
+{
+    midi = value;
+}
+
+void dialog_newcontrol::setOldKey(const QString &value)
+{
+    oldKey = value;
+}
+
+void dialog_newcontrol::setOldMidi(const QString &value)
+{
+    oldMidi = value;
 }
 
 
@@ -178,26 +198,26 @@ void dialog_newcontrol::save(void)
     if(key.size()>0)
     {
 
-    QString keyword = "KEY_"+key;
+        QString keyword = "KEY_"+key;
 
-    if(fileIsControlDefined(keyword))
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Control already defined");
-        QAbstractButton *removeButton = msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
-        msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
-        QFont font = msgBox.font();
-        font.setPixelSize(20);
-        msgBox.setFont(font);
-        msgBox.exec();
-        if (msgBox.clickedButton() != removeButton)
+        if(fileIsControlDefined(keyword))
         {
-            return;
+            QMessageBox msgBox;
+            msgBox.setText("Control already defined");
+            QAbstractButton *removeButton = msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+            msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
+            QFont font = msgBox.font();
+            font.setPixelSize(20);
+            msgBox.setFont(font);
+            msgBox.exec();
+            if (msgBox.clickedButton() != removeButton)
+            {
+                return;
+            }
         }
-    }
 
 
-    fileSetControl(keyword,controlList);
+        fileSetControl(keyword,controlList);
 
     }
     if(midi.size()>0)
@@ -224,10 +244,12 @@ void dialog_newcontrol::save(void)
 
         fileSetControl(keyword,controlList);
 
-
-
     }
 
+    if((oldMidi!="")&&(midi!=oldMidi))
+        fileRemoveControl("MIDI_"+oldMidi);
+    if((oldKey!="")&&(key!=oldKey))
+        fileRemoveControl("KEY_"+oldKey);
 
     pInterface->makeActiveControlsList();
 

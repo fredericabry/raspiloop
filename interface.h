@@ -154,6 +154,8 @@ public:
     void moveSelectedLoop();
     void selectNextLoop(void);
     void selectPrevLoop(void);
+    void createCaptureAndPlayNoId(void);
+
 
 
     void createControls(void);
@@ -168,7 +170,7 @@ public:
     int getControlParamInt(QString control);
     QString getControlParamQString(QString control);
     bool activateControl(QString key);
-    bool activateMidi(QString midiMsg);
+    bool activateMidi(QString midiMsg,int value);
 
 
     bool getAllMute() const;
@@ -185,6 +187,8 @@ public slots:
     void clickPlayStop(void);
     void checkMidiMsg(QString);
 
+    void checkMidiCC(QString msg, int code);
+
 private slots:
     void keyInput(QKeyEvent *e);
     void createInterfaceEvent(const QObject * sender, const char * signal, int eventType, void *param, bool repeat, interfaceEvent_c **pEvent);
@@ -196,6 +200,7 @@ signals:
     void sendPlaybackConsole(QString txt);
     void sendCaptureConsole(QString txt);
     void getMidiMsg(QString msg);
+    void getMidiCC(QString msg, int code);
 
 };
 

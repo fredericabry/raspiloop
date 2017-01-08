@@ -30,6 +30,7 @@ signals:
 public slots:
     void doneMidi();
     void getMidiMsg(QString msg);
+    void getMidiCC(QString msg, int code);
 
 };
 

@@ -53,6 +53,7 @@ private:
 
 signals:
     void sendMidiMsg(QString midiCode);
+    void sendMidiCC(QString midiCode,int code);
 
 };
 

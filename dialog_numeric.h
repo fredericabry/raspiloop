@@ -28,6 +28,7 @@ public slots:
     void b8(void);
     void b9(void);
     void bC(void);
+    void bCC(void);
 private:
     Ui::dialog_numeric *ui;
     int value;

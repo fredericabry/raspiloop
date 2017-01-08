@@ -182,6 +182,7 @@ void alsa_midi_capture_device::midiInterpreter(unsigned char c)
         else
         {
             qDebug()<<"error midi msg PC"<<msgList.size();
+            msgList.clear();
         }
     }
     else if(txt.left(2) == "CC")
@@ -190,38 +191,48 @@ void alsa_midi_capture_device::midiInterpreter(unsigned char c)
         {
             msgList.push_back(txt);
         }
+        else if((msgList.size()==2)&&(msgList[0].left(2) == "CC"))
+        {
+            //TODO : setup some kind of timeout mechanism to check for CC without parameter
+            //for the time being, just ignore CC message with no parameter.
+            //emit sendMidiCC(msgList.join(";"),-1);
+            msgList.clear();
+            msgList.push_back(txt);
+        }
         else
         {
             qDebug()<<"error midi msg CC"<<msgList.size();
+
+
+            msgList.clear();
         }
     }
     else if(txt.left(4) == "note")
     {
         if(msgList.size()==1)
         {
-            if(txt.left(4) == "note")
+
+            msgList.push_back(txt);
+            if(msgList[0].left(2) == "PC")
             {
-                msgList.push_back(txt);
-                if(msgList[0].left(2) == "PC")
-                {
-                    emit sendMidiMsg(msgList.join(";"));
-                    // qDebug()<<msgList.join(";");
-                    msgList.clear();
-                }
+                emit sendMidiMsg(msgList.join(";"));
+                // qDebug()<<msgList.join(";");
+                msgList.clear();
             }
-            else
-                qDebug()<<"error midi msg note"<<msgList.size();
+
+
+
         }
         else if (msgList.size()==2)
         {
             if(msgList[0].left(2) == "CC")
             {
-                msgList.push_back(txt);
+                //msgList.push_back(txt);
                 // qDebug()<<msgList.join(";");
-                emit sendMidiMsg(msgList.join(";"));
+                emit sendMidiCC(msgList.join(";"),cmd);
                 msgList.clear();
             }
-            else qDebug()<<"error midi msg note"<<msgList.size();
+            else qDebug()<<"error midi msg note"<<msgList[0].left(2)<<msgList.size();
         }
     }
 
@@ -240,6 +251,12 @@ alsa_midi_capture_device::alsa_midi_capture_device(QString device, interface_c *
     *success = true;
     connect(this,SIGNAL(sendMidiMsg(QString)),pInterface,SIGNAL(getMidiMsg(QString)));
     connect(this,SIGNAL(sendMidiMsg(QString)),pInterface,SLOT(checkMidiMsg(QString)));
+
+    connect(this,SIGNAL(sendMidiCC(QString,int)),pInterface,SIGNAL(getMidiCC(QString,int)));
+    connect(this,SIGNAL(sendMidiCC(QString,int)),pInterface,SLOT(checkMidiCC(QString,int)));
+
+
+
     alsa_midi_start_capture();
 
 }

@@ -12,6 +12,7 @@ dialog_key::dialog_key(QWidget *parent,int type):
 
 
     ui->setupUi(this);
+    connect(ui->bCancel,SIGNAL(pressed()),this,SLOT(deleteLater()));
 
     QRect geo = this->geometry();
 
@@ -42,21 +43,21 @@ dialog_key::~dialog_key()
 }
 
 
+
+void dialog_key::getMidiCC(QString msg, int code)
+{
+
+    //  qDebug()<<msg<<code;
+    midiMsg = msg;
+    ui->consoleMidi->setText(msg);
+}
+
+
+
+
 void dialog_key::getMidiMsg(QString msg)
 {
     midiMsg = msg;
-
-  /*  if(midiMsg.size()>MIDI_MAX_LENGTH)
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Too many controls in midi sequence (max: "+QString::number(MIDI_MAX_LENGTH)+"7)");
-        msgBox.addButton(tr("Ok"), QMessageBox::ActionRole);
-        QFont font = msgBox.font();
-        font.setPixelSize(20);
-        msgBox.setFont(font);
-        msgBox.exec();
-        midiMsg.clear();
-    }*/
 
 
     ui->consoleMidi->setText(midiMsg);

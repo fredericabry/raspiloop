@@ -121,7 +121,10 @@ void dialog_keylist::clickButton(void)
 
         QAbstractButton *removeButton = msgBox.addButton(tr("Remove"), QMessageBox::ActionRole);
         QAbstractButton *editButton = msgBox.addButton(tr("Edit"), QMessageBox::ActionRole);
+        QAbstractButton *cloneButton = msgBox.addButton(tr("Clone"), QMessageBox::ActionRole);
         msgBox.addButton(tr("Cancel"), QMessageBox::ActionRole);
+
+
         QFont font = msgBox.font();
         font.setPixelSize(15);
         msgBox.setFont(font);
@@ -135,14 +138,29 @@ void dialog_keylist::clickButton(void)
         }
         else if(msgBox.clickedButton() == editButton)
         {
-            fileRemoveControl(key);
+           // fileRemoveControl(key);
 
             //this->setEnabled(false);
             this->deleteLater();
             dialog_newcontrol *dialog = new dialog_newcontrol(((QMainWindow*)parent()),((QMainWindow*)parent()),pInterface);
+
+
+
             dialog->setControlList(txtList);
             dialog->refreshConsole();
+
+            if(key.left(4) == "MIDI")
+            {
+            dialog->setOldMidi(key.right(key.size()-5));
+            dialog->setMidi(key.right(key.size()-5));
+            }
+            else
+            {
             dialog->setKey(key.right(key.size()-4));
+            dialog->setOldKey(key.right(key.size()-4));
+            }
+
+
 
             dialog->show();
             QPoint pos = this->pos();
@@ -150,7 +168,24 @@ void dialog_keylist::clickButton(void)
             pos.setY(0);
             dialog->move(pos);
         }
+        else if(msgBox.clickedButton() == cloneButton)
+        {
 
+            this->deleteLater();
+
+            dialog_newcontrol *dialog = new dialog_newcontrol(((QMainWindow*)parent()),((QMainWindow*)parent()),pInterface);
+
+
+
+            dialog->setControlList(txtList);
+            dialog->refreshConsole();
+
+            dialog->show();
+            QPoint pos = this->pos();
+            pos.setX(0);
+            pos.setY(0);
+            dialog->move(pos);
+        }
 
     }
 

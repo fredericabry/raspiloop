@@ -30,13 +30,20 @@ public:
 
     void setKey(const QString value);
 
+    void setMidi(const QString &value);
+
+    void setOldKey(const QString &value);
+
+    void setOldMidi(const QString &value);
+
 private:
     Ui::dialog_newcontrol *ui;
     QStringList controlList;
     QString key;   
     QString midi;
     int activeControl;
-
+    QString oldKey;//contains the former key if the dialog is opened during an editing
+    QString oldMidi;//contains the former key if the dialog is opened during an editing
 public slots:
     void openControlList(void);
     void getControl(QString txt);

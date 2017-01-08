@@ -67,7 +67,7 @@ playback_loop_c::playback_loop_c(int id,  std::vector<playback_port_c*>pPorts, l
         restartplayData->pLoop = this;
         restartplayData->skipevent=0;
         restartplayData->status=PLAY;
-        emit makeInterfaceEvent(interface->pClick,SIGNAL(firstBeat()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent);
+        emit makeInterfaceEvent(interface->pClick,SIGNAL(firstBeatPlay()),EVENT_PLAY_RESTART,(void*)restartplayData,true,&pEvent);
 
 
         if(delta > 0)

@@ -287,7 +287,7 @@ void capture_loop_c::preDestroy()
             param->syncMode = CLICKSYNC;
             param->pCaptureLoop = NULL;
 
-            emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeat()),EVENT_CREATE_PLAY,(void*)param,false,NULL);
+            emit makeInterfaceEvent(pPort->interface->pClick,SIGNAL(firstBeatPlay()),EVENT_CREATE_PLAY,(void*)param,false,NULL);
 
 
         }

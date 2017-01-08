@@ -6,6 +6,8 @@
 #include <sndfile.h>
 
 
+#define LATENCY_COMPENSATION 15+1000*(CAPTURE_HW_BUFFER_SIZE+PLAYBACK_HW_BUFFER_SIZE)/RATE
+
 
 click_c::click_c(int nuTempo, std::vector<playback_port_c*> pPorts, status_t status, interface_c *interface, MainWindow *parent):pPorts(pPorts),status(status),interface(interface),parent(parent)
 {
@@ -51,8 +53,8 @@ void click_c::preload()
     int short_mask = SF_FORMAT_PCM_16;
     if(sf_info.format != (SF_FORMAT_WAV|short_mask))
     {
-       qDebug()<<"format de fichier incorrect\n";
-       return;
+        qDebug()<<"format de fichier incorrect\n";
+        return;
     }
 
     if(sf_info.channels != 1)
@@ -78,8 +80,8 @@ void click_c::preload()
 
     if(sf_info.format != (SF_FORMAT_WAV|short_mask))
     {
-       qDebug()<<"format de fichier incorrect\n";
-       return;
+        qDebug()<<"format de fichier incorrect\n";
+        return;
     }
 
     if(sf_info.channels != 1)
@@ -134,6 +136,34 @@ void click_c::clickUp()
 }
 
 
+
+void click_c::beep(void)
+{
+
+    for(auto pPort : pPorts)
+    {
+        pPort->clickDataToPlay1 =  bufClick1_L;
+    }
+
+
+
+}
+
+
+void click_c::firstBeep(void)
+{
+
+
+    for(auto pPort : pPorts)
+    {
+        pPort->clickDataToPlay0 =  bufClick0_L;
+    }
+
+
+}
+
+
+
 void click_c::tick(void)
 {
     t1->start();
@@ -144,27 +174,20 @@ void click_c::tick(void)
     if(beat>4) beat = 1;
     if(beat == 1)
     {if(status == PLAY)
-        {
-            for(auto pPort : pPorts)
-            {
-                pPort->clickDataToPlay0 =  bufClick0_L;
-            }
-        }
+
+            firstBeep();
+        // beep(true);
 
         emit firstBeat();
-
+        QTimer::singleShot(LATENCY_COMPENSATION,this,SIGNAL(firstBeatCapture())); //compensate for latency
+        emit firstBeatPlay();
 
     }
     else
     {
 
         if(status == PLAY)
-        {
-            for(auto pPort : pPorts)
-            {
-                pPort->clickDataToPlay1 =  bufClick1_L;
-            }
-        }
+            beep();
     }
 
 

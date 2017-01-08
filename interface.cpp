@@ -701,7 +701,7 @@ void interface_c::init(void)
 
 
 
-    //connect(pClick,SIGNAL(firstBeat()),this,SLOT(Test()));
+
     printPlaybackLoopList();
     printCaptureLoopList();
 
@@ -734,13 +734,19 @@ void interface_c::checkMidiMsg(QString msg)
 
     //qDebug()<<msg;
 
-    activateMidi("MIDI_"+msg);
-
-
-
-
+    activateMidi("MIDI_"+msg,-1);
 
 }
+
+
+void interface_c::checkMidiCC(QString msg,int code)
+{
+
+     activateMidi("MIDI_"+msg,code);
+
+}
+
+
 
 
 void interface_c::keyInput(QKeyEvent *e)

@@ -32,6 +32,7 @@ public:
     int param_int;
     controlType_e  type;
     void exec(void);
+
 };
 
 
@@ -43,7 +44,7 @@ public:
     void addElement(control_c* pNuControl);
     void exec();
     QString getKey() const;
-
+    int CCvalue;//if a CC midi msg is used to launch this control list, then here is stored the value associated with the message
 private:
     unsigned int nextAction;
     QString key;

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>220</width>
-    <height>340</height>
+    <height>398</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -150,7 +150,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>270</y>
+     <y>330</y>
      <width>181</width>
      <height>61</height>
     </rect>
@@ -180,6 +180,25 @@
    </property>
    <property name="text">
     <string>C</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bCC">
+   <property name="geometry">
+    <rect>
+     <x>79</x>
+     <y>260</y>
+     <width>121</width>
+     <height>60</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="text">
+    <string>MIDI CC</string>
    </property>
   </widget>
  </widget>
