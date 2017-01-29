@@ -68,6 +68,10 @@ public:
     void removeloop(playback_loop_c *pLoop);
     QString getDeviceName(void);
     std::vector<playback_loop_c*>pConnectedLoops;
+    bool nuTop;
+    QElapsedTimer telapsed;
+
+
 
     unsigned long clickDataToPlay0;
     unsigned long clickDataToPlay1;

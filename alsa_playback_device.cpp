@@ -251,6 +251,14 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
             if(port[i]->clickDataToPlay0>0)
             {
 
+             /*   if(port[i]->nuTop)
+                {
+                    port[i]->nuTop = false;
+                    qDebug()<<"port"<<i<<" : "<<port[i]->telapsed.elapsed();
+
+                }
+*/
+
             for(unsigned int j = 0;j<playback_frames;j++)
             {
                 if(port[i]->clickDataToPlay0<1)
@@ -265,6 +273,14 @@ void alsa_playback_device::alsa_write_playback(playback_port_c **port)
 
             if(port[i]->clickDataToPlay1>0)
             {
+
+              /*  if(port[i]->nuTop)
+                {
+                    port[i]->nuTop = false;
+                    qDebug()<<"port"<<i<<" : "<<port[i]->telapsed.elapsed();
+
+                }*/
+
 
             for(unsigned int j = 0;j<playback_frames;j++)
             {
@@ -381,7 +397,7 @@ void ConsumerDevicePlayback::write_and_poll_loop(playback_port_c **port)
         err = wait_for_poll(controler->playback_handle, ufds, count);
         if (err < 0) {
 
-            qDebug()<<"playback polling error";
+            qDebug()<<"playback polling error"<<err;
             controler->pInterface->alsaDestroy();
             return;}
         else

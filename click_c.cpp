@@ -6,7 +6,9 @@
 #include <sndfile.h>
 
 
-#define LATENCY_COMPENSATION 15+1000*(CAPTURE_HW_BUFFER_SIZE+PLAYBACK_HW_BUFFER_SIZE)/RATE
+
+
+#define LATENCY_COMPENSATION 5+(1000*(CAPTURE_HW_BUFFER_SIZE+PLAYBACK_HW_BUFFER_SIZE))/RATE
 
 
 click_c::click_c(int nuTempo, std::vector<playback_port_c*> pPorts, status_t status, interface_c *interface, MainWindow *parent):pPorts(pPorts),status(status),interface(interface),parent(parent)
@@ -19,6 +21,9 @@ click_c::click_c(int nuTempo, std::vector<playback_port_c*> pPorts, status_t sta
 
 
     preload();
+
+
+    qDebug()<<"compensate for "<<LATENCY_COMPENSATION<<"ms";
 
 
     long deltams = 60000/nuTempo; //time in ms between ticks
@@ -143,6 +148,8 @@ void click_c::beep(void)
     for(auto pPort : pPorts)
     {
         pPort->clickDataToPlay1 =  bufClick1_L;
+        // pPort->telapsed.start();
+        // pPort->nuTop = true;
     }
 
 
@@ -157,6 +164,8 @@ void click_c::firstBeep(void)
     for(auto pPort : pPorts)
     {
         pPort->clickDataToPlay0 =  bufClick0_L;
+      //  pPort->telapsed.start();
+      //  pPort->nuTop = true;
     }
 
 
@@ -166,6 +175,8 @@ void click_c::firstBeep(void)
 
 void click_c::tick(void)
 {
+
+
     t1->start();
 
 
@@ -173,7 +184,9 @@ void click_c::tick(void)
     beat ++;
     if(beat>4) beat = 1;
     if(beat == 1)
-    {if(status == PLAY)
+    {
+
+        if(status == PLAY)
 
             firstBeep();
         // beep(true);
@@ -189,6 +202,7 @@ void click_c::tick(void)
         if(status == PLAY)
             beep();
     }
+
 
 
 
